@@ -116,9 +116,9 @@ python grapheme_extraction/pipeline.py path/to/photo.jpg --detector runs/rtdetr-
 - `models/bank.pt`
 - which GPU was used and roughly how long steps 5 and 6 took
 
-## Known untested parts
+## Reference run
 
-`evaluate.py`, `run_all.py` and the RT-DETR path were written on a Mac and checked only in pieces (a quick run got through generation and one YOLO epoch and had started RT-DETR). Nothing has run on CUDA or Windows. If a step fails, send the last 30 lines of its output.
+The whole chain has been run once on Linux with an RTX 5090 (see `reports/RUN_INFO.md`): about 45 minutes in total, 40 of them RT-DETR. Windows is untested.
 
 ## Read before trusting any number
 

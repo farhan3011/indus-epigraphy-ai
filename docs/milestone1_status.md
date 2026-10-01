@@ -6,17 +6,9 @@
 
 A YOLOv8n detector trained only on 4,000 synthetic seals scores AP50 0.995 on synthetic validation and fails on real photographs. On three real Wikimedia/Met photos it boxed whole inscriptions, the animal motif, or an entire seal, and isolated only a few individual signs. Real signs are deep relief with cast shadows; the synthetic ones are thin engraved lines on noise. The classical OpenCV segmentation was worse still (it boxed animal bodies and seal edges).
 
-## Numbers so far: all on SYNTHETIC validation, none on real seals
+## Results
 
-| Metric (400 synthetic val seals, 1,448 signs) | YOLOv8n + DINOv2 bank | OpenCV + DINOv2 bank |
-|---|---|---|
-| Detection precision / recall at IoU 0.5 | 0.995 / 1.000 | 0.315 / 0.437 |
-| Sign count correct | 0.983 | 0.153 |
-| Classifier top-1 on matched boxes | 0.773 | 0.703 |
-| Sign error rate (edit distance / length) | 0.232 | 1.291 |
-| Exact sequence match | 0.493 | 0.015 |
-
-Classifier alone on synthetic val crops: top-1 0.790, top-5 0.943. Bank and queries are augmentations of the same 417 drawings, so this is not accuracy on real seals. Most confused pairs: 343/342, 97/98, 87/89 (stroke-count and jar variants).
+Milestone 1 is complete on synthetic data. The full run (YOLOv8n, RT-DETR-L, OpenCV baseline, held-out synthetic test split) is in `reports/milestone_1_report.md`, with conclusions in `reports/milestone_1_findings.md`. In short: the two learned detectors are tied (AP50 0.995), the classifier is the bottleneck (top-1 0.77 on detected signs, exact sequence match about 0.43), and neither detector works on the two real photographs.
 
 ## Adopted from the revised plan (implemented)
 
@@ -35,7 +27,7 @@ Classifier alone on synthetic val crops: top-1 0.790, top-5 0.943. Bank and quer
 ## Not done
 
 - Collecting and hand-labelling real seals: 50-100 frozen test seals first, then 150-250 train/val. This is manual work.
-- Retraining the detector on real data. (The YOLOv8n vs RT-DETR comparison on synthetic data is scripted in `evaluate.py`; it has not been run yet.) The current `best.pt` was trained on synthetic data with the default `fliplr=0.5`; retrain it.
+- Retraining the detector on real data. (The YOLOv8n vs RT-DETR comparison on synthetic data is done.) The current `best.pt` was trained on synthetic data with the default `fliplr=0.5`; retrain it.
 - Evaluation on a real test split. `evaluate.py` already reports bootstrap intervals and frequency buckets, on the synthetic test split.
 - Copy-paste augmentation (plan Level 2).
 - Checking which way the IM-417 drawings face relative to impressions (plan step 1).
