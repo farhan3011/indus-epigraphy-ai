@@ -1,20 +1,20 @@
 """Milestone 1 pipeline: seal photograph -> ordered list of Mahadevan sign IDs.
 
     python grapheme_extraction/pipeline.py seal.jpg                 # JSON payload on stdout
-    python grapheme_extraction/pipeline.py seal.jpg --direction LTR --annotate out.jpg
-    python grapheme_extraction/pipeline.py --eval                   # metrics on the synthetic val split
+    python grapheme_extraction/pipeline.py seal.jpg --seal --annotate out.jpg  # photo of the seal itself
+
+Metrics live in evaluate.py.
 """
 import argparse
 import json
-import time
 from pathlib import Path
 
 import cv2
 import numpy as np
 import torch
-from ultralytics import YOLO
+from ultralytics import RTDETR, YOLO
 
-from classifier import DATA, DEVICE, ROOT, crop_sign, load_classifier, read_labels, to_tensor
+from classifier import DEVICE, ROOT, crop_sign, load_classifier, to_tensor
 
 DETECTOR = ROOT / "runs/yolov8n/weights/best.pt"
 
@@ -24,7 +24,16 @@ def detect_yolo(model, img, conf=0.25):
     return [(*b, c) for b, c in zip(r.boxes.xyxy.tolist(), r.boxes.conf.tolist())]
 
 
-def detect_opencv(img, conf=None):
+def load_detector(spec, conf=0.25):
+    """'opencv' or a weights path -> f(BGR image) -> [(x0, y0, x1, y1, conf)]."""
+    if str(spec) == "opencv":
+        return detect_opencv
+    # RT-DETR has its own NMS-free predictor; loading it through YOLO() would post-process it wrongly
+    model = (RTDETR if "rtdetr" in str(spec).lower() else YOLO)(str(spec))
+    return lambda img: detect_yolo(model, img, conf)
+
+
+def detect_opencv(img):
     """Classical baseline (no learning): local-contrast threshold, merge strokes, take blobs."""
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     k = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (15, 15))
@@ -38,25 +47,49 @@ def detect_opencv(img, conf=None):
             if 12 < h < H * 0.5 and 6 < w < W * 0.5 and area > 40]
 
 
-def extract(img, detect, classifier, direction="RTL", artifact_id="unknown"):
-    """Detect signs, classify each crop, serialise in reading order (PRD section 4 payload)."""
+def group_into_lines(boxes):
+    """Line index per box: a new line starts when a box's y-centre sits more than half the
+    median box height below the running mean of the current line."""
+    if not boxes:
+        return []
+    yc = [(b[1] + b[3]) / 2 for b in boxes]
+    gap = 0.5 * float(np.median([b[3] - b[1] for b in boxes]))
+    lines, current, line = [0] * len(boxes), [], 0
+    for i in sorted(range(len(boxes)), key=lambda i: yc[i]):
+        if current and yc[i] - sum(current) / len(current) > gap:
+            line, current = line + 1, []
+        current.append(yc[i])
+        lines[i] = line
+    return lines
+
+
+def extract(img, detect, classifier, is_seal_matrix=False, artifact_id="unknown"):
+    """Detect signs, classify each crop, serialise in reading order.
+
+    Corpora transcribe the impression, read right-to-left. A photo of the seal itself is the
+    mirror image, so it is flipped to impression view first; everything downstream (boxes
+    included) is in impression-view pixels."""
+    if is_seal_matrix:
+        img = cv2.flip(img, 1)
     boxes = detect(img)
     signs = []
     if boxes:
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         with torch.no_grad():
-            probs = classifier(to_tensor([crop_sign(gray, b[:4]) for b in boxes]).to(DEVICE)).softmax(1).cpu()
-        for (x0, y0, x1, y1, det_conf), p in zip(boxes, probs):
+            probs = classifier(to_tensor([crop_sign(gray, b[:4]) for b in boxes])).softmax(1).cpu()
+        for (x0, y0, x1, y1, det_conf), p, line in zip(boxes, probs, group_into_lines(boxes)):
             top = p.topk(5)
-            signs.append({"sign_id": int(top.indices[0]) + 1, "confidence": round(float(top.values[0]), 3),
-                          "detector_confidence": round(det_conf, 3),
-                          "top5": [int(i) + 1 for i in top.indices],
-                          "bbox": [round(x0), round(y0), round(x1 - x0), round(y1 - y0)]})
-    # ponytail: orders by x only, i.e. assumes a single line of text. Multi-line inscriptions
-    # need row clustering on y first; add when real multi-line seals are in the benchmark.
-    signs.sort(key=lambda s: s["bbox"][0] + s["bbox"][2] / 2, reverse=direction == "RTL")
-    return {"artifact_id": artifact_id, "reading_direction": direction, "sign_count": len(signs),
-            "sequence": [s["sign_id"] for s in signs], "bounding_boxes": signs}
+            signs.append({"line": line, "bbox_xywh": [round(x0), round(y0), round(x1 - x0), round(y1 - y0)],
+                          "det_conf": round(det_conf, 3),
+                          "top_k": [[int(i) + 1, round(float(v), 3)] for v, i in zip(top.values, top.indices)]})
+    # lines top to bottom; within a line right-to-left
+    signs.sort(key=lambda s: (s["line"], -(s["bbox_xywh"][0] + s["bbox_xywh"][2] / 2)))
+    for i, s in enumerate(signs):
+        s["order"] = i
+    # `sequence` is the top-1 reading for convenience. bbox_xywh keeps the physical positions so
+    # Milestone 2 can test reading direction instead of inheriting the RTL sort assumed here.
+    return {"artifact_id": artifact_id, "is_seal_matrix": is_seal_matrix, "view": "impression",
+            "sign_count": len(signs), "sequence": [s["top_k"][0][0] for s in signs], "signs": signs}
 
 
 def levenshtein(a, b):
@@ -76,36 +109,14 @@ def iou(a, b):
     return iw * ih / union if union else 0.0
 
 
-def evaluate(detect, classifier, split="val"):
-    """End-to-end metrics against the generator's ground truth. SYNTHETIC DATA ONLY."""
-    tp = n_pred = n_gt = cls_ok = edits = gt_len = exact = count_ok = 0
-    files = sorted((DATA / "images" / split).glob("*.jpg"))
-    t0 = time.perf_counter()
-    for f in files:
-        img = cv2.imread(str(f))
-        gt = sorted(read_labels(f, img.shape[0]), key=lambda g: -(g[1] + g[3]) / 2)  # RTL
-        out = extract(img, detect, classifier)
-        pred = [(s["sign_id"], s["bbox"][0], s["bbox"][1], s["bbox"][0] + s["bbox"][2], s["bbox"][1] + s["bbox"][3])
-                for s in out["bounding_boxes"]]
-        used = set()
-        for g in gt:  # greedy one-to-one matching at IoU >= 0.5
-            best = max((p for p in range(len(pred)) if p not in used), key=lambda p: iou(g[1:], pred[p][1:]), default=None)
-            if best is not None and iou(g[1:], pred[best][1:]) >= 0.5:
-                used.add(best)
-                tp += 1
-                cls_ok += pred[best][0] == g[0]
-        gt_seq = [g[0] for g in gt]
-        n_pred, n_gt = n_pred + len(pred), n_gt + len(gt)
-        edits += levenshtein(gt_seq, out["sequence"])
-        gt_len += len(gt_seq)
-        exact += gt_seq == out["sequence"]
-        count_ok += len(gt_seq) == len(pred)
-    n = len(files)
-    return {"images": n, "signs": n_gt,
-            "det_precision@0.5": tp / max(n_pred, 1), "det_recall@0.5": tp / max(n_gt, 1),
-            "sign_count_correct": count_ok / n, "cls_top1_on_matched": cls_ok / max(tp, 1),
-            "sequence_edit_rate": edits / max(gt_len, 1), "sequence_exact_match": exact / n,
-            "ms_per_image": (time.perf_counter() - t0) / n * 1000}
+def annotate(img, out):
+    """Copy of the (impression-view) image with boxes and top-1 sign IDs drawn."""
+    img = img.copy()
+    for s in out["signs"]:
+        x, y, w, h = s["bbox_xywh"]
+        cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        cv2.putText(img, str(s["top_k"][0][0]), (x, max(12, y - 4)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+    return img
 
 
 def demo():
@@ -115,44 +126,40 @@ def demo():
     assert iou((0, 0, 10, 10), (0, 0, 10, 10)) == 1 and iou((0, 0, 10, 10), (20, 20, 30, 30)) == 0
     fake = lambda img: [(10, 10, 40, 60, 0.9), (300, 10, 330, 60, 0.9), (150, 10, 180, 60, 0.9)]
     clf = lambda x: torch.zeros(len(x), 417)
-    xs = lambda d: [b["bbox"][0] for b in extract(np.zeros((512, 512, 3), np.uint8), fake, clf, d)["bounding_boxes"]]
-    assert xs("RTL") == [300, 150, 10] and xs("LTR") == [10, 150, 300]
+    out = extract(np.zeros((512, 512, 3), np.uint8), fake, clf)
+    assert [s["bbox_xywh"][0] for s in out["signs"]] == [300, 150, 10]  # right-to-left
+    # two lines: upper line is read first, each line right-to-left
+    two = [(10, 10, 40, 60, 1), (100, 12, 130, 62, 1), (10, 90, 40, 140, 1), (100, 92, 130, 142, 1)]
+    assert group_into_lines(two) == [0, 0, 1, 1]
+    out = extract(np.zeros((512, 512, 3), np.uint8), lambda img: two, clf)
+    assert [s["bbox_xywh"][:2] for s in out["signs"]] == [[100, 12], [10, 10], [100, 92], [10, 90]]
+    # mirroring a seal photo reverses which physical end is read first
+    lit = lambda img: [(int(x), 10, int(x) + 20, 60, 1) for x in np.flatnonzero(img[30, :, 0])[::20]]
+    img = np.zeros((100, 400, 3), np.uint8)
+    img[:, 50:70] = 255
+    assert extract(img, lit, clf)["signs"][0]["bbox_xywh"][0] == 50
+    assert extract(img, lit, clf, is_seal_matrix=True)["signs"][0]["bbox_xywh"][0] == 330
     print("ok")
 
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("image", nargs="?")
-    ap.add_argument("--direction", choices=["RTL", "LTR"], default="RTL",
-                    help="RTL for impressions (the default reading); LTR when photographing the seal itself (mirror image)")
+    ap.add_argument("--seal", action="store_true",
+                    help="the photo shows the carved seal itself (mirror image), not an impression: flip it first")
     ap.add_argument("--detector", default=str(DETECTOR), help="detector weights, or 'opencv' for the classical baseline")
     ap.add_argument("--conf", type=float, default=0.25)
     ap.add_argument("--annotate", help="write a copy of the image with boxes and sign IDs drawn")
-    ap.add_argument("--eval", action="store_true", help="evaluate on the synthetic val split")
     ap.add_argument("--selftest", action="store_true")
     args = ap.parse_args()
 
     if args.selftest:
         demo()
         raise SystemExit
-    if args.detector == "opencv":
-        detect = detect_opencv
-    else:
-        model = YOLO(args.detector)  # ultralytics' YOLO() also loads RT-DETR checkpoints
-        detect = lambda img: detect_yolo(model, img, args.conf)
-    classifier = load_classifier()
-
-    if args.eval:
-        print(json.dumps(evaluate(detect, classifier), indent=1))
-    else:
-        img = cv2.imread(args.image)
-        if img is None:
-            raise SystemExit(f"cannot read image: {args.image}")
-        out = extract(img, detect, classifier, args.direction, Path(args.image).stem)
-        print(json.dumps(out, indent=1))
-        if args.annotate:
-            for s in out["bounding_boxes"]:
-                x, y, w, h = s["bbox"]
-                cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
-                cv2.putText(img, str(s["sign_id"]), (x, max(12, y - 4)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
-            cv2.imwrite(args.annotate, img)
+    img = cv2.imread(args.image or "")
+    if img is None:
+        raise SystemExit(f"cannot read image: {args.image}")
+    out = extract(img, load_detector(args.detector, args.conf), load_classifier(), args.seal, Path(args.image).stem)
+    print(json.dumps(out, indent=1))
+    if args.annotate:
+        cv2.imwrite(args.annotate, annotate(cv2.flip(img, 1) if args.seal else img, out))  # boxes are in impression view

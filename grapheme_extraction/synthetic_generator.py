@@ -4,7 +4,7 @@ Label class = Mahadevan sign ID - 1, so one label file serves the single-class d
 (train with single_cls=True), the sign classifier, and the reading-order ground truth
 (signs sorted by descending x = right-to-left reading).
 
-    python grapheme_extraction/synthetic_generator.py --train 3000 --val 300
+    python grapheme_extraction/synthetic_generator.py --train 4000 --val 400 --test 400
 """
 import argparse
 import csv
@@ -164,6 +164,7 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--train", type=int, default=3000)
     ap.add_argument("--val", type=int, default=300)
+    ap.add_argument("--test", type=int, default=300, help="held out: never used for model selection or tuning")
     ap.add_argument("--seed", type=int, default=0)
     args = ap.parse_args()
     random.seed(args.seed)
@@ -172,6 +173,7 @@ if __name__ == "__main__":
     glyphs, seqs = load_glyphs(), load_sequences()
     generate(args.train, "train", glyphs, seqs)
     generate(args.val, "val", glyphs, seqs)
+    generate(args.test, "test", glyphs, seqs)
     names = "\n".join(f"  {i}: '{i + 1}'" for i in range(N_SIGNS))
-    (OUT / "data.yaml").write_text(f"path: {OUT}\ntrain: images/train\nval: images/val\nnames:\n{names}\n")
-    print(f"wrote {args.train} train + {args.val} val seals to {OUT}")
+    (OUT / "data.yaml").write_text(f"path: {OUT.as_posix()}\ntrain: images/train\nval: images/val\ntest: images/test\nnames:\n{names}\n")
+    print(f"wrote {args.train} train + {args.val} val + {args.test} test seals to {OUT}")

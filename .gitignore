@@ -224,3 +224,6 @@ data/synthetic/
 runs/
 models/
 *.pt
+data/real/source/
+data/real/images/
+reports/quick/
