@@ -1,0 +1,134 @@
+{
+ "note": "SYNTHETIC val crops: augmentations of the same 417 source drawings, not real seals",
+ "val_top1": 0.7907458543777466,
+ "val_top5": 0.935773491859436,
+ "val_crops": 1448,
+ "temperature": 0.01,
+ "most_confused": [
+  {
+   "true": 343,
+   "pred": 342,
+   "n": 5
+  },
+  {
+   "true": 97,
+   "pred": 98,
+   "n": 4
+  },
+  {
+   "true": 342,
+   "pred": 343,
+   "n": 4
+  },
+  {
+   "true": 67,
+   "pred": 59,
+   "n": 4
+  },
+  {
+   "true": 99,
+   "pred": 100,
+   "n": 4
+  },
+  {
+   "true": 18,
+   "pred": 1,
+   "n": 3
+  },
+  {
+   "true": 97,
+   "pred": 86,
+   "n": 3
+  },
+  {
+   "true": 12,
+   "pred": 15,
+   "n": 3
+  },
+  {
+   "true": 89,
+   "pred": 95,
+   "n": 3
+  },
+  {
+   "true": 87,
+   "pred": 89,
+   "n": 3
+  },
+  {
+   "true": 89,
+   "pred": 87,
+   "n": 2
+  },
+  {
+   "true": 70,
+   "pred": 59,
+   "n": 2
+  },
+  {
+   "true": 72,
+   "pred": 59,
+   "n": 2
+  },
+  {
+   "true": 223,
+   "pred": 229,
+   "n": 2
+  },
+  {
+   "true": 107,
+   "pred": 103,
+   "n": 2
+  },
+  {
+   "true": 345,
+   "pred": 343,
+   "n": 2
+  },
+  {
+   "true": 403,
+   "pred": 53,
+   "n": 2
+  },
+  {
+   "true": 87,
+   "pred": 105,
+   "n": 2
+  },
+  {
+   "true": 121,
+   "pred": 118,
+   "n": 2
+  },
+  {
+   "true": 95,
+   "pred": 89,
+   "n": 2
+  },
+  {
+   "true": 284,
+   "pred": 267,
+   "n": 2
+  },
+  {
+   "true": 129,
+   "pred": 125,
+   "n": 2
+  },
+  {
+   "true": 13,
+   "pred": 12,
+   "n": 2
+  },
+  {
+   "true": 103,
+   "pred": 99,
+   "n": 2
+  },
+  {
+   "true": 275,
+   "pred": 282,
+   "n": 2
+  }
+ ]
+}

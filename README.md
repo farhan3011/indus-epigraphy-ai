@@ -116,18 +116,12 @@ python -c "import torch, torchvision, ultralytics, cv2; print('PyTorch:', torch.
 
 ---
 
-## Repository Layout
+## Running Milestone 1
 
+See **[docs/RUN_GUIDE.md](docs/RUN_GUIDE.md)**. After setup, one command generates the synthetic seals, trains YOLOv8n and RT-DETR, builds the sign classifier and writes `reports/milestone_1_report.md`:
+
+```bash
+python grapheme_extraction/run_all.py
 ```
-indus-epigraphy-ai/
-├── AI/                                # Local virtual environment (gitignored)
-├── data/                              # Data directories & acquisition guides
-│   └── README.md
-├── docs/                              # Technical specifications & PRDs
-│   └── PRD_Milestone_1_Grapheme_Extraction.md
-├── .gitignore                         # Environment, checkpoint, and data exclusions
-├── Indus_Epigraphy_AI_Project_Proposal.md # Academic course proposal & milestones
-├── LICENSE                            # MIT License
-├── README.md                          # Project overview & cross-platform setup guide
-└── requirements.txt                   # Pinned dependency manifest
-```
+
+Current state and open items: [docs/milestone1_status.md](docs/milestone1_status.md). All results so far are on synthetic data.

@@ -1,0 +1,418 @@
+sign_id,frequency_bucket,precision,recall,f1,test_crops
+1,50 most frequent signs,0.571,0.889,0.696,9
+2,signs ranked 51-200,1.0,0.5,0.667,4
+3,signs ranked 51-200,0.0,0.0,0.0,0
+4,rarer signs,0.0,0.0,0.0,3
+5,rarer signs,0.0,0.0,0.0,0
+6,signs ranked 51-200,0.0,0.0,0.0,5
+7,signs ranked 51-200,0.25,0.5,0.333,2
+8,50 most frequent signs,0.857,0.857,0.857,7
+9,signs ranked 51-200,1.0,1.0,1.0,1
+10,signs ranked 51-200,0.5,1.0,0.667,2
+11,rarer signs,1.0,1.0,1.0,1
+12,50 most frequent signs,0.571,0.667,0.615,6
+13,rarer signs,1.0,1.0,1.0,1
+14,signs ranked 51-200,0.0,0.0,0.0,1
+15,50 most frequent signs,0.714,0.625,0.667,8
+16,rarer signs,1.0,1.0,1.0,1
+17,50 most frequent signs,1.0,1.0,1.0,4
+18,signs ranked 51-200,0.571,0.667,0.615,6
+19,signs ranked 51-200,0.0,0.0,0.0,0
+20,rarer signs,1.0,1.0,1.0,1
+21,rarer signs,1.0,1.0,1.0,4
+22,rarer signs,0.0,0.0,0.0,1
+23,rarer signs,0.0,0.0,0.0,1
+24,rarer signs,1.0,1.0,1.0,1
+25,signs ranked 51-200,0.571,0.444,0.5,9
+26,rarer signs,1.0,1.0,1.0,2
+27,rarer signs,1.0,1.0,1.0,1
+28,signs ranked 51-200,0.75,1.0,0.857,3
+29,rarer signs,0.75,0.5,0.6,6
+30,rarer signs,0.0,0.0,0.0,1
+31,rarer signs,1.0,0.667,0.8,3
+32,signs ranked 51-200,0.333,0.5,0.4,2
+33,rarer signs,0.0,0.0,0.0,2
+34,rarer signs,0.2,0.333,0.25,3
+35,rarer signs,1.0,0.5,0.667,2
+36,rarer signs,0.5,0.667,0.571,3
+37,rarer signs,0.0,0.0,0.0,1
+38,signs ranked 51-200,1.0,0.5,0.667,4
+39,rarer signs,0.0,0.0,0.0,0
+40,signs ranked 51-200,0.5,1.0,0.667,2
+41,signs ranked 51-200,0.667,1.0,0.8,2
+42,rarer signs,1.0,1.0,1.0,2
+43,rarer signs,0.667,1.0,0.8,2
+44,rarer signs,0.0,0.0,0.0,0
+45,rarer signs,1.0,0.5,0.667,2
+46,rarer signs,0.0,0.0,0.0,0
+47,signs ranked 51-200,1.0,1.0,1.0,1
+48,50 most frequent signs,0.818,1.0,0.9,9
+49,rarer signs,0.0,0.0,0.0,0
+50,signs ranked 51-200,1.0,1.0,1.0,2
+51,50 most frequent signs,0.889,0.889,0.889,9
+52,rarer signs,1.0,0.667,0.8,3
+53,50 most frequent signs,0.833,1.0,0.909,10
+54,signs ranked 51-200,0.5,0.5,0.5,4
+55,rarer signs,0.0,0.0,0.0,2
+56,signs ranked 51-200,1.0,1.0,1.0,1
+57,signs ranked 51-200,1.0,1.0,1.0,2
+58,signs ranked 51-200,0.0,0.0,0.0,1
+59,50 most frequent signs,0.714,0.882,0.789,17
+60,signs ranked 51-200,0.333,0.5,0.4,2
+61,rarer signs,1.0,0.6,0.75,5
+62,signs ranked 51-200,0.75,1.0,0.857,3
+63,signs ranked 51-200,0.5,1.0,0.667,2
+64,rarer signs,0.0,0.0,0.0,2
+65,50 most frequent signs,0.647,0.846,0.733,13
+66,signs ranked 51-200,1.0,1.0,1.0,3
+67,50 most frequent signs,0.923,0.857,0.889,14
+68,signs ranked 51-200,0.5,1.0,0.667,2
+69,rarer signs,0.0,0.0,0.0,2
+70,50 most frequent signs,0.75,0.75,0.75,4
+71,signs ranked 51-200,0.0,0.0,0.0,2
+72,50 most frequent signs,0.643,0.818,0.72,11
+73,signs ranked 51-200,0.0,0.0,0.0,1
+74,rarer signs,0.5,1.0,0.667,1
+75,signs ranked 51-200,0.5,0.333,0.4,3
+76,signs ranked 51-200,1.0,1.0,1.0,1
+77,rarer signs,1.0,0.5,0.667,2
+78,signs ranked 51-200,0.0,0.0,0.0,1
+79,rarer signs,1.0,1.0,1.0,1
+80,rarer signs,0.5,1.0,0.667,1
+81,signs ranked 51-200,1.0,1.0,1.0,4
+82,rarer signs,1.0,1.0,1.0,2
+83,rarer signs,1.0,1.0,1.0,4
+84,signs ranked 51-200,1.0,1.0,1.0,2
+85,rarer signs,1.0,1.0,1.0,1
+86,50 most frequent signs,0.818,1.0,0.9,9
+87,50 most frequent signs,0.8,0.667,0.727,18
+88,rarer signs,0.5,0.5,0.5,2
+89,50 most frequent signs,0.714,0.75,0.732,20
+90,rarer signs,1.0,1.0,1.0,2
+91,rarer signs,1.0,1.0,1.0,1
+92,rarer signs,1.0,0.667,0.8,3
+93,signs ranked 51-200,0.0,0.0,0.0,2
+94,signs ranked 51-200,0.667,0.5,0.571,8
+95,signs ranked 51-200,0.0,0.0,0.0,3
+96,signs ranked 51-200,0.0,0.0,0.0,2
+97,50 most frequent signs,0.727,0.727,0.727,11
+98,50 most frequent signs,0.455,0.625,0.526,8
+99,50 most frequent signs,0.806,0.926,0.862,27
+100,signs ranked 51-200,0.75,0.75,0.75,4
+101,rarer signs,0.0,0.0,0.0,2
+102,50 most frequent signs,0.438,0.7,0.538,10
+103,signs ranked 51-200,1.0,1.0,1.0,3
+104,50 most frequent signs,0.333,0.4,0.364,5
+105,rarer signs,1.0,0.25,0.4,4
+106,signs ranked 51-200,0.333,0.5,0.4,6
+107,signs ranked 51-200,0.0,0.0,0.0,3
+108,rarer signs,0.0,0.0,0.0,5
+109,signs ranked 51-200,0.333,0.667,0.444,3
+110,signs ranked 51-200,0.333,0.25,0.286,4
+111,rarer signs,1.0,0.667,0.8,3
+112,50 most frequent signs,0.25,0.25,0.25,4
+113,signs ranked 51-200,0.667,1.0,0.8,2
+114,signs ranked 51-200,0.333,0.2,0.25,5
+115,rarer signs,0.333,0.333,0.333,3
+116,rarer signs,0.0,0.0,0.0,0
+117,rarer signs,0.0,0.0,0.0,0
+118,rarer signs,0.0,0.0,0.0,3
+119,signs ranked 51-200,1.0,1.0,1.0,4
+120,rarer signs,1.0,1.0,1.0,1
+121,50 most frequent signs,0.714,1.0,0.833,5
+122,rarer signs,1.0,1.0,1.0,3
+123,50 most frequent signs,1.0,1.0,1.0,23
+124,50 most frequent signs,1.0,1.0,1.0,8
+125,signs ranked 51-200,1.0,1.0,1.0,1
+126,rarer signs,1.0,0.667,0.8,3
+127,signs ranked 51-200,1.0,1.0,1.0,3
+128,signs ranked 51-200,1.0,1.0,1.0,1
+129,signs ranked 51-200,0.0,0.0,0.0,0
+130,signs ranked 51-200,1.0,0.375,0.545,8
+131,rarer signs,1.0,1.0,1.0,3
+132,rarer signs,1.0,1.0,1.0,2
+133,rarer signs,1.0,0.667,0.8,3
+134,signs ranked 51-200,1.0,1.0,1.0,4
+135,signs ranked 51-200,1.0,1.0,1.0,7
+136,signs ranked 51-200,1.0,1.0,1.0,4
+137,signs ranked 51-200,0.0,0.0,0.0,0
+138,rarer signs,0.5,0.333,0.4,3
+139,signs ranked 51-200,1.0,0.875,0.933,8
+140,rarer signs,1.0,1.0,1.0,1
+141,rarer signs,1.0,1.0,1.0,3
+142,signs ranked 51-200,1.0,1.0,1.0,2
+143,rarer signs,1.0,1.0,1.0,1
+144,rarer signs,1.0,0.667,0.8,3
+145,rarer signs,1.0,1.0,1.0,2
+146,rarer signs,1.0,1.0,1.0,2
+147,rarer signs,1.0,1.0,1.0,4
+148,rarer signs,1.0,0.667,0.8,3
+149,50 most frequent signs,0.923,0.857,0.889,14
+150,signs ranked 51-200,0.857,1.0,0.923,6
+151,rarer signs,1.0,1.0,1.0,1
+152,rarer signs,1.0,0.667,0.8,3
+153,signs ranked 51-200,0.556,0.833,0.667,6
+154,rarer signs,1.0,1.0,1.0,1
+155,signs ranked 51-200,1.0,0.667,0.8,3
+156,rarer signs,0.0,0.0,0.0,0
+157,rarer signs,0.5,0.333,0.4,3
+158,rarer signs,1.0,0.667,0.8,3
+159,rarer signs,0.0,0.0,0.0,0
+160,signs ranked 51-200,1.0,1.0,1.0,1
+161,rarer signs,1.0,1.0,1.0,1
+162,50 most frequent signs,1.0,1.0,1.0,5
+163,rarer signs,1.0,0.5,0.667,2
+164,rarer signs,1.0,1.0,1.0,3
+165,rarer signs,0.0,0.0,0.0,0
+166,rarer signs,1.0,1.0,1.0,4
+167,signs ranked 51-200,0.667,1.0,0.8,2
+168,rarer signs,1.0,0.667,0.8,3
+169,50 most frequent signs,1.0,1.0,1.0,19
+170,rarer signs,1.0,1.0,1.0,2
+171,50 most frequent signs,0.889,0.889,0.889,9
+172,signs ranked 51-200,1.0,1.0,1.0,2
+173,signs ranked 51-200,1.0,1.0,1.0,5
+174,signs ranked 51-200,0.5,0.5,0.5,2
+175,signs ranked 51-200,1.0,1.0,1.0,4
+176,50 most frequent signs,0.958,1.0,0.979,23
+177,signs ranked 51-200,1.0,1.0,1.0,5
+178,signs ranked 51-200,1.0,0.5,0.667,4
+179,rarer signs,1.0,1.0,1.0,2
+180,signs ranked 51-200,1.0,1.0,1.0,2
+181,rarer signs,0.0,0.0,0.0,0
+182,signs ranked 51-200,1.0,1.0,1.0,3
+183,signs ranked 51-200,1.0,1.0,1.0,4
+184,signs ranked 51-200,1.0,1.0,1.0,2
+185,rarer signs,0.0,0.0,0.0,0
+186,signs ranked 51-200,0.0,0.0,0.0,0
+187,rarer signs,0.0,0.0,0.0,1
+188,rarer signs,1.0,0.5,0.667,2
+189,rarer signs,1.0,1.0,1.0,1
+190,signs ranked 51-200,1.0,1.0,1.0,4
+191,rarer signs,0.5,1.0,0.667,1
+192,signs ranked 51-200,1.0,1.0,1.0,2
+193,signs ranked 51-200,1.0,1.0,1.0,2
+194,signs ranked 51-200,1.0,1.0,1.0,3
+195,rarer signs,0.0,0.0,0.0,0
+196,rarer signs,1.0,1.0,1.0,3
+197,signs ranked 51-200,0.4,0.667,0.5,3
+198,rarer signs,0.0,0.0,0.0,0
+199,rarer signs,1.0,0.75,0.857,4
+200,rarer signs,1.0,1.0,1.0,5
+201,signs ranked 51-200,1.0,1.0,1.0,3
+202,signs ranked 51-200,0.0,0.0,0.0,2
+203,rarer signs,0.5,0.5,0.5,2
+204,50 most frequent signs,0.833,1.0,0.909,5
+205,signs ranked 51-200,0.0,0.0,0.0,0
+206,signs ranked 51-200,0.0,0.0,0.0,1
+207,rarer signs,0.0,0.0,0.0,1
+208,rarer signs,0.667,0.667,0.667,3
+209,signs ranked 51-200,1.0,1.0,1.0,3
+210,signs ranked 51-200,1.0,1.0,1.0,2
+211,50 most frequent signs,0.833,0.938,0.882,16
+212,signs ranked 51-200,0.0,0.0,0.0,0
+213,rarer signs,1.0,0.5,0.667,2
+214,signs ranked 51-200,0.667,0.667,0.667,3
+215,signs ranked 51-200,0.75,1.0,0.857,3
+216,50 most frequent signs,0.545,0.545,0.545,11
+217,signs ranked 51-200,0.5,0.5,0.5,4
+218,rarer signs,0.0,0.0,0.0,2
+219,signs ranked 51-200,1.0,1.0,1.0,1
+220,rarer signs,1.0,1.0,1.0,1
+221,rarer signs,0.0,0.0,0.0,0
+222,signs ranked 51-200,0.333,0.333,0.333,3
+223,signs ranked 51-200,0.0,0.0,0.0,0
+224,signs ranked 51-200,1.0,0.333,0.5,3
+225,rarer signs,0.0,0.0,0.0,2
+226,signs ranked 51-200,0.0,0.0,0.0,0
+227,rarer signs,1.0,1.0,1.0,1
+228,rarer signs,1.0,0.333,0.5,3
+229,rarer signs,0.286,0.667,0.4,3
+230,signs ranked 51-200,1.0,1.0,1.0,5
+231,rarer signs,0.667,1.0,0.8,2
+232,rarer signs,1.0,1.0,1.0,3
+233,signs ranked 51-200,0.667,0.667,0.667,3
+234,signs ranked 51-200,0.4,0.667,0.5,3
+235,rarer signs,0.0,0.0,0.0,1
+236,rarer signs,1.0,1.0,1.0,1
+237,signs ranked 51-200,0.0,0.0,0.0,0
+238,rarer signs,0.0,0.0,0.0,1
+239,rarer signs,1.0,1.0,1.0,1
+240,rarer signs,1.0,1.0,1.0,1
+241,rarer signs,1.0,0.5,0.667,2
+242,signs ranked 51-200,0.5,1.0,0.667,1
+243,rarer signs,1.0,1.0,1.0,3
+244,50 most frequent signs,0.889,1.0,0.941,8
+245,50 most frequent signs,1.0,1.0,1.0,16
+246,rarer signs,1.0,1.0,1.0,2
+247,signs ranked 51-200,1.0,1.0,1.0,3
+248,rarer signs,1.0,1.0,1.0,1
+249,50 most frequent signs,0.846,1.0,0.917,11
+250,signs ranked 51-200,0.6,0.5,0.545,6
+251,rarer signs,1.0,1.0,1.0,1
+252,signs ranked 51-200,1.0,0.667,0.8,3
+253,signs ranked 51-200,1.0,1.0,1.0,3
+254,50 most frequent signs,0.571,1.0,0.727,4
+255,rarer signs,1.0,0.333,0.5,3
+256,rarer signs,1.0,1.0,1.0,1
+257,rarer signs,1.0,1.0,1.0,2
+258,signs ranked 51-200,1.0,1.0,1.0,3
+259,rarer signs,1.0,0.8,0.889,5
+260,rarer signs,0.0,0.0,0.0,1
+261,signs ranked 51-200,1.0,1.0,1.0,2
+262,rarer signs,0.0,0.0,0.0,0
+263,signs ranked 51-200,1.0,0.5,0.667,4
+264,signs ranked 51-200,1.0,1.0,1.0,2
+265,rarer signs,0.0,0.0,0.0,0
+266,rarer signs,0.0,0.0,0.0,0
+267,50 most frequent signs,0.84,0.913,0.875,23
+268,rarer signs,0.333,0.333,0.333,3
+269,rarer signs,1.0,1.0,1.0,1
+270,rarer signs,1.0,1.0,1.0,1
+271,rarer signs,1.0,1.0,1.0,1
+272,rarer signs,1.0,1.0,1.0,1
+273,rarer signs,0.0,0.0,0.0,1
+274,rarer signs,1.0,0.667,0.8,3
+275,rarer signs,0.0,0.0,0.0,2
+276,rarer signs,0.0,0.0,0.0,1
+277,signs ranked 51-200,0.5,0.5,0.5,2
+278,rarer signs,1.0,1.0,1.0,1
+279,rarer signs,0.5,1.0,0.667,2
+280,rarer signs,0.75,0.75,0.75,4
+281,rarer signs,1.0,1.0,1.0,1
+282,rarer signs,0.0,0.0,0.0,1
+283,rarer signs,0.5,0.5,0.5,2
+284,signs ranked 51-200,1.0,1.0,1.0,7
+285,rarer signs,1.0,1.0,1.0,3
+286,signs ranked 51-200,0.0,0.0,0.0,0
+287,50 most frequent signs,0.571,0.667,0.615,6
+288,rarer signs,1.0,0.5,0.667,4
+289,rarer signs,0.5,1.0,0.667,1
+290,rarer signs,1.0,0.5,0.667,2
+291,rarer signs,0.0,0.0,0.0,2
+292,signs ranked 51-200,1.0,1.0,1.0,1
+293,50 most frequent signs,0.6,0.667,0.632,9
+294,signs ranked 51-200,0.5,1.0,0.667,1
+295,signs ranked 51-200,1.0,0.5,0.667,4
+296,signs ranked 51-200,0.75,1.0,0.857,6
+297,signs ranked 51-200,1.0,1.0,1.0,3
+298,rarer signs,1.0,1.0,1.0,2
+299,rarer signs,0.0,0.0,0.0,2
+300,rarer signs,0.0,0.0,0.0,0
+301,signs ranked 51-200,0.0,0.0,0.0,2
+302,signs ranked 51-200,0.8,1.0,0.889,4
+303,signs ranked 51-200,1.0,1.0,1.0,4
+304,signs ranked 51-200,1.0,1.0,1.0,1
+305,rarer signs,1.0,1.0,1.0,1
+306,rarer signs,1.0,0.667,0.8,3
+307,signs ranked 51-200,1.0,0.909,0.952,11
+308,rarer signs,0.0,0.0,0.0,0
+309,rarer signs,1.0,0.5,0.667,4
+310,rarer signs,1.0,0.5,0.667,2
+311,rarer signs,0.0,0.0,0.0,0
+312,rarer signs,1.0,1.0,1.0,2
+313,rarer signs,1.0,0.8,0.889,5
+314,rarer signs,0.667,1.0,0.8,2
+315,rarer signs,1.0,1.0,1.0,3
+316,rarer signs,1.0,1.0,1.0,1
+317,rarer signs,1.0,1.0,1.0,1
+318,rarer signs,1.0,1.0,1.0,6
+319,signs ranked 51-200,0.75,0.75,0.75,4
+320,rarer signs,1.0,1.0,1.0,1
+321,signs ranked 51-200,1.0,1.0,1.0,2
+322,rarer signs,1.0,1.0,1.0,3
+323,signs ranked 51-200,0.0,0.0,0.0,0
+324,rarer signs,1.0,1.0,1.0,4
+325,signs ranked 51-200,1.0,1.0,1.0,3
+326,signs ranked 51-200,0.75,1.0,0.857,3
+327,signs ranked 51-200,1.0,0.5,0.667,2
+328,50 most frequent signs,0.889,1.0,0.941,16
+329,signs ranked 51-200,0.0,0.0,0.0,1
+330,signs ranked 51-200,1.0,1.0,1.0,2
+331,rarer signs,1.0,1.0,1.0,1
+332,rarer signs,1.0,1.0,1.0,1
+333,rarer signs,0.0,0.0,0.0,0
+334,rarer signs,0.0,0.0,0.0,2
+335,rarer signs,1.0,0.333,0.5,6
+336,50 most frequent signs,0.938,0.938,0.938,16
+337,rarer signs,1.0,1.0,1.0,1
+338,rarer signs,1.0,1.0,1.0,4
+339,rarer signs,1.0,1.0,1.0,1
+340,rarer signs,1.0,0.5,0.667,4
+341,signs ranked 51-200,1.0,1.0,1.0,2
+342,50 most frequent signs,0.916,0.962,0.938,79
+343,50 most frequent signs,0.545,0.857,0.667,7
+344,signs ranked 51-200,0.5,0.4,0.444,5
+345,signs ranked 51-200,0.4,0.333,0.364,6
+346,rarer signs,1.0,1.0,1.0,2
+347,50 most frequent signs,0.833,0.833,0.833,6
+348,signs ranked 51-200,1.0,1.0,1.0,3
+349,rarer signs,0.0,0.0,0.0,1
+350,rarer signs,1.0,1.0,1.0,1
+351,rarer signs,0.5,1.0,0.667,1
+352,rarer signs,0.667,0.5,0.571,4
+353,rarer signs,1.0,0.5,0.667,2
+354,rarer signs,1.0,1.0,1.0,2
+355,rarer signs,1.0,1.0,1.0,1
+356,rarer signs,0.75,1.0,0.857,3
+357,rarer signs,1.0,0.5,0.667,2
+358,signs ranked 51-200,0.571,0.8,0.667,5
+359,rarer signs,0.0,0.0,0.0,0
+360,rarer signs,0.0,0.0,0.0,1
+361,rarer signs,0.0,0.0,0.0,0
+362,rarer signs,1.0,1.0,1.0,1
+363,rarer signs,1.0,0.667,0.8,3
+364,rarer signs,0.0,0.0,0.0,0
+365,rarer signs,0.0,0.0,0.0,0
+366,rarer signs,1.0,1.0,1.0,2
+367,signs ranked 51-200,1.0,0.75,0.857,4
+368,rarer signs,1.0,1.0,1.0,1
+369,rarer signs,1.0,0.667,0.8,3
+370,rarer signs,0.5,1.0,0.667,1
+371,rarer signs,1.0,1.0,1.0,4
+372,rarer signs,0.667,1.0,0.8,2
+373,signs ranked 51-200,0.833,0.833,0.833,6
+374,signs ranked 51-200,1.0,0.5,0.667,2
+375,signs ranked 51-200,0.0,0.0,0.0,0
+376,rarer signs,0.833,0.625,0.714,8
+377,rarer signs,1.0,1.0,1.0,1
+378,rarer signs,1.0,1.0,1.0,1
+379,signs ranked 51-200,0.667,0.4,0.5,5
+380,rarer signs,1.0,1.0,1.0,1
+381,signs ranked 51-200,0.333,0.5,0.4,2
+382,rarer signs,1.0,1.0,1.0,2
+383,rarer signs,1.0,0.5,0.667,4
+384,signs ranked 51-200,1.0,1.0,1.0,5
+385,rarer signs,1.0,1.0,1.0,4
+386,signs ranked 51-200,0.75,1.0,0.857,3
+387,50 most frequent signs,1.0,1.0,1.0,6
+388,signs ranked 51-200,1.0,1.0,1.0,1
+389,50 most frequent signs,0.857,0.857,0.857,7
+390,rarer signs,0.0,0.0,0.0,1
+391,50 most frequent signs,1.0,1.0,1.0,12
+392,rarer signs,1.0,1.0,1.0,4
+393,signs ranked 51-200,1.0,1.0,1.0,4
+394,rarer signs,0.5,1.0,0.667,1
+395,signs ranked 51-200,0.0,0.0,0.0,0
+396,rarer signs,1.0,1.0,1.0,2
+397,signs ranked 51-200,0.0,0.0,0.0,0
+398,signs ranked 51-200,1.0,1.0,1.0,1
+399,rarer signs,1.0,1.0,1.0,1
+400,signs ranked 51-200,1.0,0.5,0.667,2
+401,rarer signs,0.0,0.0,0.0,0
+402,50 most frequent signs,0.8,1.0,0.889,8
+403,50 most frequent signs,1.0,0.833,0.909,6
+404,rarer signs,0.667,1.0,0.8,2
+405,rarer signs,0.0,0.0,0.0,0
+406,signs ranked 51-200,0.75,0.75,0.75,4
+407,signs ranked 51-200,1.0,1.0,1.0,7
+408,rarer signs,1.0,1.0,1.0,3
+409,signs ranked 51-200,1.0,0.8,0.889,5
+410,rarer signs,0.333,0.667,0.444,3
+411,rarer signs,1.0,0.5,0.667,2
+412,rarer signs,1.0,1.0,1.0,2
+413,rarer signs,0.5,1.0,0.667,1
+414,rarer signs,0.0,0.0,0.0,0
+415,signs ranked 51-200,1.0,0.5,0.667,4
+416,rarer signs,1.0,1.0,1.0,2
+417,rarer signs,1.0,0.75,0.857,4

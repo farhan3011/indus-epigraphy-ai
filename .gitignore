@@ -217,3 +217,14 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Indus project data & artifacts
+data/raw/
+data/synthetic/
+runs/
+models/
+*.pt
+data/real/source/
+data/real/images/
+reports/quick/
+.DS_Store
