@@ -125,3 +125,13 @@ python grapheme_extraction/run_all.py
 ```
 
 Current state and open items: [docs/milestone1_status.md](docs/milestone1_status.md). All results so far are on synthetic data.
+
+## Running Milestone 2
+
+Sign-sequence statistics on the IM77 corpus (n-gram models, transition matrix, writing-direction test). CPU only, about a minute:
+
+```bash
+python sequence_analysis/run_milestone2.py
+```
+
+Results: [reports/milestone_2/milestone_2_report.md](reports/milestone_2/milestone_2_report.md). Background research: [reports/Indus sign sequence modelling methods.md](reports/Indus%20sign%20sequence%20modelling%20methods.md).
