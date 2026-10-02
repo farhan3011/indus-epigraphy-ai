@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-A student computational-epigraphy project on the undeciphered Indus script. It treats inscriptions as a notational system and makes no decipherment claims. Four milestones are defined in `Indus_Epigraphy_AI_Project_Proposal.md`; only Milestone 1 (seal photo -> ordered list of Mahadevan sign IDs) has code, in `grapheme_extraction/`.
+A student computational-epigraphy project on the undeciphered Indus script. It treats inscriptions as a notational system and makes no decipherment claims. Four milestones are defined in `Indus_Epigraphy_AI_Project_Proposal.md`. Milestone 1 (seal photo -> ordered list of Mahadevan sign IDs) is in `grapheme_extraction/`; Milestone 2 (sign-sequence statistics) is in `sequence_analysis/`.
 
 Read `docs/milestone1_status.md` before changing direction: it records which design was adopted and why. `docs/PRD_Milestone_1_Grapheme_Extraction.md` and `milestone1.md` are earlier plans that were superseded (three-way detector benchmark, softmax classifier, flip augmentation); do not implement from them.
 
@@ -55,6 +55,17 @@ Two-stage pipeline: a **single-class** detector finds signs, then a separate cla
 - `bootstrap_boxes.py` and `assign_labels.py` are helpers for hand-labelling real seals (`data/real/manifest.csv`); no real labelled data exists yet.
 
 Module dependencies run one way: `classifier` <- `pipeline` <- `evaluate`; `synthetic_generator` is imported only for its `IM77_CSV` path. Path constants (`ROOT`, `DATA`, `BANK`, `DETECTOR`) are defined in `classifier.py` and `pipeline.py`.
+
+## Milestone 2 (`sequence_analysis/`)
+
+Statistics on corpus text, independent of the vision pipeline; CPU only, about a minute.
+
+```bash
+python sequence_analysis/run_milestone2.py [--quick]   # writes reports/milestone_2/ including the report
+python sequence_analysis/ngram.py                      # self-check (also: stats.py, corpus.py)
+```
+
+`corpus.py` loads IM77 and applies the EBUDS filter (reproduces Yadav et al. 2010 exactly: 1,548 texts / 7,000 tokens / 377 signs). `ngram.py` has hand-written Witten-Bell (interpolated and backoff), add-k, Kneser-Ney and a positional baseline; NLTK is not used because its Witten-Bell gives infinite perplexity on unseen signs. `stats.py` has entropy, pair significance and the direction test. `run_milestone2.py` orchestrates and generates the report (`write_report`); edit report text there. The direction test runs on physical layout recovered from each line's `direction` label, never on stored reading order. Corpus statistics must come from corpus text, never from pipeline or synthetic output, and no file containing corpus sequences may be committed. Wording stays at "structured, non-random, consistent with right-to-left"; no claim about language.
 
 ## Domain rules that are easy to break
 
