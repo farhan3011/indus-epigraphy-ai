@@ -35,4 +35,4 @@ if __name__ == "__main__":
             continue
         print(f"\n=== {title} ===", flush=True)
         subprocess.run([sys.executable, str(HERE / cmd[0]), *cmd[1:]], check=True, cwd=HERE.parent)
-    print("\ndone: see reports/quick/milestone_1_report.md" if q else "\ndone: see reports/milestone_1_report.md")
+    print("\ndone: see reports/quick/milestone_1_report.md" if q else "\ndone: see reports/milestone_1/milestone_1_report.md")

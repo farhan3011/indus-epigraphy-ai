@@ -3,7 +3,7 @@
     python grapheme_extraction/evaluate.py                          # yolov8n, rtdetr-l and the OpenCV baseline
     python grapheme_extraction/evaluate.py --runs yolov8n --out reports/quick
 
-Writes <out>/eval_results.json, <out>/per_class_f1.csv, <out>/figures/ and <out>/milestone_1_report.md.
+Writes (default reports/milestone_1/) <out>/eval_results.json, <out>/per_class_f1.csv, <out>/figures/ and <out>/milestone_1_report.md.
 """
 import argparse
 import csv
@@ -185,7 +185,7 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--runs", nargs="*", default=["yolov8n", "rtdetr-l"], help="run folders under runs/")
     ap.add_argument("--split", default="test")
-    ap.add_argument("--out", default=str(ROOT / "reports"))
+    ap.add_argument("--out", default=str(ROOT / "reports/milestone_1"))
     args = ap.parse_args()
     out_dir = Path(args.out)
     (out_dir / "figures").mkdir(parents=True, exist_ok=True)

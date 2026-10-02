@@ -1,137 +1,62 @@
 # Indus Epigraphy AI
 
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
-[![Package Manager](https://img.shields.io/badge/uv-fast_packaging-purple.svg)](https://github.com/astral-sh/uv)
-[![Framework](https://img.shields.io/badge/PyTorch-2.x-red.svg)](https://pytorch.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Computational epigraphy framework for the undeciphered **Indus Valley Script** (~2600–1900 BCE). Treating inscriptions as a structured, notational information system, this project deploys deep-learning vision backbones for grapheme extraction, directional Markov modeling, and masked-token language encoders over archaeological seal corpora.
+Computational epigraphy of the undeciphered **Indus Valley script** (~2600–1900 BCE). The project treats the inscriptions as a structured notational system and studies their visual and sequential regularities. It does not attempt decipherment and makes no claim that the inscriptions encode a language.
 
----
+Scope and milestones: [Indus_Epigraphy_AI_Project_Proposal.md](Indus_Epigraphy_AI_Project_Proposal.md).
 
-## Getting Started (Quickstart)
+## Status
 
-This project standardizes on [`uv`](https://github.com/astral-sh/uv) for fast, reproducible virtual environment and package management.
+| Milestone | State | Code | Results |
+|---|---|---|---|
+| 1. Seal photo to ordered sign IDs | Done on synthetic seals; does not yet work on real photographs | `grapheme_extraction/` | [report](reports/milestone_1/milestone_1_report.md), [findings](reports/milestone_1/milestone_1_findings.md) |
+| 2. Sign-sequence statistics | Done on the IM77 corpus | `sequence_analysis/` | [report](reports/milestone_2/milestone_2_report.md) |
+| 3. Masked-sign prediction | Not started | | |
+| 4. Hallucination benchmark | Not started | | |
 
-### Option A: Ubuntu (Linux)
+## Setup
 
-#### 1. Clone the Repository
+Uses [`uv`](https://github.com/astral-sh/uv) and Python 3.10.
+
 ```bash
 git clone https://github.com/farhan3011/indus-epigraphy-ai.git
 cd indus-epigraphy-ai
-```
-
-#### 2. Install `uv`
-If you do not already have `uv` installed, install it via the official standalone script (recommended) or snap:
-```bash
-# Recommended standalone installer
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Or via snap
-sudo snap install uv --classic
-```
-
-#### 3. Create the Virtual Environment
-Create a dedicated virtual environment named `AI` using Python 3.10:
-```bash
 uv venv AI --python 3.10
-```
-
-#### 4. Activate the Environment
-```bash
-source AI/bin/activate
-```
-
-#### 5. Install Dependencies
-```bash
+source AI/bin/activate          # Windows: AI\Scripts\activate
 uv pip install -r requirements.txt
 ```
 
-#### 6. (Optional) Install Headless Browser Tools
-For running automated scraping or dataset acquisition pipelines:
-```bash
-playwright install chromium
-```
+Raw data is not in the repository. The two download commands are in [data/README.md](data/README.md).
 
-#### 7. Verify the Setup & GPU Acceleration
-```bash
-python -c "import torch, torchvision, ultralytics, cv2; print('PyTorch:', torch.__version__, '| CUDA Available:', torch.cuda.is_available(), '| Ultralytics:', ultralytics.__version__)"
-```
+## Milestone 1: grapheme extraction
 
----
-
-### Option B: macOS (Apple Silicon & Intel)
-
-#### 1. Clone the Repository
-```bash
-git clone https://github.com/farhan3011/indus-epigraphy-ai.git
-cd indus-epigraphy-ai
-```
-
-#### 2. Install `uv`
-Using [Homebrew](https://brew.sh/) (recommended) or the standalone installer:
-```bash
-# Via Homebrew
-brew install uv
-
-# Or via standalone installer
-curl -LsSf https://astral.sh/uv/install.sh | sh
-```
-
-#### 3. Create the Virtual Environment
-```bash
-uv venv AI --python 3.10
-```
-
-#### 4. Activate the Environment
-```bash
-source AI/bin/activate
-```
-
-#### 5. Install Dependencies
-```bash
-uv pip install -r requirements.txt
-```
-
-#### 6. (Optional) Install Headless Browser Tools
-```bash
-playwright install chromium
-```
-
-#### 7. Verify the Setup & Apple Silicon Acceleration (MPS)
-```bash
-python -c "import torch, torchvision, ultralytics, cv2; print('PyTorch:', torch.__version__, '| Apple MPS Available:', torch.backends.mps.is_available(), '| Ultralytics:', ultralytics.__version__)"
-```
-
----
-
-## Project Documentation & Milestone Roadmap
-
-- 📖 **[Milestone 1 Product Requirements Document (PRD)](docs/PRD_Milestone_1_Grapheme_Extraction.md)**:
-  Detailed documentation explaining the computational logic behind **YOLO vs. Faster R-CNN vs. RT-DETR**, why and how **synthetic seal generation** is constructed (Poisson blending, intaglio relief modeling, and zero-cost bounding-box generation), and the reality-check holdout evaluation protocol.
-- 📋 **[Project Proposal & Academic Scope](Indus_Epigraphy_AI_Project_Proposal.md)**:
-  The complete four-milestone epigraphy curriculum (visual extraction, Markov chain modeling, masked-token encoders, and hallucination benchmarking).
-- 🗄️ **[Data Sources & Directory Guide](data/README.md)**:
-  Download references for the IM77 concordance, Kaggle IM-417-150 glyph dataset, and CISI Parpola corpus.
-
----
-
-## Running Milestone 1
-
-See **[docs/RUN_GUIDE.md](docs/RUN_GUIDE.md)**. After setup, one command generates the synthetic seals, trains YOLOv8n and RT-DETR, builds the sign classifier and writes `reports/milestone_1_report.md`:
+A single-class detector (YOLOv8n or RT-DETR) finds the signs, and a DINOv2 nearest-neighbour classifier names each one with a Mahadevan sign number. One command generates the synthetic seals, trains both detectors, builds the classifier and writes the report; it needs a GPU to be practical.
 
 ```bash
 python grapheme_extraction/run_all.py
+python grapheme_extraction/pipeline.py photo.jpg --annotate out.jpg    # run on one image
 ```
 
-Current state and open items: [docs/milestone1_status.md](docs/milestone1_status.md). All results so far are on synthetic data.
+Step-by-step instructions: [docs/RUN_GUIDE.md](docs/RUN_GUIDE.md). Design decisions and open items: [docs/milestone1_status.md](docs/milestone1_status.md).
 
-## Running Milestone 2
+## Milestone 2: sign-sequence analysis
 
-Sign-sequence statistics on the IM77 corpus (n-gram models, transition matrix, writing-direction test). CPU only, about a minute:
+N-gram models with Witten-Bell smoothing, transition matrices, sign-pair statistics and writing-direction measures on the IM77 corpus. CPU only, about a minute.
 
 ```bash
 python sequence_analysis/run_milestone2.py
 ```
 
-Results: [reports/milestone_2/milestone_2_report.md](reports/milestone_2/milestone_2_report.md). Background research: [reports/Indus sign sequence modelling methods.md](reports/Indus%20sign%20sequence%20modelling%20methods.md).
+## Layout
+
+```
+grapheme_extraction/   Milestone 1 code
+sequence_analysis/     Milestone 2 code
+reports/milestone_1/   Milestone 1 results (synthetic data)
+reports/milestone_2/   Milestone 2 results
+notebooks/             Milestone 1 results notebook
+data/                  download instructions, sample photos, labelling manifest
+docs/                  run guide and Milestone 1 status
+```

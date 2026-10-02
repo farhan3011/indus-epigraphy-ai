@@ -228,3 +228,8 @@ data/real/source/
 data/real/images/
 reports/quick/
 .DS_Store
+
+# Local-only working material (kept on disk, not published)
+CLAUDE.md
+research_notes/
+archive/

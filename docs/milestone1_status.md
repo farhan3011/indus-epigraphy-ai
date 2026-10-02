@@ -1,6 +1,6 @@
 # Milestone 1: decision and status (1 Oct 2026)
 
-**Decision: follow the revised plan ("Milestone 1 Plan: Grapheme Extraction (Revised)"). Real labelled seals come first; synthetic data is an optional extra.** That plan is not in this repository yet. Until real labelled seals exist, Milestone 1 is completed on synthetic data only: see `docs/RUN_GUIDE.md` and `reports/milestone_1_report.md`.
+**Decision: follow the revised plan ("Milestone 1 Plan: Grapheme Extraction (Revised)"). Real labelled seals come first; synthetic data is an optional extra.** That plan is not in this repository yet. Until real labelled seals exist, Milestone 1 is completed on synthetic data only: see `docs/RUN_GUIDE.md` and `reports/milestone_1/milestone_1_report.md`.
 
 ## Why
 
@@ -8,7 +8,7 @@ A YOLOv8n detector trained only on 4,000 synthetic seals scores AP50 0.995 on sy
 
 ## Results
 
-Milestone 1 is complete on synthetic data. The full run (YOLOv8n, RT-DETR-L, OpenCV baseline, held-out synthetic test split) is in `reports/milestone_1_report.md`, with conclusions in `reports/milestone_1_findings.md`. In short: the two learned detectors are tied (AP50 0.995), the classifier is the bottleneck (top-1 0.77 on detected signs, exact sequence match about 0.43), and neither detector works on the two real photographs.
+Milestone 1 is complete on synthetic data. The full run (YOLOv8n, RT-DETR-L, OpenCV baseline, held-out synthetic test split) is in `reports/milestone_1/milestone_1_report.md`, with conclusions in `reports/milestone_1/milestone_1_findings.md`. In short: the two learned detectors are tied (AP50 0.995), the classifier is the bottleneck (top-1 0.77 on detected signs, exact sequence match about 0.43), and neither detector works on the two real photographs.
 
 ## Adopted from the revised plan (implemented)
 
