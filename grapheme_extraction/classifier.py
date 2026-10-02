@@ -120,8 +120,8 @@ def build():
         if t != p:
             pairs[(t + 1, p + 1)] = pairs.get((t + 1, p + 1), 0) + 1
     confused = [{"true": t, "pred": p, "n": n} for (t, p), n in sorted(pairs.items(), key=lambda kv: -kv[1])[:25]]
-    (ROOT / "reports").mkdir(exist_ok=True)
-    (ROOT / "reports/classifier_metrics.json").write_text(json.dumps(
+    (ROOT / "reports/milestone_1").mkdir(parents=True, exist_ok=True)
+    (ROOT / "reports/milestone_1/classifier_metrics.json").write_text(json.dumps(
         {"note": "SYNTHETIC val crops: augmentations of the same 417 source drawings, not real seals",
          "val_top1": top1, "val_top5": top5_acc, "val_crops": len(yva), "temperature": T, "most_confused": confused}, indent=1))
     print(f"synthetic val top-1 {top1:.3f}  top-5 {top5_acc:.3f}  T={T}  -> {BANK}")

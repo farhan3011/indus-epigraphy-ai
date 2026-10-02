@@ -90,7 +90,7 @@ python grapheme_extraction/pipeline.py --selftest    # must print: ok
 python grapheme_extraction/evaluate.py               # YOLOv8n, RT-DETR and the OpenCV baseline
 ```
 
-`evaluate.py` scores all three detectors on the held-out synthetic test split with the same classifier and writes, under `reports/`:
+`evaluate.py` scores all three detectors on the held-out synthetic test split with the same classifier and writes, under `reports/milestone_1/`:
 
 - `milestone_1_report.md`: the comparison table (AP50, precision, recall, recall on touching signs, sign error rate, exact match, speed), each with a 95% bootstrap interval;
 - `eval_results.json` and `per_class_f1.csv`;
@@ -111,14 +111,14 @@ python grapheme_extraction/pipeline.py path/to/photo.jpg --detector runs/rtdetr-
 
 ## What to send back
 
-- the whole `reports/` folder
+- the whole `reports/milestone_1/` folder
 - `runs/yolov8n/weights/best.pt` and `runs/rtdetr-l/weights/best.pt`
 - `models/bank.pt`
 - which GPU was used and roughly how long steps 5 and 6 took
 
 ## Reference run
 
-The whole chain has been run once on Linux with an RTX 5090 (see `reports/RUN_INFO.md`): about 45 minutes in total, 40 of them RT-DETR. Windows is untested.
+The whole chain has been run once on Linux with an RTX 5090 (see `reports/milestone_1/RUN_INFO.md`): about 45 minutes in total, 40 of them RT-DETR. Windows is untested.
 
 ## Read before trusting any number
 
