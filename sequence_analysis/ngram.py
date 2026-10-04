@@ -21,7 +21,8 @@ class WittenBell:
     backoff=False: interpolated. backoff=True: Katz-style backoff with the Witten-Bell discount,
     the form SRILM uses and Yadav et al. 2010 report."""
 
-    def __init__(self, texts, vocab, order=2, backoff=False):
+    def __init__(self, texts, vocab, order=2, backoff=False, min_count=1):
+        """min_count: drop n-grams of order 3 and up seen fewer times (SRILM's default is 2)."""
         self.order, self.backoff, self.n_events = order, backoff, len(vocab) + 1
         self.counts = defaultdict(Counter)  # history tuple -> Counter of next events
         for t in texts:
@@ -29,6 +30,12 @@ class WittenBell:
             for i in range(1, len(s)):
                 for k in range(min(order, i + 1)):
                     self.counts[tuple(s[i - k:i])][s[i]] += 1
+        for h in [h for h in self.counts if len(h) >= 2 and min_count > 1]:
+            kept = Counter({w: c for w, c in self.counts[h].items() if c >= min_count})
+            if kept:
+                self.counts[h] = kept
+            else:
+                del self.counts[h]
         self.total = {h: sum(c.values()) for h, c in self.counts.items()}
         self._p, self._alpha = {}, {}
 
@@ -121,6 +128,29 @@ class Positional:
         if not c:
             return self.uni.prob(w)
         return (c[w] + len(c) * self.uni.prob(w)) / (sum(c.values()) + len(c))
+
+
+class TwoEnded:
+    """No sign-to-sign dependence, but position counted from both ends: P(sign | distance from the
+    start, distance from the end), Witten-Bell smoothed toward the unigram over signs. It knows each
+    text's length, so it predicts signs only, never end-of-text."""
+
+    def __init__(self, texts, vocab, max_pos=6):
+        self.max_pos, self.uni = max_pos, WittenBell(texts, vocab, 1)
+        self.counts = defaultdict(Counter)
+        for t in texts:
+            for i, w in enumerate(t):
+                self.counts[self.slot(i, len(t))][w] += 1
+
+    def slot(self, i, length):
+        return min(i, self.max_pos), min(length - 1 - i, self.max_pos)
+
+    def prob(self, w, i, length):
+        u = self.uni.prob(w) / (1 - self.uni.prob(EOS))
+        c = self.counts.get(self.slot(i, length))
+        if not c:
+            return u
+        return (c[w] + len(c) * u) / (sum(c.values()) + len(c))
 
 
 class Uniform:
@@ -230,6 +260,12 @@ def selfcheck():
     # skipping unseen signs: 'z' is not scored and cuts the context of the sign after it
     ll, n = log2_likelihood(m, ["azb"], known=set("abcde"))
     assert n == 3 and abs(ll - math.log2(m.prob("a", (BOS,)) * m.prob("b") * m.prob(EOS, ("b",)))) < 1e-12
+    # count cutoff: the trigram (a, b) -> c is seen once and dropped; (a, b) -> EOS is seen twice and kept
+    cut = WittenBell(["abc", "ab", "ab"], list("abc"), 3, min_count=2)
+    assert cut.counts[("a", "b")] == Counter({EOS: 2}) and abs(sum(cut.prob(w, ("a", "b")) for w in [*"abc", EOS]) - 1) < 1e-12
+    two = TwoEnded(train, vocab)
+    for i, length in [(0, 1), (1, 3), (2, 3), (0, 9)]:
+        assert abs(sum(two.prob(w, i, length) for w in vocab) - 1) < 1e-9
 
 
 if __name__ == "__main__":

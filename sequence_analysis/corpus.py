@@ -6,6 +6,10 @@ order (first-read sign first). Never write filtered sequences into the repo: the
     python sequence_analysis/corpus.py     # prints the filter counts step by step
 """
 import hashlib
+import re
+import sysconfig
+import tokenize
+from collections import defaultdict
 from pathlib import Path
 
 import pandas as pd
@@ -34,18 +38,68 @@ def summarise(rows):
     return {"rows": len(rows), "unique_texts": len(texts), "tokens": len(tokens), "signs": len(set(tokens) - {0})}
 
 
-def ebuds(lines):
+def ebuds(lines, keep_doubtful=False, keep_copies=False):
     """Yadav et al.'s filter: drop damaged or doubtful texts, drop lines of multi-line texts, keep one
-    copy of each repeated text. Returns (sorted list of sign tuples, [(step, counts), ...])."""
+    copy of each repeated text. Returns (sorted list of sign tuples, [(step, counts), ...]).
+    The two flags undo one step each, for sensitivity checks; copies leak across CV folds."""
     steps = [("all inscribed lines", summarise(lines))]
     x = lines[~lines.damaged]
     steps.append(("no illegible or lost sign", summarise(x)))
-    x = x[~x.doubtful]
-    steps.append(("no doubtful reading", summarise(x)))
+    if not keep_doubtful:
+        x = x[~x.doubtful]
+        steps.append(("no doubtful reading", summarise(x)))
     x = x[x.line == "0"]  # line 0 = the only line on its side; 1/2/3 = a line of a multi-line text
     steps.append(("single-line only", summarise(x)))
-    texts = sorted(set(x.signs))
+    texts = sorted(x.signs) if keep_copies else sorted(set(x.signs))
     return texts, steps
+
+
+WELLS_SQL = ROOT / "data/raw/yajnadevam/population-script.sql"
+WELLS_UNREADABLE = {0, 515, 516, 546, 547, 606, 999}  # 0 = line break, the rest render as '??' or blank
+
+
+def load_wells():
+    """Second, independent transcription: yajnadevam/indus-website (GPL-3.0), Wells / ICIT sign numbers.
+
+    Returns (texts, variant) with the same filter as EBUDS as far as the data allows: single-line,
+    every sign readable, one copy per text. The site records no doubtful readings. GLYPHSEQUENCE is
+    stored with the jar sign (740, the commonest text-ender in every corpus) first in 816 texts and last in 2,
+    regardless of the recorded direction, so it is reversed here to give reading order; physical layout
+    cannot be recovered from it. variant maps a sign to the head of its Wells variant group (GLYPHSIMILARITY)."""
+    sql = WELLS_SQL.read_text()
+
+    def rows(table):
+        i = sql.index(f"INSERT INTO {table}")
+        return re.findall(r"\(([^()]*)\)", sql[sql.index("VALUES", i):sql.index(";", i)])
+
+    seq = defaultdict(dict)
+    for r in rows("GLYPHSEQUENCE"):
+        seal, glyph, idx = map(int, r.split(","))
+        seq[seal][idx] = glyph
+    texts = [tuple(v[i] for i in sorted(v, reverse=True)) for v in seq.values()]
+    texts = sorted({t for t in texts if not WELLS_UNREADABLE & set(t)})
+    head = {}
+    for r in rows("GLYPHSIMILARITY"):
+        a, b = map(int, r.split(","))
+        head[b] = head.get(a, a)  # groups are stars: (head, member); ponytail: no union-find needed for this data
+    return texts, head
+
+
+REFERENCE = ROOT / "data/raw/reference"
+
+
+def reference_systems():
+    """Token streams from systems of known type, for comparison: {name: list of tokens}."""
+    eng = (REFERENCE / "pride_and_prejudice.txt").read_text(encoding="utf-8-sig")
+    eng = eng[eng.index("Chapter I.]"):eng.index("*** END OF THE PROJECT GUTENBERG")].lower()
+    dna = "".join((REFERENCE / "lambda_phage.fasta").read_text().split("\n")[1:])
+    code = []
+    for f in sorted(Path(sysconfig.get_paths()["stdlib"]).glob("*.py"))[:40]:
+        with open(f, "rb") as fh:
+            code += [t.string if t.type in (tokenize.NAME, tokenize.OP) else tokenize.tok_name[t.type]
+                     for t in tokenize.tokenize(fh.readline) if t.type in (tokenize.NAME, tokenize.OP, tokenize.NUMBER, tokenize.STRING)]
+    return {"English, words": re.findall(r"[a-z]+", eng), "English, letters": list(re.sub(r"[^a-z]", "", eng)),
+            "DNA (phage lambda)": list(dna), "Python source, tokens": code}
 
 
 def physical(row):

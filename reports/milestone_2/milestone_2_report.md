@@ -26,7 +26,7 @@ All statistics below use this filtered corpus except the direction test, which n
 | Perplexity, order 4 (Witten-Bell, backoff) | 25.26 | 30.13 (every held-out sign scored); 27.11 (unseen signs skipped) |
 | Perplexity, order 5 (Witten-Bell, backoff) | 25.26 | 30.32 (every held-out sign scored); 27.29 (unseen signs skipped) |
 | Unigram entropy (bits) | 6.68 | 6.68 plug-in; 6.72 Miller-Madow |
-| Adjacent-sign mutual information (bits) | 2.24 | 3.12 (plug-in; not reproduced) |
+| Adjacent-sign mutual information | 2.24 (unit not stated) | 3.12 bits (plug-in); 2.24 in nats with every copy of repeated texts kept |
 | Distinct adjacent sign pairs observed | 2,178 (Sinha et al. 2009) | 2178 |
 | Signs covering 80% of all tokens / text-beginners / text-enders | 69 / 82 / 23 | 69 / 82 / 23 |
 | Three most frequent text-beginners | [267, 391, 293] | [267, 391, 293] |
@@ -38,8 +38,8 @@ All statistics below use this filtered corpus except the direction test, which n
 
 Notes on comparability:
 
-- **Perplexity.** The headline figure scores every held-out sign over a fixed vocabulary, and is higher than published. The second figure takes the vocabulary from each training fold and skips held-out signs never seen in training (1.6% of events), which is the default behaviour of the SRILM toolkit the paper used. It lands close to the published values for orders 1 to 3, so it is a candidate explanation of the gap, not a confirmed one: the paper does not state its split or options. Skipping drops the hardest events, so the headline figure is the more honest measure. Orders 4 and 5 are not reproduced under either protocol.
-- **Mutual information.** The paper does not define its estimator. An independent check of seven definitions found none that gives 2.24. The plug-in value is biased upward: with every token permuted across the corpus it is still 1.94 bits.
+- **Perplexity.** The headline figure scores every held-out sign over a fixed vocabulary, and is higher than published. The second figure takes the vocabulary from each training fold and skips held-out signs never seen in training (1.6% of events), which is the default behaviour of the SRILM toolkit the paper used. It lands close to the published values for orders 1 to 3, so it is a candidate explanation of the gap, not a confirmed one: the paper does not state its split or options. Skipping drops the hardest events, so the headline figure is the more honest measure. Orders 4 and 5 are not reproduced under any of the four protocols tried (see Replication gaps below), so that gap is closed as unexplained.
+- **Mutual information.** The paper does not define its estimator or unit. Computed in nats on the single-line corpus before repeated texts are reduced to one copy, the plug-in value is 2.239, which matches the published 2.24 to the stated precision. This is the likely explanation, but it rests on a numerical match only. The plug-in value is biased upward: with every token permuted across the corpus it is still 1.94 bits.
 - **Restoration.** The published rule can be read two ways at the 90% boundary, and the two readings differ by several points.
 
 ## Language models compared (5-fold cross-validation over distinct texts)
@@ -62,7 +62,7 @@ Notes on comparability:
 | add-0.01 n=2 | 5.302, 0.124 | 39.44 | 68.60 |
 | kneser-ney n=2 | 4.827, 0.087 | 28.38 | 49.09 |
 
-The positional model, which knows only how far into the text a sign is, reaches 5.970 bits per event; the bigram model reaches 4.899. The baseline knows position counted from the start only, so part of the difference may still be end-of-text position.
+The positional model, which knows only how far into the text a sign is, reaches 5.970 bits per event; the bigram model reaches 4.899. This baseline counts position from the start only; a baseline that also knows the distance to the end is under Robustness checks.
 The vocabulary is fixed at the 377 signs of the filtered corpus plus end-of-text; every model gives unseen signs non-zero probability.
 
 ## Is sign order structured?
@@ -92,9 +92,16 @@ The result is conditional on Mahadevan's labels and is not an independent verifi
 | right-to-left single-line, object_type = copper tablet | 118 | -0.603 (0.056) | [-0.080, +0.074] | 0.001 | +0.017 (0.002) |
 | right-to-left single-line, site = Mohenjodaro | 1203 | -0.450 (0.019) | [-0.025, +0.028] | 0.001 | +0.134 (0.007) |
 | right-to-left single-line, site = Harappa | 891 | -0.484 (0.020) | [-0.034, +0.033] | 0.001 | +0.100 (0.005) |
+| primary, no top-1 text-beginner or ender at either end | 1418 | -0.286 (0.013) | [-0.021, +0.022] | 0.001 | +0.116 (0.006) |
+| primary, no top-3 text-beginner or ender at either end | 950 | -0.209 (0.014) | [-0.024, +0.024] | 0.001 | +0.083 (0.006) |
+| primary, no top-5 text-beginner or ender at either end | 714 | -0.157 (0.015) | [-0.026, +0.025] | 0.001 | +0.062 (0.006) |
+| primary, no top-10 text-beginner or ender at either end | 421 | -0.091 (0.018) | [-0.038, +0.034] | 0.001 | +0.019 (0.006) |
+| primary, no top-20 text-beginner or ender at either end | 156 | -0.004 (0.020) | [-0.044, +0.044] | 0.871 | +0.001 (0.007) |
 
 In the primary group, sign 342 (the commonest text-ender) is at the physical left end of 766 lines and at the right end of 0, out of 2319. In lines labelled left-to-right it is at the left end of 0 and the right end of 40, out of 210. No exceptions in either group is what one would expect if the labels were assigned with the position of such signs in view.
 Descriptively, the gap in delta S between the two labelled groups is -0.720, against [-0.094, +0.082] when labels are reassigned at random; this follows from the labels and is not separate evidence.
+
+**Without the signs most likely to have guided the labels.** The rows 'no top-k text-beginner or ender at either end' drop every primary line whose physical left or right sign is among the k commonest text-beginners or text-enders (ranked on EBUDS). k = 1: delta S -0.286 on 1418 lines. k = 3: delta S -0.209 on 950 lines. k = 5: delta S -0.157 on 714 lines. k = 10: delta S -0.091 on 421 lines. k = 20: delta S -0.004 on 156 lines. The asymmetry is not carried by sign 342 alone, but it shrinks steadily as more end-marking signs are removed and is not detectable once the top 20 are excluded. Either the direction signal lives in a few dozen formulaic end signs, or those are the signs the labels were assigned from; this test cannot tell the two apart.
 
 p is the share of within-line shuffles with an absolute delta S at least as large as observed; 0.001 is the smallest value 1,000 shuffles can give. delta S (entropy) is the headline measure because it is stable across group sizes. delta G (Gini) shrinks as a group gets smaller and sparser, so its size should not be compared between groups. delta G here is computed over the full 418-symbol sign list so that groups share one alphabet; over only the signs seen at either end, which is closer to Ashraf & Sinha's usage, the primary group gives +0.203. A bootstrap standard error is given in place of a percentile interval because both measures are biased on sparse counts and resampling repeats the bias.
 
@@ -123,3 +130,86 @@ The conclusions weaken but do not reverse: the direction signal shrinks toward z
 ## Restoring a missing sign
 
 With one sign removed and predicted from both neighbours by the bigram model (7000 trials, 5-fold): top-1 38.0%, top-5 62.4%, and the true sign is inside the 90%-probability candidate set 86.1% of the time (that set holds 44 signs on average). The published 74% uses the last criterion; it is not top-1 accuracy. This measures how predictable the notation is and says nothing about meaning.
+
+## Robustness checks
+
+### Comparison with sign systems of known type
+
+Each reference system is cut into samples with exactly the Indus text-length distribution (1548 texts, 7000 tokens), so sample size and text length, which bias every plug-in estimate, are matched; 10 samples each, mean (SD over samples). Dependence index = share of a sign's uncertainty removed by knowing the previous sign, beyond what remains after shuffling signs within each text (0 = order carries nothing). Shuffling a short text keeps much of its pair structure, so even the rigid control stays far below 1. Python tokens are from the first 40 modules of the local Python 3.10 standard library, string and number literals collapsed to one token each.
+
+| System | Signs in sample | H(sign), bits | H(next given current), bits | Dependence index, all signs | Dependence index, top 20 signs |
+|---|---|---|---|---|---|
+| Indus (IM77, EBUDS) | 377 | 6.68 | 3.22 | 0.197 (0.000) | 0.412 (0.000) |
+| English, words | 1555 | 8.67 | 3.23 | 0.037 (0.002) | 0.234 (0.021) |
+| English, letters | 26 | 4.18 | 3.53 | 0.123 (0.004) | 0.120 (0.004) |
+| DNA (phage lambda) | 4 | 2.00 | 1.98 | 0.006 (0.001) | n/a (fewer than 20 signs) |
+| Python source, tokens | 953 | 6.52 | 3.39 | 0.105 (0.004) | 0.326 (0.013) |
+| Indus signs permuted across the corpus (memoryless) | 377 | 6.68 | 4.72 | 0.002 (0.002) | 0.001 (0.006) |
+| random, 377 equiprobable signs (Rao type 1) | 377 | 8.52 | 3.87 | 0.000 (0.001) | 0.021 (0.048) |
+| rigid, each sign has one fixed successor (Rao type 2) | 377 | 8.52 | 0.00 | 0.301 (0.001) | 0.270 (0.059) |
+
+Read this as a scale, not a classification. Sign order in the Indus corpus removes more uncertainty than in any reference system at this sample size, on both columns, including English letters and Python code, and far more than DNA or the memoryless and random controls. Over all signs it reaches 65% of the rigid control; among the 20 commonest signs it exceeds it (0.41 against 0.27), meaning the common signs occur in near-fixed sequences. Strong order dependence is what a formulaic notation would show, linguistic or not, so this places the Indus corpus among highly structured systems without saying which kind. The all-signs index for English words is compressed because, at 7000 tokens and over 1,500 word types, most word pairs occur once in both the real and the shuffled texts; the top-20 column avoids that. No other ancient script is included.
+
+![Conditional entropy of sign systems](conditional_entropy_systems.png)
+
+### Position counted from both ends
+
+All three models below predict signs only, given that the text has not ended (end-of-text is renormalised away), 5-fold CV.
+
+| Model | Bits per sign (mean, SD over folds) | Perplexity |
+|---|---|---|
+| position from the start | 6.609, 0.080 | 97.6 |
+| position from both ends (knows the text's length) | 6.345, 0.107 | 81.3 |
+| bigram (Witten-Bell backoff) | 5.495, 0.120 | 45.1 |
+
+Knowing the distance to both ends helps the positional model, but the bigram, which is not told the text's length, is still 0.85 bits per sign better. The bigram's gain is therefore sign-to-sign dependence, not position at either end.
+
+### Cross-validation stability and unseen signs
+
+| Model | Perplexity, mean over 10 random 5-fold splits | SD across splits | Range |
+|---|---|---|---|
+| positional (no sign-to-sign dependence) | 62.47 | 0.35 | 61.92 to 63.08 |
+| kneser-ney n=2 | 28.40 | 0.13 | 28.21 to 28.62 |
+| witten-bell backoff n=1 | 74.62 | 0.09 | 74.46 to 74.77 |
+| witten-bell backoff n=2 | 29.83 | 0.12 | 29.62 to 30.02 |
+| witten-bell backoff n=3 | 29.25 | 0.14 | 28.98 to 29.45 |
+
+The bigram beats the positional baseline in 50 of 50 folds across all splits, by at least 0.99 bits per event. The SD across splits is under 1% of perplexity, so the gaps to the published values are not split noise.
+
+Signs absent from the training fold are 1.6% of held-out events but 4.6% of the held-out bits (13.9 bits each against 4.7). Scoring only the other events with the same model gives perplexity 26.9 instead of 29.8: rare signs account for about a tenth of the headline figure.
+
+### Corpus variants: duplicates, doubtful readings, a second transcription, merged sign groups
+
+The main corpus already keeps one copy of each repeated text (EBUDS); the third row shows what counting every copy would change. The Wells/ICIT rows use an independent transcription with a different sign list (yajnadevam/indus-website, GPL-3.0; single-line texts with every sign readable, one copy each). That data records no doubtful readings and no usable physical layout, so the direction test cannot be repeated on it. 'Variant groups merged' maps every sign to the head of its Wells variant group (14 groups, 69 signs). Perplexity is not comparable across sign lists, so it is also given relative to a uniform model.
+
+| Corpus | Texts | Tokens | Signs | Dependence index | Pairs tested / attracting / avoiding | Top ender (share of texts) | Enders covering 80% | Bigram perplexity (relative to uniform) | Bits gained over positional | Top-20 pairs shared with main |
+|---|---|---|---|---|---|---|---|---|---|---|
+| IM77, EBUDS (main analysis) | 1548 | 7000 | 377 | 0.198 | 205 / 179 / 4 | 342 (34%) | 23 | 29.8 (0.079) | 1.07 | 20 |
+| IM77, doubtful readings kept | 1704 | 7786 | 383 | 0.200 | 230 / 193 / 4 | 342 (35%) | 23 | 29.7 (0.077) | 1.05 | 18 |
+| IM77, every copy of repeated texts kept | 2406 | 9597 | 377 | 0.231 | 292 / 256 / 4 | 342 (29%) | 17 | n/a: copies leak across folds | n/a | 17 |
+| Wells/ICIT (yajnadevam), signs as listed | 1798 | 8252 | 558 | 0.178 | 232 / 190 / 6 | 740 (36%) | 23 | 35.8 (0.064) | 1.00 | n/a (other sign list) |
+| Wells/ICIT, variant groups merged | 1787 | 8212 | 502 | 0.178 | 234 / 187 / 6 | 740 (36%) | 23 | 33.9 (0.067) | 0.96 | n/a (other sign list) |
+
+Across the variants: dependence index 0.178 to 0.231; 80 to 88% of tested pairs attracting; one dominant text-ender closing 29 to 36% of texts; 17 to 23 signs covering 80% of endings; 0.96 to 1.07 bits per event gained over position alone where computable. The vocabulary ranges over 377 to 558 signs. None of these conclusions changes direction on any variant.
+
+### Replication gaps
+
+Mutual information under the definitions tried:
+
+| Definition | Bits | Nats |
+|---|---|---|
+| distinct texts | 3.115 | 2.159 |
+| distinct texts, start and end marks counted as signs | 2.565 | 1.778 |
+| every copy of repeated texts kept | 3.231 | 2.239 |
+
+Witten-Bell backoff perplexity with unseen signs skipped (SRILM's default handling), under four protocols:
+
+| Protocol | n=1 | n=2 | n=3 | n=4 | n=5 |
+|---|---|---|---|---|---|
+| Yadav et al. 2010 | 68.82 | 26.69 | 26.09 | 25.26 | 25.26 |
+| 5-fold, no count cutoff | 68.95 | 26.88 | 26.26 | 27.11 | 27.29 |
+| 5-fold, SRILM default cutoff (order 3+ n-grams seen once dropped) | 68.95 | 26.88 | 27.39 | 27.75 | 27.77 |
+| 10-fold, no count cutoff | 69.45 | 26.67 | 25.92 | 26.77 | 26.96 |
+| 10-fold, SRILM default cutoff (order 3+ n-grams seen once dropped) | 69.45 | 26.67 | 27.00 | 27.40 | 27.42 |
+
+10-fold cross-validation with unseen signs skipped reproduces orders 1 to 3 within 1%. No protocol tried reproduces orders 4 and 5, where the published values fall while every reproduction rises; the paper does not give enough detail to go further, so this gap is closed as unexplained.

@@ -18,7 +18,7 @@ import numpy as np
 
 import ngram
 import stats
-from corpus import EBUDS_PUBLISHED, ROOT, ebuds, load_lines, physical
+from corpus import EBUDS_PUBLISHED, REFERENCE, ROOT, WELLS_SQL, ebuds, load_lines, load_wells, physical, reference_systems
 from ngram import BOS, EOS, AddK, KneserNey, Positional, Uniform, WittenBell
 
 OUT = ROOT / "reports/milestone_2"
@@ -96,7 +96,7 @@ def structure_test(texts, n_resample, seed=0):
             "p": float((np.sum(np.array(null) >= observed) + 1) / (n_resample + 1))}
 
 
-def direction_analysis(lines, n_resample):
+def direction_analysis(lines, texts, n_resample):
     """Run the direction test on PHYSICAL left-to-right layout, recovered from each line's recorded
     direction. Stored order is reading order, so testing it directly would only return the
     transcriber's assumption."""
@@ -122,6 +122,13 @@ def direction_analysis(lines, n_resample):
         for value, count in d[rtl & single][col].value_counts().items():
             if count >= 100:
                 out[f"right-to-left single-line, {col} = {value}"] = group(rtl & single & (d[col] == value))
+    # The labels were plausibly assigned by looking at signs with strong end preferences (342 above all).
+    # Drop every line with such a sign at either physical end and test what remains.
+    begin, end = Counter(t[0] for t in texts), Counter(t[-1] for t in texts)
+    for k in (1, 3, 5, 10, 20):
+        markers = {s for s, _ in begin.most_common(k)} | {s for s, _ in end.most_common(k)}
+        clean = d.phys.map(lambda p: p[0] not in markers and p[-1] not in markers).to_numpy()
+        out[f"primary, no top-{k} text-beginner or ender at either end"] = group(rtl & single & clean)
     # Do the two labelled groups differ more than a random relabelling would produce?
     rng = np.random.default_rng(0)
     left, right = stats.terminals(list(d.phys))
@@ -185,6 +192,159 @@ def error_propagation(texts, phys_lines, vocab, clean_pairs, repeats, seed=0):
     return rows
 
 
+def cv_stability(texts, vocab, seeds=10):
+    """Perplexity over 10 different random 5-fold splits, and how often the bigram beats the positional
+    baseline fold by fold."""
+    makers = {"positional (no sign-to-sign dependence)": Positional, "kneser-ney n=2": KneserNey,
+              **{f"witten-bell backoff n={n}": (lambda tr, v, n=n: WittenBell(tr, v, n, backoff=True)) for n in (1, 2, 3)}}
+    folds = {name: [ngram.cross_validate(make, texts, vocab, seed=s)[0] for s in range(seeds)] for name, make in makers.items()}
+    out = {name: {"perplexity_mean": 2 ** float(np.mean([np.mean(f) for f in fs])),
+                  "perplexity_sd_across_splits": float(np.std([2 ** np.mean(f) for f in fs], ddof=1)),
+                  "perplexity_range": [2 ** float(min(map(np.mean, fs))), 2 ** float(max(map(np.mean, fs)))]}
+           for name, fs in folds.items()}
+    pos, big = np.ravel(folds["positional (no sign-to-sign dependence)"]), np.ravel(folds["witten-bell backoff n=2"])
+    out["bigram better than positional"] = {"folds": int((big < pos).sum()), "of": len(big),
+                                            "smallest_gain_bits": float((pos - big).min())}
+    return out
+
+
+def unseen_signs(texts, vocab):
+    """How much of the bigram's held-out cross-entropy comes from signs absent from the training fold."""
+    ll, n = Counter(), Counter()
+    for train, test in ngram.folds(texts):
+        m, known = WittenBell(train, vocab, 2, backoff=True), {s for t in train for s in t}
+        for t in test:
+            s = [BOS, *t, EOS]
+            for a, b in zip(s, s[1:]):
+                kind = "seen" if b == EOS or b in known else "unseen"
+                ll[kind] -= np.log2(m.prob(b, (a,)))
+                n[kind] += 1
+    total_bits, total_n = ll["seen"] + ll["unseen"], n["seen"] + n["unseen"]
+    return {"unseen_share_of_events": n["unseen"] / total_n, "unseen_share_of_bits": ll["unseen"] / total_bits,
+            "bits_per_unseen_event": ll["unseen"] / n["unseen"], "bits_per_seen_event": ll["seen"] / n["seen"],
+            "perplexity_all": 2 ** (total_bits / total_n), "perplexity_seen_only": 2 ** (ll["seen"] / n["seen"])}
+
+
+def position_vs_bigram(texts, vocab):
+    """Is the bigram's gain just position? All three models predict signs only, given that the text
+    has not ended (end-of-text renormalised away), so none is credited for predicting the ending."""
+    bits = {"position from the start": [], "position from both ends (knows the text's length)": [], "bigram (Witten-Bell backoff)": []}
+    for train, test in ngram.folds(texts):
+        pos, two, big = Positional(train, vocab), ngram.TwoEnded(train, vocab), WittenBell(train, vocab, 2, backoff=True)
+        ll, n = np.zeros(3), 0
+        for t in test:
+            h = (BOS,)
+            for i, w in enumerate(t):
+                ll -= np.log2([pos.prob(w, h) / (1 - pos.prob(EOS, h)), two.prob(w, i, len(t)),
+                               big.prob(w, h[-1:]) / (1 - big.prob(EOS, h[-1:]))])
+                h, n = h + (w,), n + 1
+        for k, v in zip(bits, ll / n):
+            bits[k].append(float(v))
+    return {k: {"bits_per_sign": mean_sd(v), "perplexity": 2 ** float(np.mean(v))} for k, v in bits.items()}
+
+
+def cross_system(texts, refs, samples, seed=0):
+    """The same statistics on the Indus corpus and on equally sized samples of systems of known type.
+    Each reference stream is cut into 'texts' with the Indus length distribution (one random window per
+    text), so sample size and text length, which bias every plug-in estimate, are matched."""
+    rng = np.random.default_rng(seed)
+    lengths = [len(t) for t in texts]
+    window = lambda stream: [tuple(stream[s:s + n]) for s, n in zip(rng.integers(0, len(stream) - max(lengths), len(lengths)), lengths)]
+    successor = rng.permutation(377)
+
+    def rigid(n):
+        s = [int(rng.integers(377))]
+        while len(s) < n:
+            s.append(int(successor[s[-1]]))
+        return tuple(s)
+
+    tokens, cuts = np.concatenate(texts), np.cumsum(lengths)[:-1]
+    systems = {"Indus (IM77, EBUDS)": [texts], **{k: [window(v) for _ in range(samples)] for k, v in refs.items()},
+               "Indus signs permuted across the corpus (memoryless)": [[tuple(t) for t in np.split(rng.permutation(tokens), cuts)] for _ in range(samples)],
+               "random, 377 equiprobable signs (Rao type 1)": [[tuple(rng.integers(0, 377, n)) for n in lengths] for _ in range(samples)],
+               "rigid, each sign has one fixed successor (Rao type 2)": [[rigid(n) for n in lengths] for _ in range(samples)]}
+    out = {}
+    for name, corpora in systems.items():
+        rows = []
+        for c in corpora:
+            rows.append([len({s for t in c for s in t}), stats.entropy(Counter(s for t in c for s in t).values()),
+                         stats.conditional_entropy(c), dependence(c, rng), dependence(c, rng, top_n=20),
+                         *[stats.conditional_entropy(c, n) for n in RAO_N]])
+        m, sd = np.mean(rows, 0), np.std(rows, 0, ddof=1) if len(rows) > 1 else np.zeros(len(rows[0]))
+        out[name] = {"signs_in_sample": float(m[0]), "unigram_entropy": float(m[1]), "conditional_entropy": float(m[2]),
+                     "dependence_index": [float(m[3]), float(sd[3])], "dependence_index_top20": [float(m[4]), float(sd[4])],
+                     "conditional_entropy_top_n": dict(zip(map(str, RAO_N), map(float, m[5:])))}
+    return out
+
+
+RAO_N = (2, 4, 10, 20, 50, 100, 200, 400)
+
+
+def dependence(texts, rng, top_n=None, shuffles=10):
+    """Share of the next sign's uncertainty removed by knowing the current one, beyond what is left
+    after shuffling signs within each text (same length and contents):
+    (H_shuffled(next | current) - H(next | current)) / H(sign). 0 = no order dependence, 1 = rigid.
+    The plug-in H(next | current) is biased low when most pairs are seen once; the shuffle shares the
+    bias, but a large vocabulary still compresses the index (see the report)."""
+    counts = Counter(s for t in texts for s in t)
+    h = stats.entropy([c for _, c in counts.most_common(top_n)])
+    shuffled = np.mean([stats.conditional_entropy([tuple(rng.permutation(t)) for t in texts], top_n) for _ in range(shuffles)])
+    return float((shuffled - stats.conditional_entropy(texts, top_n)) / h)
+
+
+def corpus_summary(texts, cv=True):
+    """Headline statistics for one corpus variant, in forms comparable across sign lists."""
+    vocab = sorted({s for t in texts for s in t})
+    counts, end = Counter(s for t in texts for s in t), Counter(t[-1] for t in texts)
+    table, _ = stats.pair_table(texts)
+    attracting, avoiding = stats.significant_pairs(table)
+    tested = sum(r[2] >= stats.MIN_PAIR_COUNT for r in table)
+    out = {"texts": len(texts), "tokens": sum(counts.values()), "signs": len(vocab), "unigram_entropy": stats.entropy(counts.values()),
+           "dependence_index": dependence(texts, np.random.default_rng(0)),
+           "pairs_tested": tested, "pairs_attracting": attracting, "pairs_avoiding": avoiding,
+           "top_ender": end.most_common(1)[0], "top_ender_share": end.most_common(1)[0][1] / len(texts),
+           "enders_covering_80pct": stats.coverage(end.values()),
+           "top20_pairs": [[a, b] for a, b, *_ in table[:20]]}
+    if cv:
+        pos = ngram.cross_validate(Positional, texts, vocab)[0]
+        big = ngram.cross_validate(lambda tr, v: WittenBell(tr, v, 2, backoff=True), texts, vocab)[0]
+        out.update(bigram_perplexity=2 ** float(np.mean(big)), bigram_perplexity_over_uniform=2 ** float(np.mean(big)) / (len(vocab) + 1),
+                   bits_saved_over_positional=float(np.mean(pos) - np.mean(big)))
+    return out
+
+
+def corpus_variants(lines, wells):
+    base, _ = ebuds(lines)
+    variants = {"IM77, EBUDS (main analysis)": corpus_summary(base),
+                "IM77, doubtful readings kept": corpus_summary(ebuds(lines, keep_doubtful=True)[0]),
+                "IM77, every copy of repeated texts kept": corpus_summary(ebuds(lines, keep_copies=True)[0], cv=False)}
+    if wells:
+        w, head = wells
+        variants["Wells/ICIT (yajnadevam), signs as listed"] = corpus_summary(w)
+        variants["Wells/ICIT, variant groups merged"] = corpus_summary(sorted({tuple(head.get(s, s) for s in t) for t in w}))
+    top = {tuple(p) for p in variants["IM77, EBUDS (main analysis)"]["top20_pairs"]}
+    for name, v in variants.items():
+        if name.startswith("IM77"):
+            v["top20_pairs_shared_with_main"] = len(top & {tuple(p) for p in v["top20_pairs"]})
+    return variants
+
+
+def replication_gaps(texts, lines):
+    """Candidate explanations for the two published numbers not reproduced."""
+    copies, _ = ebuds(lines, keep_copies=True)
+    ln2 = float(np.log(2))
+    mi = {"distinct texts": stats.mutual_information(texts),
+          "distinct texts, start and end marks counted as signs": stats.mutual_information([(BOS, *t, EOS) for t in texts]),
+          "every copy of repeated texts kept": stats.mutual_information(copies)}
+    out = {"mutual_information": {k: {"bits": v, "nats": v * ln2} for k, v in mi.items()}, "perplexity_protocols": {}}
+    for k in (5, 10):
+        for cut in (1, 2):
+            make = lambda n: (lambda tr, v: WittenBell(tr, v, n, backoff=True, min_count=cut))
+            out["perplexity_protocols"][f"{k}-fold, " + ("no count cutoff" if cut == 1 else "SRILM default cutoff (order 3+ n-grams seen once dropped)")] = \
+                [2 ** float(np.mean(ngram.cross_validate_skipping_unseen(make(n), texts, k=k)[0])) for n in range(1, 6)]
+    return out
+
+
 def figures(res, texts, vocab, P_mle, null_samples):
     counts = Counter(s for t in texts for s in t)
     f = np.sort(np.array(list(counts.values()), float))[::-1]
@@ -229,9 +389,18 @@ def figures(res, texts, vocab, P_mle, null_samples):
         a_.axvline(M1_SIGN_ERROR_RATE, color="C3", ls=":", label="Milestone 1 error rate (synthetic)"); a_.set_xlabel("injected sign error rate")
     ax[0].legend(fontsize=7); plt.tight_layout(); plt.savefig(OUT / "error_propagation.png", dpi=130); plt.close()
 
+    if res["cross_system"]:
+        plt.figure(figsize=(7, 4.5))
+        for name, v in res["cross_system"].items():
+            ns = [n for n in RAO_N if n <= v["signs_in_sample"]]
+            plt.semilogx(ns, [v["conditional_entropy_top_n"][str(n)] for n in ns], "o-", lw=3 if name.startswith("Indus (") else 1, label=name)
+        plt.xlabel("number of most frequent signs kept (N)"); plt.ylabel("H(next | current), bits")
+        plt.title("Conditional entropy as in Rao et al. 2009, samples matched to the Indus corpus", fontsize=9)
+        plt.legend(fontsize=6); plt.tight_layout(); plt.savefig(OUT / "conditional_entropy_systems.png", dpi=130); plt.close()
+
 
 def write_report(res):
-    lm, d, pub = res["language_models"], res["direction"], PUBLISHED
+    lm, d, pub, gaps = res["language_models"], res["direction"], PUBLISHED, res["replication_gaps"]
     L = ["# Milestone 2 report: positional bias and Markov-chain modelling", "",
          "Generated by `sequence_analysis/run_milestone2.py` from the IM77 corpus (Mahadevan 1977). "
          "Signs are Mahadevan numbers; sequences are in reading order unless stated.", "",
@@ -254,7 +423,8 @@ def write_report(res):
         m = lm[f"witten-bell backoff n={n}"]
         L.append(f"| Perplexity, order {n} (Witten-Bell, backoff) | {pub['perplexity'][n]} | {m['cv_perplexity']:.2f} (every held-out sign scored); {m['skip_unseen_perplexity']:.2f} (unseen signs skipped) |")
     L += [f"| Unigram entropy (bits) | {pub['unigram_entropy']} | {r['unigram_entropy']:.2f} plug-in; {r['unigram_entropy_miller_madow']:.2f} Miller-Madow |",
-          f"| Adjacent-sign mutual information (bits) | {pub['bigram_mi']} | {r['bigram_mi']:.2f} (plug-in; not reproduced) |",
+          f"| Adjacent-sign mutual information | {pub['bigram_mi']} (unit not stated) | {r['bigram_mi']:.2f} bits (plug-in); "
+          f"{gaps['mutual_information']['every copy of repeated texts kept']['nats']:.2f} in nats with every copy of repeated texts kept |",
           f"| Distinct adjacent sign pairs observed | 2,178 (Sinha et al. 2009) | {res['pairs']['distinct']} |",
           f"| Signs covering 80% of all tokens / text-beginners / text-enders | 69 / 82 / 23 | {r['coverage80']['all']} / {r['coverage80']['beginners']} / {r['coverage80']['enders']} |",
           f"| Three most frequent text-beginners | {pub['top_beginners']} | {r['top_beginners']} |",
@@ -269,8 +439,10 @@ def write_report(res):
           f"({100 * lm['witten-bell backoff n=2']['skip_unseen_share']:.1f}% of events), which is the default behaviour of the SRILM toolkit the paper used. "
           "It lands close to the published values for orders 1 to 3, so it is a candidate explanation of the gap, not a confirmed one: the paper "
           "does not state its split or options. Skipping drops the hardest events, so the headline figure is the more honest measure. "
-          "Orders 4 and 5 are not reproduced under either protocol.",
-          "- **Mutual information.** The paper does not define its estimator. An independent check of seven definitions found none that gives 2.24. "
+          "Orders 4 and 5 are not reproduced under any of the four protocols tried (see Replication gaps below), so that gap is closed as unexplained.",
+          "- **Mutual information.** The paper does not define its estimator or unit. Computed in nats on the single-line corpus before "
+          f"repeated texts are reduced to one copy, the plug-in value is {gaps['mutual_information']['every copy of repeated texts kept']['nats']:.3f}, "
+          "which matches the published 2.24 to the stated precision. This is the likely explanation, but it rests on a numerical match only. "
           f"The plug-in value is biased upward: with every token permuted across the corpus it is still {res['structure_test']['all_tokens_permuted_bits']:.2f} bits.",
           "- **Restoration.** The published rule can be read two ways at the 90% boundary, and the two readings differ by several points.", "",
           "## Language models compared (5-fold cross-validation over distinct texts)", "",
@@ -280,7 +452,7 @@ def write_report(res):
     s = res["structure_test"]
     pos, big = lm["positional (no sign-to-sign dependence)"], lm["witten-bell backoff n=2"]
     L += ["", f"The positional model, which knows only how far into the text a sign is, reaches {pos['cv_bits'][0]:.3f} bits per event; the bigram model reaches "
-          f"{big['cv_bits'][0]:.3f}. The baseline knows position counted from the start only, so part of the difference may still be end-of-text position.",
+          f"{big['cv_bits'][0]:.3f}. This baseline counts position from the start only; a baseline that also knows the distance to the end is under Robustness checks.",
           f"The vocabulary is fixed at the {e['signs']} signs of the filtered corpus plus end-of-text; every model gives unseen signs non-zero probability.", "",
           "## Is sign order structured?", "",
           f"Adjacent-sign mutual information is {s['observed_bits']:.3f} bits. After shuffling the signs inside each text it is "
@@ -318,6 +490,12 @@ def write_report(res):
           f"In lines labelled left-to-right it is at the left end of {j2['at_physical_left']} and the right end of {j2['at_physical_right']}, out of {j2['lines']}. "
           "No exceptions in either group is what one would expect if the labels were assigned with the position of such signs in view.",
           f"Descriptively, the gap in delta S between the two labelled groups is {lp['delta_S_gap_rtl_minus_ltr']:+.3f}, against [{lp['null_95'][0]:+.3f}, {lp['null_95'][1]:+.3f}] when labels are reassigned at random; this follows from the labels and is not separate evidence.", "",
+          "**Without the signs most likely to have guided the labels.** The rows 'no top-k text-beginner or ender at either end' drop every primary line "
+          "whose physical left or right sign is among the k commonest text-beginners or text-enders (ranked on EBUDS). "
+          + " ".join(f"k = {k}: delta S {d[f'primary, no top-{k} text-beginner or ender at either end']['delta_S']['value']:+.3f} on {d[f'primary, no top-{k} text-beginner or ender at either end']['lines']} lines."
+                     for k in (1, 3, 5, 10, 20) if 'delta_S' in d[f'primary, no top-{k} text-beginner or ender at either end'])
+          + " The asymmetry is not carried by sign 342 alone, but it shrinks steadily as more end-marking signs are removed and is not detectable once the top 20 are excluded. "
+          "Either the direction signal lives in a few dozen formulaic end signs, or those are the signs the labels were assigned from; this test cannot tell the two apart.", "",
           "p is the share of within-line shuffles with an absolute delta S at least as large as observed; 0.001 is the smallest value 1,000 shuffles can give. "
           "delta S (entropy) is the headline measure because it is stable across group sizes. delta G (Gini) shrinks as a group gets smaller and sparser, "
           "so its size should not be compared between groups. delta G here is computed over the full 418-symbol sign list so that groups share one alphabet; "
@@ -342,7 +520,84 @@ def write_report(res):
           f"90%-probability candidate set {100 * res['restoration']['hit_in_90pct_mass_set']:.1f}% of the time (that set holds "
           f"{res['restoration']['mean_size_of_90pct_set']:.0f} signs on average). The published 74% uses the last criterion; it is not top-1 accuracy. "
           "This measures how predictable the notation is and says nothing about meaning.", ""]
+    L += robustness_section(res)
     (OUT / "milestone_2_report.md").write_text("\n".join(L))
+
+
+def robustness_section(res):
+    pv, cs, us, gaps, cvs = res["position_vs_bigram"], res["cross_system"], res["unseen_signs"], res["replication_gaps"], res["cv_stability"]
+    L = ["## Robustness checks", "",
+         "### Comparison with sign systems of known type", ""]
+    if cs:
+        L += ["Each reference system is cut into samples with exactly the Indus text-length distribution (1548 texts, 7000 tokens), "
+              "so sample size and text length, which bias every plug-in estimate, are matched; 10 samples each, mean (SD over samples). "
+              "Dependence index = share of a sign's uncertainty removed by knowing the previous sign, beyond what remains after shuffling signs "
+              "within each text (0 = order carries nothing). Shuffling a short text keeps much of its pair structure, so even the rigid control stays far below 1. Python tokens are from the first 40 modules of the local Python 3.10 standard library, "
+              "string and number literals collapsed to one token each.", "",
+              "| System | Signs in sample | H(sign), bits | H(next given current), bits | Dependence index, all signs | Dependence index, top 20 signs |", "|---|---|---|---|---|---|"]
+        for name, v in cs.items():
+            top20 = f"{v['dependence_index_top20'][0]:.3f} ({v['dependence_index_top20'][1]:.3f})" if v["signs_in_sample"] >= 20 else "n/a (fewer than 20 signs)"
+            L.append(f"| {name} | {v['signs_in_sample']:.0f} | {v['unigram_entropy']:.2f} | {v['conditional_entropy']:.2f} | "
+                     f"{v['dependence_index'][0]:.3f} ({v['dependence_index'][1]:.3f}) | {top20} |")
+        ind, rig = cs["Indus (IM77, EBUDS)"], cs["rigid, each sign has one fixed successor (Rao type 2)"]
+        L += ["", "Read this as a scale, not a classification. Sign order in the Indus corpus removes more uncertainty than in any reference system at this sample size, "
+              "on both columns, including English letters and Python code, and far more than DNA or the memoryless and random controls. "
+              f"Over all signs it reaches {ind['dependence_index'][0] / rig['dependence_index'][0]:.0%} of the rigid control; among the 20 commonest signs it "
+              f"exceeds it ({ind['dependence_index_top20'][0]:.2f} against {rig['dependence_index_top20'][0]:.2f}), meaning the common signs occur in near-fixed sequences. "
+              "Strong order dependence is what a formulaic notation would show, linguistic or not, so this places the Indus corpus among highly structured "
+              "systems without saying which kind. The all-signs index for English words is compressed because, at 7000 tokens and over 1,500 word types, "
+              "most word pairs occur once in both the real and the shuffled texts; the top-20 column avoids that. No other ancient script is included.", "",
+              "![Conditional entropy of sign systems](conditional_entropy_systems.png)", ""]
+    else:
+        L += ["Skipped: reference texts not found under data/raw/reference (see data/README.md).", ""]
+    L += ["### Position counted from both ends", "",
+          "All three models below predict signs only, given that the text has not ended (end-of-text is renormalised away), 5-fold CV.", "",
+          "| Model | Bits per sign (mean, SD over folds) | Perplexity |", "|---|---|---|"]
+    L += [f"| {k} | {v['bits_per_sign'][0]:.3f}, {v['bits_per_sign'][1]:.3f} | {v['perplexity']:.1f} |" for k, v in pv.items()]
+    gain = pv["position from both ends (knows the text's length)"]["bits_per_sign"][0] - pv["bigram (Witten-Bell backoff)"]["bits_per_sign"][0]
+    L += ["", f"Knowing the distance to both ends helps the positional model, but the bigram, which is not told the text's length, is still {gain:.2f} bits per sign better. "
+          "The bigram's gain is therefore sign-to-sign dependence, not position at either end.", "",
+          "### Cross-validation stability and unseen signs", "",
+          "| Model | Perplexity, mean over 10 random 5-fold splits | SD across splits | Range |", "|---|---|---|---|"]
+    L += [f"| {k} | {v['perplexity_mean']:.2f} | {v['perplexity_sd_across_splits']:.2f} | {v['perplexity_range'][0]:.2f} to {v['perplexity_range'][1]:.2f} |"
+          for k, v in cvs.items() if "perplexity_mean" in v]
+    b = cvs["bigram better than positional"]
+    L += ["", f"The bigram beats the positional baseline in {b['folds']} of {b['of']} folds across all splits, by at least {b['smallest_gain_bits']:.2f} bits per event. "
+          "The SD across splits is under 1% of perplexity, so the gaps to the published values are not split noise.", "",
+          f"Signs absent from the training fold are {100 * us['unseen_share_of_events']:.1f}% of held-out events but {100 * us['unseen_share_of_bits']:.1f}% of the held-out bits "
+          f"({us['bits_per_unseen_event']:.1f} bits each against {us['bits_per_seen_event']:.1f}). Scoring only the other events with the same model gives "
+          f"perplexity {us['perplexity_seen_only']:.1f} instead of {us['perplexity_all']:.1f}: rare signs account for about a tenth of the headline figure.", "",
+          "### Corpus variants: duplicates, doubtful readings, a second transcription, merged sign groups", "",
+          "The main corpus already keeps one copy of each repeated text (EBUDS); the third row shows what counting every copy would change. "
+          "The Wells/ICIT rows use an independent transcription with a different sign list (yajnadevam/indus-website, GPL-3.0; single-line texts with every sign readable, one copy each). "
+          "That data records no doubtful readings and no usable physical layout, so the direction test cannot be repeated on it. "
+          "'Variant groups merged' maps every sign to the head of its Wells variant group (14 groups, 69 signs). "
+          "Perplexity is not comparable across sign lists, so it is also given relative to a uniform model.", "",
+          "| Corpus | Texts | Tokens | Signs | Dependence index | Pairs tested / attracting / avoiding | Top ender (share of texts) | Enders covering 80% | Bigram perplexity (relative to uniform) | Bits gained over positional | Top-20 pairs shared with main |",
+          "|---|---|---|---|---|---|---|---|---|---|---|"]
+    for name, v in res["corpus_variants"].items():
+        ppl = f"{v['bigram_perplexity']:.1f} ({v['bigram_perplexity_over_uniform']:.3f})" if "bigram_perplexity" in v else "n/a: copies leak across folds"
+        gain = f"{v['bits_saved_over_positional']:.2f}" if "bits_saved_over_positional" in v else "n/a"
+        L.append(f"| {name} | {v['texts']} | {v['tokens']} | {v['signs']} | {v['dependence_index']:.3f} | {v['pairs_tested']} / {v['pairs_attracting']} / {v['pairs_avoiding']} | "
+                 f"{v['top_ender'][0]} ({100 * v['top_ender_share']:.0f}%) | {v['enders_covering_80pct']} | {ppl} | {gain} | {v.get('top20_pairs_shared_with_main', 'n/a (other sign list)')} |")
+    vs = list(res["corpus_variants"].values())
+    span = lambda f, fmt="{:.0f}", rows=vs: f"{fmt.format(min(map(f, rows)))} to {fmt.format(max(map(f, rows)))}"
+    L += ["", f"Across the variants: dependence index {span(lambda v: v['dependence_index'], '{:.3f}')}; "
+          f"{span(lambda v: 100 * v['pairs_attracting'] / v['pairs_tested'])}% of tested pairs attracting; "
+          f"one dominant text-ender closing {span(lambda v: 100 * v['top_ender_share'])}% of texts; "
+          f"{span(lambda v: v['enders_covering_80pct'])} signs covering 80% of endings; "
+          f"{span(lambda v: v['bits_saved_over_positional'], '{:.2f}', [v for v in vs if 'bits_saved_over_positional' in v])} bits per event gained over position alone where computable. "
+          f"The vocabulary ranges over {span(lambda v: v['signs'])} signs. None of these conclusions changes direction on any variant.", "",
+          "### Replication gaps", "",
+          "Mutual information under the definitions tried:", "", "| Definition | Bits | Nats |", "|---|---|---|"]
+    L += [f"| {k} | {v['bits']:.3f} | {v['nats']:.3f} |" for k, v in gaps["mutual_information"].items()]
+    L += ["", "Witten-Bell backoff perplexity with unseen signs skipped (SRILM's default handling), under four protocols:", "",
+          "| Protocol | n=1 | n=2 | n=3 | n=4 | n=5 |", "|---|---|---|---|---|---|",
+          f"| Yadav et al. 2010 | {' | '.join(str(PUBLISHED['perplexity'][n]) for n in range(1, 6))} |"]
+    L += [f"| {k} | {' | '.join(f'{x:.2f}' for x in v)} |" for k, v in gaps["perplexity_protocols"].items()]
+    L += ["", "10-fold cross-validation with unseen signs skipped reproduces orders 1 to 3 within 1%. No protocol tried reproduces orders 4 and 5, "
+          "where the published values fall while every reproduction rises; the paper does not give enough detail to go further, so this gap is closed as unexplained.", ""]
+    return L
 
 
 if __name__ == "__main__":
@@ -402,7 +657,7 @@ if __name__ == "__main__":
     print("bigram WB backoff CV perplexity:", round(res["language_models"]["witten-bell backoff n=2"]["cv_perplexity"], 2))
     res["restoration"] = restoration(texts, vocab)
     res["structure_test"] = structure_test(texts, n_resample)
-    res["direction"], phys = direction_analysis(lines, n_resample)
+    res["direction"], phys = direction_analysis(lines, texts, n_resample)
     rng = np.random.default_rng(1)
     null_samples = []
     for _ in range(n_resample):  # null distribution for the figure
@@ -410,6 +665,17 @@ if __name__ == "__main__":
         null_samples.append(stats.asymmetry(np.array([l[i] for l, (i, _) in zip(phys, ends)]), np.array([l[j] for l, (_, j) in zip(phys, ends)]))[1])
     print("direction primary:", res["direction"]["primary: labelled right-to-left, single-line"]["delta_S"])
     res["error_propagation"] = error_propagation(texts, phys, vocab, pairs, repeats)
+
+    res["position_vs_bigram"] = position_vs_bigram(texts, vocab)
+    res["cv_stability"] = cv_stability(texts, vocab, seeds=3 if args.quick else 10)
+    res["unseen_signs"] = unseen_signs(texts, vocab)
+    res["replication_gaps"] = replication_gaps(texts, lines)
+    have_refs = all((REFERENCE / f).exists() for f in ("pride_and_prejudice.txt", "lambda_phage.fasta"))
+    res["cross_system"] = cross_system(texts, reference_systems(), 3 if args.quick else 10) if have_refs else None
+    res["corpus_variants"] = corpus_variants(lines, load_wells() if WELLS_SQL.exists() else None)
+    for name, present in (("comparison with other sign systems", have_refs), ("Wells/ICIT corpus", WELLS_SQL.exists())):
+        if not present:
+            print(f"skipped the {name}: input missing, see data/README.md")
 
     (OUT / "results.json").write_text(json.dumps(res, indent=1))
     figures(res, texts, vocab, P_mle, null_samples)
