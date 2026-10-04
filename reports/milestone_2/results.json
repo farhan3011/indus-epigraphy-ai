@@ -1,4 +1,10 @@
 {
+ "settings": {
+  "n_resample": 1000,
+  "error_repeats": 10,
+  "samples": 10,
+  "subsets": 5
+ },
  "corpus_steps": [
   [
    "all inscribed lines",
@@ -255,6 +261,7 @@
   "p": 0.000999000999000999
  },
  "direction": {
+  "share labelled right-to-left": 0.9213777611381505,
   "primary: labelled right-to-left, single-line": {
    "lines": 2319,
    "delta_G": {
@@ -871,7 +878,7 @@
  },
  "cv_stability": {
   "positional (no sign-to-sign dependence)": {
-   "perplexity_mean": 62.466309719279494,
+   "perplexity_mean": 62.46721320841374,
    "perplexity_sd_across_splits": 0.35422448522079264,
    "perplexity_range": [
     61.92083739639401,
@@ -879,7 +886,7 @@
    ]
   },
   "kneser-ney n=2": {
-   "perplexity_mean": 28.395307523758753,
+   "perplexity_mean": 28.395555618113775,
    "perplexity_sd_across_splits": 0.12513465638945603,
    "perplexity_range": [
     28.211079806421388,
@@ -887,7 +894,7 @@
    ]
   },
   "witten-bell backoff n=1": {
-   "perplexity_mean": 74.62270292105498,
+   "perplexity_mean": 74.62275398368368,
    "perplexity_sd_across_splits": 0.09202311610090459,
    "perplexity_range": [
     74.45871314023215,
@@ -895,7 +902,7 @@
    ]
   },
   "witten-bell backoff n=2": {
-   "perplexity_mean": 29.83482671639318,
+   "perplexity_mean": 29.835060515683494,
    "perplexity_sd_across_splits": 0.12445925964919992,
    "perplexity_range": [
     29.61569957699771,
@@ -903,7 +910,7 @@
    ]
   },
   "witten-bell backoff n=3": {
-   "perplexity_mean": 29.248556838963832,
+   "perplexity_mean": 29.248864994370898,
    "perplexity_sd_across_splits": 0.14145379706175168,
    "perplexity_range": [
     28.979929254644336,
@@ -976,11 +983,11 @@
    "unigram_entropy": 6.681098726097744,
    "conditional_entropy": 3.2214860677159134,
    "dependence_index": [
-    0.19701464639682575,
+    0.19842150416080542,
     0.0
    ],
    "dependence_index_top20": [
-    0.412370010150379,
+    0.41639294469516175,
     0.0
    ],
    "conditional_entropy_top_n": {
@@ -999,12 +1006,12 @@
    "unigram_entropy": 8.669075800121643,
    "conditional_entropy": 3.2331831213099784,
    "dependence_index": [
-    0.03745199442773652,
-    0.0016712246387499926
+    0.036987874269851895,
+    0.001410302214849974
    ],
    "dependence_index_top20": [
-    0.23367114969177388,
-    0.020874718362510057
+    0.2318914198722617,
+    0.019730198039160624
    ],
    "conditional_entropy_top_n": {
     "2": 0.0,
@@ -1022,12 +1029,12 @@
    "unigram_entropy": 4.175225336895795,
    "conditional_entropy": 3.528042300875884,
    "dependence_index": [
-    0.12274027410241736,
-    0.0036309678253038614
+    0.12262432626113666,
+    0.0034578579326077943
    ],
    "dependence_index_top20": [
-    0.11961710064189601,
-    0.0041204755017863965
+    0.1198449653506187,
+    0.004301102560884087
    ],
    "conditional_entropy_top_n": {
     "2": 0.9370390740569853,
@@ -1045,12 +1052,12 @@
    "unigram_entropy": 1.998478774633193,
    "conditional_entropy": 1.9826294139253497,
    "dependence_index": [
-    0.00615318126234821,
-    0.0010907350856078765
+    0.006232959870652885,
+    0.0010012821963052737
    ],
    "dependence_index_top20": [
-    0.006203740442973152,
-    0.001150546501417994
+    0.006232959870652885,
+    0.0010012821963052737
    ],
    "conditional_entropy_top_n": {
     "2": 0.9932173925916901,
@@ -1068,12 +1075,12 @@
    "unigram_entropy": 6.520590449549877,
    "conditional_entropy": 3.3913607785362814,
    "dependence_index": [
-    0.10452356337155326,
-    0.0035113003008460895
+    0.105014460392992,
+    0.0029515798515748867
    ],
    "dependence_index_top20": [
-    0.32616535183280787,
-    0.013015515993352378
+    0.3268119609760999,
+    0.013438362941832553
    ],
    "conditional_entropy_top_n": {
     "2": 0.2610330729953487,
@@ -1086,63 +1093,155 @@
     "400": 3.2213356432567366
    }
   },
+  "Linear B, Knossos series D (signs)": {
+   "signs_in_sample": 108.2,
+   "unigram_entropy": 5.551392045085365,
+   "conditional_entropy": 3.11247438841498,
+   "dependence_index": [
+    0.26920870581659706,
+    0.005168306214354114
+   ],
+   "dependence_index_top20": [
+    0.35842125785142975,
+    0.007182300865794597
+   ],
+   "conditional_entropy_top_n": {
+    "2": 0.6221405805559246,
+    "4": 0.6232332925393823,
+    "10": 1.595456099400121,
+    "20": 2.2759329085311886,
+    "50": 2.9821279848510693,
+    "100": 3.1155843594328054,
+    "200": 3.11247438841498,
+    "400": 3.11247438841498
+   }
+  },
+  "Sumerian cuneiform, all texts (signs)": {
+   "signs_in_sample": 685.4,
+   "unigram_entropy": 7.938731862017969,
+   "conditional_entropy": 3.3801977143726334,
+   "dependence_index": [
+    0.08472897373977614,
+    0.0027496497150899138
+   ],
+   "dependence_index_top20": [
+    0.22810250970539886,
+    0.016101703444088292
+   ],
+   "conditional_entropy_top_n": {
+    "2": 0.49129727194387857,
+    "4": 1.1300105657769675,
+    "10": 1.8685049931433704,
+    "20": 2.387326425921942,
+    "50": 3.0228466001761993,
+    "100": 3.3305055047710725,
+    "200": 3.4742404581022868,
+    "400": 3.4413275981484075
+   }
+  },
+  "Cuneiform seal inscriptions (signs)": {
+   "signs_in_sample": 438.8,
+   "unigram_entropy": 6.6614484758572186,
+   "conditional_entropy": 2.9508236833079438,
+   "dependence_index": [
+    0.20223982470585883,
+    0.0032208024433263683
+   ],
+   "dependence_index_top20": [
+    0.41668975752212223,
+    0.010632734249770643
+   ],
+   "conditional_entropy_top_n": {
+    "2": 0.10151263678092814,
+    "4": 0.6209819802864289,
+    "10": 1.213239694422224,
+    "20": 1.8429296265746085,
+    "50": 2.4368384361026045,
+    "100": 2.7481101734156703,
+    "200": 2.906623956464449,
+    "400": 2.9476339543335173
+   }
+  },
+  "Folk melodies, Essen collection (notes)": {
+   "signs_in_sample": 51.3,
+   "unigram_entropy": 4.152712061344163,
+   "conditional_entropy": 2.9682405341634945,
+   "dependence_index": [
+    0.07817964156735038,
+    0.0029483252128044085
+   ],
+   "dependence_index_top20": [
+    0.08082258693895353,
+    0.003964829807520599
+   ],
+   "conditional_entropy_top_n": {
+    "2": 0.9872082210427756,
+    "4": 1.7088409337403951,
+    "10": 2.583700948235188,
+    "20": 2.8878049235023835,
+    "50": 2.968745609833977,
+    "100": 2.9682405341634945,
+    "200": 2.9682405341634945,
+    "400": 2.9682405341634945
+   }
+  },
   "Indus signs permuted across the corpus (memoryless)": {
    "signs_in_sample": 377.0,
    "unigram_entropy": 6.681098726097744,
-   "conditional_entropy": 4.716649754820557,
+   "conditional_entropy": 4.7293432827648845,
    "dependence_index": [
-    0.0017956129009890434,
-    0.002086498832136125
+    3.576336308732789e-05,
+    0.0019244913513255517
    ],
    "dependence_index_top20": [
-    0.001354995314214434,
-    0.005507513148713234
+    0.0009229597178117083,
+    0.0067870463503015436
    ],
    "conditional_entropy_top_n": {
-    "2": 0.9347792508949985,
-    "4": 1.750963034098658,
-    "10": 2.923986426460948,
-    "20": 3.784997653262226,
-    "50": 4.565921678752185,
-    "100": 4.794695763723175,
-    "200": 4.78910592059111,
-    "400": 4.716649754820557
+    "2": 0.9279804170475611,
+    "4": 1.7711732187685552,
+    "10": 2.9221078408343137,
+    "20": 3.7938494396623077,
+    "50": 4.567070208713059,
+    "100": 4.802488778262151,
+    "200": 4.7971383951059785,
+    "400": 4.7293432827648845
    }
   },
   "random, 377 equiprobable signs (Rao type 1)": {
    "signs_in_sample": 377.0,
-   "unigram_entropy": 8.5185671243063,
-   "conditional_entropy": 3.866812433279969,
+   "unigram_entropy": 8.519272477470608,
+   "conditional_entropy": 3.8681299544052252,
    "dependence_index": [
-    6.771261693872866e-05,
-    0.0007256459694648457
+    -0.0001628664940632974,
+    0.0005857857832350805
    ],
    "dependence_index_top20": [
-    0.020678893020935955,
-    0.04778947023022634
+    0.004794708032767795,
+    0.05548409488682585
    ],
    "conditional_entropy_top_n": {
     "2": 0.0,
-    "4": 0.0,
-    "10": 0.5225541248228598,
-    "20": 1.1185070444405363,
-    "50": 1.972538063365318,
-    "100": 2.7121767337606344,
-    "200": 3.4002758686805046,
-    "400": 3.866812433279969
+    "4": 0.06666666666666665,
+    "10": 0.6259171709917701,
+    "20": 1.1410502711431285,
+    "50": 2.0440674664327303,
+    "100": 2.721741326542255,
+    "200": 3.3967938587641866,
+    "400": 3.8681299544052252
    }
   },
   "rigid, each sign has one fixed successor (Rao type 2)": {
    "signs_in_sample": 377.0,
-   "unigram_entropy": 8.518674293801789,
+   "unigram_entropy": 8.519094678778085,
    "conditional_entropy": 0.0,
    "dependence_index": [
-    0.3008810667042479,
-    0.0009382140450078607
+    0.30080186677398457,
+    0.0012397320711033046
    ],
    "dependence_index_top20": [
-    0.2700364813109135,
-    0.058957337369568485
+    0.2994217256620915,
+    0.08280312822707676
    ],
    "conditional_entropy_top_n": {
     "2": 0.0,
@@ -1155,6 +1254,31 @@
     "400": 0.0
    }
   }
+ },
+ "multiline": {
+  "groups": 122,
+  "groups_fully_legible": 71,
+  "alternating_direction": 9,
+  "ender_sets_size": 23,
+  "beginner_set_size": 82,
+  "sign before a line break is a typical ender": {
+   "n": 72,
+   "share": 0.6805555555555556
+  },
+  "last sign of a multi-line text is a typical ender": {
+   "n": 71,
+   "share": 0.4084507042253521
+  },
+  "medial sign of a single-line text is a typical ender": {
+   "n": 3973,
+   "share": 0.22048829599798642
+  },
+  "sign after a line break is a typical beginner": {
+   "n": 72,
+   "share": 0.5694444444444444
+  },
+  "share of later lines that are a single sign": 0.3888888888888889,
+  "p_before_break_vs_medial": 2.1746175849657036e-16
  },
  "corpus_variants": {
   "IM77, EBUDS (main analysis)": {
@@ -1460,6 +1584,210 @@
    ],
    "top20_pairs_shared_with_main": 17
   },
+  "IM77, multi-line texts added, lines joined": {
+   "texts": 1611,
+   "tokens": 7415,
+   "signs": 390,
+   "unigram_entropy": 6.717558634191942,
+   "dependence_index": 0.1918813194876938,
+   "pairs_tested": 221,
+   "pairs_attracting": 191,
+   "pairs_avoiding": 4,
+   "top_ender": [
+    342,
+    531
+   ],
+   "top_ender_share": 0.329608938547486,
+   "enders_covering_80pct": 26,
+   "top20_pairs": [
+    [
+     267,
+     99
+    ],
+    [
+     336,
+     89
+    ],
+    [
+     8,
+     342
+    ],
+    [
+     342,
+     176
+    ],
+    [
+     347,
+     342
+    ],
+    [
+     391,
+     99
+    ],
+    [
+     342,
+     1
+    ],
+    [
+     293,
+     123
+    ],
+    [
+     48,
+     342
+    ],
+    [
+     87,
+     59
+    ],
+    [
+     171,
+     59
+    ],
+    [
+     245,
+     245
+    ],
+    [
+     249,
+     162
+    ],
+    [
+     59,
+     211
+    ],
+    [
+     89,
+     211
+    ],
+    [
+     65,
+     67
+    ],
+    [
+     51,
+     130
+    ],
+    [
+     150,
+     123
+    ],
+    [
+     99,
+     67
+    ],
+    [
+     99,
+     87
+    ]
+   ],
+   "bigram_perplexity": 31.13534523808509,
+   "bigram_perplexity_over_uniform": 0.07963003897208464,
+   "bits_saved_over_positional": 1.0601831731555524,
+   "top20_pairs_shared_with_main": 18
+  },
+  "IM77, multi-line texts added, each line a text": {
+   "texts": 1648,
+   "tokens": 7367,
+   "signs": 390,
+   "unigram_entropy": 6.712674448823624,
+   "dependence_index": 0.19435085548160153,
+   "pairs_tested": 216,
+   "pairs_attracting": 187,
+   "pairs_avoiding": 4,
+   "top_ender": [
+    342,
+    548
+   ],
+   "top_ender_share": 0.3325242718446602,
+   "enders_covering_80pct": 26,
+   "top20_pairs": [
+    [
+     267,
+     99
+    ],
+    [
+     336,
+     89
+    ],
+    [
+     8,
+     342
+    ],
+    [
+     342,
+     176
+    ],
+    [
+     347,
+     342
+    ],
+    [
+     391,
+     99
+    ],
+    [
+     342,
+     1
+    ],
+    [
+     293,
+     123
+    ],
+    [
+     48,
+     342
+    ],
+    [
+     87,
+     59
+    ],
+    [
+     171,
+     59
+    ],
+    [
+     245,
+     245
+    ],
+    [
+     249,
+     162
+    ],
+    [
+     89,
+     211
+    ],
+    [
+     59,
+     211
+    ],
+    [
+     65,
+     67
+    ],
+    [
+     51,
+     130
+    ],
+    [
+     99,
+     67
+    ],
+    [
+     150,
+     123
+    ],
+    [
+     162,
+     342
+    ]
+   ],
+   "bigram_perplexity": 30.88504629622394,
+   "bigram_perplexity_over_uniform": 0.07898988822563667,
+   "bits_saved_over_positional": 1.058570235372084,
+   "top20_pairs_shared_with_main": 19
+  },
   "Wells/ICIT (yajnadevam), signs as listed": {
    "texts": 1798,
    "tokens": 8252,
@@ -1662,5 +1990,1122 @@
    "bigram_perplexity_over_uniform": 0.06730693244255276,
    "bits_saved_over_positional": 0.9638232677794614
   }
+ },
+ "wells_variant_groups": [
+  14,
+  83
+ ],
+ "restoration_by_model": {
+  "witten-bell backoff n=3": {
+   "trials": 7000,
+   "top1": 0.40114285714285713,
+   "top5": 0.6297142857142857,
+   "hit_in_90pct_mass_set": 0.8248571428571428,
+   "hit_in_90pct_mass_set_strict": 0.699,
+   "mean_size_of_90pct_set": 37.10171428571429
+  },
+  "kneser-ney n=2": {
+   "trials": 7000,
+   "top1": 0.3871428571428571,
+   "top5": 0.6321428571428571,
+   "hit_in_90pct_mass_set": 0.8667142857142857,
+   "hit_in_90pct_mass_set_strict": 0.7697142857142857,
+   "mean_size_of_90pct_set": 55.34442857142857
+  }
+ },
+ "syntax": {
+  "classes": {
+   "final": {
+    "signs": 9,
+    "examples": [
+     342,
+     176,
+     211,
+     162,
+     169,
+     1,
+     15,
+     254,
+     12
+    ]
+   },
+   "medial": {
+    "signs": 28,
+    "examples": [
+     99,
+     59,
+     87,
+     67,
+     123,
+     336,
+     72,
+     89,
+     343,
+     48,
+     8,
+     347
+    ]
+   },
+   "initial": {
+    "signs": 18,
+    "examples": [
+     267,
+     391,
+     65,
+     293,
+     86,
+     249,
+     102,
+     53,
+     387,
+     171,
+     389,
+     17
+    ]
+   },
+   "free": {
+    "signs": 12,
+    "examples": [
+     245,
+     328,
+     28,
+     121,
+     341,
+     375,
+     127,
+     307,
+     180,
+     175,
+     373,
+     345
+    ]
+   }
+  },
+  "classified_signs": 67,
+  "token_share_classified": 0.795,
+  "class_transitions": [
+   {
+    "first": "final",
+    "second": "final",
+    "observed": 231,
+    "shuffled_mean": 138.43,
+    "z": 12.85018241899455
+   },
+   {
+    "first": "medial",
+    "second": "final",
+    "observed": 515,
+    "shuffled_mean": 633.165,
+    "z": -9.945874341874687
+   },
+   {
+    "first": "initial",
+    "second": "medial",
+    "observed": 697,
+    "shuffled_mean": 594.38,
+    "z": 8.75424368880781
+   },
+   {
+    "first": "medial",
+    "second": "initial",
+    "observed": 366,
+    "shuffled_mean": 286.585,
+    "z": 7.851939360984074
+   },
+   {
+    "first": "free",
+    "second": "free",
+    "observed": 84,
+    "shuffled_mean": 56.935,
+    "z": 6.6320556473234795
+   },
+   {
+    "first": "final",
+    "second": "medial",
+    "observed": 80,
+    "shuffled_mean": 123.09,
+    "z": -6.1609670259901215
+   },
+   {
+    "first": "final",
+    "second": "initial",
+    "observed": 22,
+    "shuffled_mean": 56.115,
+    "z": -6.105816964835022
+   },
+   {
+    "first": "rare",
+    "second": "medial",
+    "observed": 340,
+    "shuffled_mean": 407.255,
+    "z": -6.021161701945527
+   },
+   {
+    "first": "initial",
+    "second": "rare",
+    "observed": 173,
+    "shuffled_mean": 213.445,
+    "z": -4.839073137795467
+   },
+   {
+    "first": "rare",
+    "second": "rare",
+    "observed": 250,
+    "shuffled_mean": 217.525,
+    "z": 4.722628360003425
+   },
+   {
+    "first": "initial",
+    "second": "initial",
+    "observed": 128,
+    "shuffled_mean": 162.0,
+    "z": -4.017044214341877
+   },
+   {
+    "first": "rare",
+    "second": "final",
+    "observed": 370,
+    "shuffled_mean": 327.045,
+    "z": 3.874578896450478
+   },
+   {
+    "first": "initial",
+    "second": "free",
+    "observed": 40,
+    "shuffled_mean": 58.525,
+    "z": -3.806236099126018
+   },
+   {
+    "first": "free",
+    "second": "medial",
+    "observed": 98,
+    "shuffled_mean": 114.355,
+    "z": -2.6272375852105987
+   },
+   {
+    "first": "final",
+    "second": "free",
+    "observed": 14,
+    "shuffled_mean": 20.37,
+    "z": -2.104834263337376
+   },
+   {
+    "first": "medial",
+    "second": "medial",
+    "observed": 817,
+    "shuffled_mean": 792.92,
+    "z": 2.034594021318163
+   },
+   {
+    "first": "medial",
+    "second": "rare",
+    "observed": 392,
+    "shuffled_mean": 375.16,
+    "z": 1.6516618126264502
+   },
+   {
+    "first": "final",
+    "second": "rare",
+    "observed": 58,
+    "shuffled_mean": 66.995,
+    "z": -1.472780827303362
+   },
+   {
+    "first": "free",
+    "second": "final",
+    "observed": 76,
+    "shuffled_mean": 83.71,
+    "z": -1.4574218921474773
+   },
+   {
+    "first": "rare",
+    "second": "initial",
+    "observed": 149,
+    "shuffled_mean": 157.175,
+    "z": -0.9804527743049323
+   },
+   {
+    "first": "initial",
+    "second": "final",
+    "observed": 261,
+    "shuffled_mean": 270.65,
+    "z": -0.8443155035751881
+   },
+   {
+    "first": "free",
+    "second": "initial",
+    "observed": 40,
+    "shuffled_mean": 43.125,
+    "z": -0.6968588185745692
+   },
+   {
+    "first": "medial",
+    "second": "free",
+    "observed": 113,
+    "shuffled_mean": 115.17,
+    "z": -0.34825931134995275
+   },
+   {
+    "first": "free",
+    "second": "rare",
+    "observed": 61,
+    "shuffled_mean": 60.875,
+    "z": 0.022181060529009387
+   },
+   {
+    "first": "rare",
+    "second": "free",
+    "observed": 77,
+    "shuffled_mean": 77.0,
+    "z": 0.0
+   }
+  ],
+  "order_rule_heldout": {
+   "texts_with_both": 722,
+   "share_obeying": 0.9168975069252078,
+   "share_obeying_after_shuffle": 0.39058171745152354,
+   "share_obeying_ends_kept": 0.8518005540166205
+  },
+  "segments": {
+   "distinct_recurring": 179,
+   "top": {
+    "267 99": {
+     "texts": 168,
+     "final": 3,
+     "medial": 20,
+     "whole text": 1,
+     "initial": 144
+    },
+    "342 1": {
+     "texts": 48,
+     "final": 43,
+     "medial": 5
+    },
+    "347 342": {
+     "texts": 56,
+     "final": 50,
+     "medial": 6
+    },
+    "391 99": {
+     "texts": 56,
+     "medial": 5,
+     "initial": 51
+    },
+    "342 176": {
+     "texts": 59,
+     "final": 57,
+     "medial": 2
+    },
+    "403 87": {
+     "texts": 20,
+     "medial": 15,
+     "final": 1,
+     "whole text": 1,
+     "initial": 3
+    },
+    "48 342": {
+     "texts": 38,
+     "medial": 11,
+     "final": 20,
+     "whole text": 1,
+     "initial": 6
+    },
+    "245 245": {
+     "texts": 33,
+     "final": 20,
+     "medial": 7,
+     "initial": 6
+    },
+    "293 123 343": {
+     "texts": 25,
+     "initial": 25
+    },
+    "150 123": {
+     "texts": 22,
+     "initial": 21,
+     "medial": 1
+    },
+    "59 211": {
+     "texts": 31,
+     "final": 28,
+     "medial": 3
+    },
+    "8 342": {
+     "texts": 58,
+     "whole text": 1,
+     "final": 42,
+     "medial": 15
+    },
+    "391 123": {
+     "texts": 20,
+     "whole text": 1,
+     "initial": 19
+    },
+    "222 254": {
+     "texts": 15,
+     "final": 12,
+     "medial": 2,
+     "whole text": 1
+    },
+    "216 254": {
+     "texts": 19,
+     "medial": 2,
+     "final": 15,
+     "whole text": 1,
+     "initial": 1
+    }
+   },
+   "heldout_token_coverage": 0.477,
+   "heldout_token_coverage_after_shuffle": 0.11014285714285714
+  }
+ },
+ "breakdown": {
+  "site": {
+   "Harappa": {
+    "texts": 489,
+    "tokens": 1909,
+    "signs": 239,
+    "unigram_entropy": 6.508661422292419,
+    "dependence_index": 0.17543561543102204,
+    "pairs_tested": 50,
+    "pairs_attracting": 47,
+    "pairs_avoiding": 0,
+    "top_ender": [
+     342,
+     143
+    ],
+    "top_ender_share": 0.29243353783231085,
+    "enders_covering_80pct": 19,
+    "bigram_perplexity": 31.95997818808875,
+    "bigram_perplexity_over_uniform": 0.13316657578370314,
+    "bits_saved_over_positional": 0.9025989631054232,
+    "js_signs": 0.07602228390133743,
+    "js_signs_null_mean": 0.0529078922627979,
+    "p_signs": 0.000999000999000999,
+    "js_pairs": 0.43650791870763656,
+    "js_pairs_null_mean": 0.40092510014744076,
+    "p_pairs": 0.000999000999000999
+   },
+   "Mohenjodaro": {
+    "texts": 958,
+    "tokens": 4515,
+    "signs": 316,
+    "unigram_entropy": 6.6080830809951125,
+    "dependence_index": 0.18399534102978868,
+    "pairs_tested": 140,
+    "pairs_attracting": 123,
+    "pairs_avoiding": 1,
+    "top_ender": [
+     342,
+     358
+    ],
+    "top_ender_share": 0.3736951983298539,
+    "enders_covering_80pct": 17,
+    "bigram_perplexity": 30.27261966697122,
+    "bigram_perplexity_over_uniform": 0.09549722292419943,
+    "bits_saved_over_positional": 1.0526101274865276,
+    "js_signs": 0.06275903815272695,
+    "js_signs_null_mean": 0.047448186828909486,
+    "p_signs": 0.000999000999000999,
+    "js_pairs": 0.40970976840425977,
+    "js_pairs_null_mean": 0.3821755609216226,
+    "p_pairs": 0.000999000999000999
+   },
+   "other sites": {
+    "texts": 192,
+    "tokens": 802,
+    "signs": 185,
+    "unigram_entropy": 6.495772424223159,
+    "dependence_index": 0.08378273603764545,
+    "pairs_tested": 9,
+    "pairs_attracting": 9,
+    "pairs_avoiding": 0,
+    "top_ender": [
+     342,
+     54
+    ],
+    "top_ender_share": 0.28125,
+    "enders_covering_80pct": 30,
+    "bigram_perplexity": 46.151114689912475,
+    "bigram_perplexity_over_uniform": 0.24812427252641117,
+    "bits_saved_over_positional": 0.6433575740789363,
+    "js_signs": 0.10568019406773455,
+    "js_signs_null_mean": 0.08773490502769173,
+    "p_signs": 0.002997002997002997,
+    "js_pairs": 0.5487688349028398,
+    "js_pairs_null_mean": 0.4941982885792756,
+    "p_pairs": 0.000999000999000999
+   }
+  },
+  "object type": {
+   "miniature tablet": {
+    "texts": 134,
+    "tokens": 394,
+    "signs": 108,
+    "unigram_entropy": 5.874896572406277,
+    "dependence_index": 0.1360057784174437,
+    "pairs_tested": 5,
+    "pairs_attracting": 5,
+    "pairs_avoiding": 0,
+    "top_ender": [
+     176,
+     34
+    ],
+    "top_ender_share": 0.2537313432835821,
+    "enders_covering_80pct": 14,
+    "bigram_perplexity": 28.802849689571357,
+    "bigram_perplexity_over_uniform": 0.2642463274272602,
+    "bits_saved_over_positional": 0.39797232024443296,
+    "js_signs": 0.24620762245319286,
+    "js_signs_null_mean": 0.10918448467085279,
+    "p_signs": 0.000999000999000999,
+    "js_pairs": 0.6866680706470256,
+    "js_pairs_null_mean": 0.5377736210091963,
+    "p_pairs": 0.000999000999000999
+   },
+   "seal": {
+    "texts": 1139,
+    "tokens": 5530,
+    "signs": 334,
+    "unigram_entropy": 6.608694918895271,
+    "dependence_index": 0.19093697026400347,
+    "pairs_tested": 174,
+    "pairs_attracting": 154,
+    "pairs_avoiding": 2,
+    "top_ender": [
+     342,
+     436
+    ],
+    "top_ender_share": 0.38279192273924495,
+    "enders_covering_80pct": 16,
+    "bigram_perplexity": 29.141197749133113,
+    "bigram_perplexity_over_uniform": 0.08698864999741228,
+    "bits_saved_over_positional": 1.0669571168657486,
+    "js_signs": 0.1207394383550738,
+    "js_signs_null_mean": 0.05211025531944176,
+    "p_signs": 0.000999000999000999,
+    "js_pairs": 0.5178241843178165,
+    "js_pairs_null_mean": 0.3981059897931846,
+    "p_pairs": 0.000999000999000999
+   },
+   "sealing": {
+    "texts": 233,
+    "tokens": 901,
+    "signs": 164,
+    "unigram_entropy": 6.246420127794486,
+    "dependence_index": 0.1691273762975708,
+    "pairs_tested": 23,
+    "pairs_attracting": 22,
+    "pairs_avoiding": 0,
+    "top_ender": [
+     342,
+     62
+    ],
+    "top_ender_share": 0.26609442060085836,
+    "enders_covering_80pct": 16,
+    "bigram_perplexity": 29.731843718531398,
+    "bigram_perplexity_over_uniform": 0.1801929922335236,
+    "bits_saved_over_positional": 0.897455883021431,
+    "js_signs": 0.1266291448602069,
+    "js_signs_null_mean": 0.07800118541775465,
+    "p_signs": 0.000999000999000999,
+    "js_pairs": 0.5263838937085121,
+    "js_pairs_null_mean": 0.47155210317844454,
+    "p_pairs": 0.000999000999000999
+   }
+  },
+  "field symbol": {
+   "no field symbol": {
+    "texts": 643,
+    "tokens": 2552,
+    "signs": 266,
+    "unigram_entropy": 6.636137423402669,
+    "dependence_index": 0.17154984645394517,
+    "pairs_tested": 66,
+    "pairs_attracting": 61,
+    "pairs_avoiding": 0,
+    "top_ender": [
+     342,
+     175
+    ],
+    "top_ender_share": 0.27216174183514774,
+    "enders_covering_80pct": 30,
+    "bigram_perplexity": 32.56675494230614,
+    "bigram_perplexity_over_uniform": 0.12197286495245746,
+    "bits_saved_over_positional": 0.9797980788346488,
+    "js_signs": 0.0891346012236092,
+    "js_signs_null_mean": 0.04744085212618535,
+    "p_signs": 0.000999000999000999,
+    "js_pairs": 0.45394378712918504,
+    "js_pairs_null_mean": 0.3804740648582687,
+    "p_pairs": 0.000999000999000999
+   },
+   "other field symbol": {
+    "texts": 275,
+    "tokens": 1102,
+    "signs": 206,
+    "unigram_entropy": 6.484909734344262,
+    "dependence_index": 0.11988969530910243,
+    "pairs_tested": 21,
+    "pairs_attracting": 20,
+    "pairs_avoiding": 0,
+    "top_ender": [
+     342,
+     88
+    ],
+    "top_ender_share": 0.32,
+    "enders_covering_80pct": 20,
+    "bigram_perplexity": 39.58881682194429,
+    "bigram_perplexity_over_uniform": 0.1912503228113251,
+    "bits_saved_over_positional": 0.6896391282504428,
+    "js_signs": 0.07679196732643168,
+    "js_signs_null_mean": 0.07061623297057797,
+    "p_signs": 0.09490509490509491,
+    "js_pairs": 0.47432893087630396,
+    "js_pairs_null_mean": 0.45069810001531996,
+    "p_pairs": 0.012987012987012988
+   },
+   "unicorn": {
+    "texts": 738,
+    "tokens": 3650,
+    "signs": 292,
+    "unigram_entropy": 6.510776581766127,
+    "dependence_index": 0.18041944687471415,
+    "pairs_tested": 107,
+    "pairs_attracting": 95,
+    "pairs_avoiding": 0,
+    "top_ender": [
+     342,
+     297
+    ],
+    "top_ender_share": 0.4024390243902439,
+    "enders_covering_80pct": 13,
+    "bigram_perplexity": 30.274877945092374,
+    "bigram_perplexity_over_uniform": 0.10332722848154394,
+    "bits_saved_over_positional": 0.9989631858985328,
+    "js_signs": 0.06797256065656568,
+    "js_signs_null_mean": 0.046185289119126394,
+    "p_signs": 0.000999000999000999,
+    "js_pairs": 0.4138514336467016,
+    "js_pairs_null_mean": 0.3758883035794841,
+    "p_pairs": 0.000999000999000999
+   }
+  },
+  "signs by field symbol": {
+   "texts_unicorn": 738,
+   "texts_other_field_symbol": 275,
+   "tested_signs": 86,
+   "significant": []
+  }
+ },
+ "estimators": {
+  "plug-in": {
+   "unigram_entropy": 6.681098726097744,
+   "mutual_information": 3.115331873996908,
+   "mutual_information_permuted_corpus": 1.9472595874863874,
+   "conditional_entropy": 3.2214860677159134,
+   "direction_delta_S_primary": -0.41765644859577566
+  },
+  "Miller-Madow": {
+   "unigram_entropy": 6.719845392910191,
+   "mutual_information": 2.9105178678252184,
+   "mutual_information_permuted_corpus": 1.5648871857834266,
+   "conditional_entropy": 3.464669622847418,
+   "direction_delta_S_primary": -0.41899871066718347
+  },
+  "Chao-Shen": {
+   "unigram_entropy": 6.753407816168486,
+   "mutual_information": 2.8608636183124183,
+   "mutual_information_permuted_corpus": 1.2507609077199078,
+   "conditional_entropy": 3.5448492052987097,
+   "direction_delta_S_primary": -0.4045466748728136
+  }
+ },
+ "sample_size": [
+  {
+   "fraction": 0.1,
+   "texts": 155,
+   "unigram_entropy_plugin": 6.382213746633132,
+   "unigram_entropy_chao_shen": 6.640340620565951,
+   "mi_plugin": 4.159329240572512,
+   "mi_chao_shen": 3.516052608148322,
+   "dependence_index": 0.1070183052546565,
+   "bigram_perplexity": 42.41886018967668,
+   "top_ender_share": 0.35870967741935483,
+   "attracting_pairs": 9.6,
+   "signs_seen": 165.2
+  },
+  {
+   "fraction": 0.2,
+   "texts": 310,
+   "unigram_entropy_plugin": 6.543127119384046,
+   "unigram_entropy_chao_shen": 6.731485653177643,
+   "mi_plugin": 3.8473452137416118,
+   "mi_chao_shen": 3.367318397174292,
+   "dependence_index": 0.13329927614100057,
+   "bigram_perplexity": 41.167833938602996,
+   "top_ender_share": 0.33096774193548384,
+   "attracting_pairs": 25.8,
+   "signs_seen": 223.2
+  },
+  {
+   "fraction": 0.3,
+   "texts": 464,
+   "unigram_entropy_plugin": 6.579819282978031,
+   "unigram_entropy_chao_shen": 6.72632583679983,
+   "mi_plugin": 3.6307147110680673,
+   "mi_chao_shen": 3.265442673968662,
+   "dependence_index": 0.14600199523032203,
+   "bigram_perplexity": 36.64737086907004,
+   "top_ender_share": 0.33189655172413796,
+   "attracting_pairs": 49.4,
+   "signs_seen": 251.0
+  },
+  {
+   "fraction": 0.4,
+   "texts": 619,
+   "unigram_entropy_plugin": 6.586706488372647,
+   "unigram_entropy_chao_shen": 6.707718671330795,
+   "mi_plugin": 3.457343492520544,
+   "mi_chao_shen": 3.1440735579297874,
+   "dependence_index": 0.16275281905314326,
+   "bigram_perplexity": 33.76232119955243,
+   "top_ender_share": 0.3453957996768982,
+   "attracting_pairs": 73.2,
+   "signs_seen": 275.2
+  },
+  {
+   "fraction": 0.5,
+   "texts": 774,
+   "unigram_entropy_plugin": 6.649741329240195,
+   "unigram_entropy_chao_shen": 6.758088027857426,
+   "mi_plugin": 3.4078832523819607,
+   "mi_chao_shen": 3.1088516209130583,
+   "dependence_index": 0.16457591120513348,
+   "bigram_perplexity": 34.17395258296526,
+   "top_ender_share": 0.3250645994832041,
+   "attracting_pairs": 90.2,
+   "signs_seen": 301.8
+  },
+  {
+   "fraction": 0.6,
+   "texts": 929,
+   "unigram_entropy_plugin": 6.658680439591691,
+   "unigram_entropy_chao_shen": 6.758803828738624,
+   "mi_plugin": 3.341837127150856,
+   "mi_chao_shen": 3.069377500255359,
+   "dependence_index": 0.1778488609194922,
+   "bigram_perplexity": 32.60860393246459,
+   "top_ender_share": 0.32917115177610334,
+   "attracting_pairs": 112.8,
+   "signs_seen": 325.4
+  },
+  {
+   "fraction": 0.7,
+   "texts": 1084,
+   "unigram_entropy_plugin": 6.6554944821675,
+   "unigram_entropy_chao_shen": 6.745656327122552,
+   "mi_plugin": 3.253182641190957,
+   "mi_chao_shen": 2.988894977831757,
+   "dependence_index": 0.1840527109177878,
+   "bigram_perplexity": 31.50503457905038,
+   "top_ender_share": 0.3398523985239853,
+   "attracting_pairs": 126.0,
+   "signs_seen": 338.2
+  },
+  {
+   "fraction": 0.8,
+   "texts": 1238,
+   "unigram_entropy_plugin": 6.668589535148607,
+   "unigram_entropy_chao_shen": 6.750013380774275,
+   "mi_plugin": 3.2012482299877334,
+   "mi_chao_shen": 2.9382314041290973,
+   "dependence_index": 0.1884943032283817,
+   "bigram_perplexity": 30.99089856169556,
+   "top_ender_share": 0.3397415185783522,
+   "attracting_pairs": 145.4,
+   "signs_seen": 349.8
+  },
+  {
+   "fraction": 0.9,
+   "texts": 1393,
+   "unigram_entropy_plugin": 6.677781197552602,
+   "unigram_entropy_chao_shen": 6.753658934839104,
+   "mi_plugin": 3.147675772295126,
+   "mi_chao_shen": 2.8921734241074684,
+   "dependence_index": 0.19201775687786754,
+   "bigram_perplexity": 30.489779713641457,
+   "top_ender_share": 0.33711414213926777,
+   "attracting_pairs": 158.8,
+   "signs_seen": 363.8
+  },
+  {
+   "fraction": 1.0,
+   "texts": 1548,
+   "unigram_entropy_plugin": 6.681098726097744,
+   "unigram_entropy_chao_shen": 6.753407816168486,
+   "mi_plugin": 3.115331873996908,
+   "mi_chao_shen": 2.8608636183124183,
+   "dependence_index": 0.19842150416080542,
+   "bigram_perplexity": 29.830101677795028,
+   "top_ender_share": 0.3397932816537468,
+   "attracting_pairs": 179.0,
+   "signs_seen": 377.0
+  }
+ ],
+ "resegmentation": {
+  "split, 5% of sign types": {
+   "dependence_index": [
+    0.21340546560445744,
+    0.011609791685259233
+   ],
+   "attracting_share": [
+    0.8350141381061282,
+    0.021551351940295532
+   ],
+   "top_ender_share": [
+    0.340870802703908,
+    0.0022886012776533043
+   ],
+   "bits_saved_over_positional": [
+    1.1011899904460303,
+    0.0332586077922961
+   ],
+   "same_direction": true
+  },
+  "merged, 5% of sign types": {
+   "dependence_index": [
+    0.19660145694134162,
+    0.0006867010415756895
+   ],
+   "attracting_share": [
+    0.8670671632824704,
+    0.0036485351605309527
+   ],
+   "top_ender_share": [
+    0.3397932816537468,
+    0.0
+   ],
+   "bits_saved_over_positional": [
+    1.0629379031726418,
+    0.012268676304372741
+   ],
+   "same_direction": true
+  },
+  "split, 10% of sign types": {
+   "dependence_index": [
+    0.2214979105400102,
+    0.0210323122287901
+   ],
+   "attracting_share": [
+    0.8021286741130871,
+    0.03444787831832584
+   ],
+   "top_ender_share": [
+    0.3403100775193798,
+    0.0008422742125584818
+   ],
+   "bits_saved_over_positional": [
+    1.1285946916547043,
+    0.055077721202619445
+   ],
+   "same_direction": true
+  },
+  "merged, 10% of sign types": {
+   "dependence_index": [
+    0.19746912595919633,
+    0.0006936836411565946
+   ],
+   "attracting_share": [
+    0.8678426059762507,
+    0.006010979821214074
+   ],
+   "top_ender_share": [
+    0.3398836758014407,
+    0.0002467646845928841
+   ],
+   "bits_saved_over_positional": [
+    1.0509498996033073,
+    0.0051365048488985045
+   ],
+   "same_direction": true
+  },
+  "split, 20% of sign types": {
+   "dependence_index": [
+    0.2324689656401903,
+    0.016730410390184275
+   ],
+   "attracting_share": [
+    0.7715654243887394,
+    0.01334986002542844
+   ],
+   "top_ender_share": [
+    0.3562051415676587,
+    0.03217269338398922
+   ],
+   "bits_saved_over_positional": [
+    1.153628368859482,
+    0.0413480371963247
+   ],
+   "same_direction": true
+  },
+  "merged, 20% of sign types": {
+   "dependence_index": [
+    0.19673695893231513,
+    0.0014343978505219177
+   ],
+   "attracting_share": [
+    0.8650494544527223,
+    0.007136375366194825
+   ],
+   "top_ender_share": [
+    0.3398447338805944,
+    0.00028031291328394154
+   ],
+   "bits_saved_over_positional": [
+    1.0388195716794202,
+    0.01452910694427284
+   ],
+   "same_direction": true
+  }
+ },
+ "multiple_comparisons": [
+  {
+   "test": "sign order vs within-text shuffle (mutual information)",
+   "p": 0.000999000999000999,
+   "q_bh": 0.001123876123876124,
+   "p_holm": 0.03496503496503497
+  },
+  {
+   "test": "direction: primary: labelled right-to-left, single-line",
+   "p": 0.000999000999000999,
+   "q_bh": 0.001123876123876124,
+   "p_holm": 0.03496503496503497
+  },
+  {
+   "test": "direction: same, duplicate texts removed",
+   "p": 0.000999000999000999,
+   "q_bh": 0.001123876123876124,
+   "p_holm": 0.03496503496503497
+  },
+  {
+   "test": "direction: labelled right-to-left, all lines",
+   "p": 0.000999000999000999,
+   "q_bh": 0.001123876123876124,
+   "p_holm": 0.03496503496503497
+  },
+  {
+   "test": "direction: labelled left-to-right, all lines",
+   "p": 0.000999000999000999,
+   "q_bh": 0.001123876123876124,
+   "p_holm": 0.03496503496503497
+  },
+  {
+   "test": "direction: labelled left-to-right, single-line",
+   "p": 0.000999000999000999,
+   "q_bh": 0.001123876123876124,
+   "p_holm": 0.03496503496503497
+  },
+  {
+   "test": "direction: right-to-left single-line, object_type = seal",
+   "p": 0.000999000999000999,
+   "q_bh": 0.001123876123876124,
+   "p_holm": 0.03496503496503497
+  },
+  {
+   "test": "direction: right-to-left single-line, object_type = sealing",
+   "p": 0.000999000999000999,
+   "q_bh": 0.001123876123876124,
+   "p_holm": 0.03496503496503497
+  },
+  {
+   "test": "direction: right-to-left single-line, object_type = miniature tablet",
+   "p": 0.000999000999000999,
+   "q_bh": 0.001123876123876124,
+   "p_holm": 0.03496503496503497
+  },
+  {
+   "test": "direction: right-to-left single-line, object_type = copper tablet",
+   "p": 0.000999000999000999,
+   "q_bh": 0.001123876123876124,
+   "p_holm": 0.03496503496503497
+  },
+  {
+   "test": "direction: right-to-left single-line, site = Mohenjodaro",
+   "p": 0.000999000999000999,
+   "q_bh": 0.001123876123876124,
+   "p_holm": 0.03496503496503497
+  },
+  {
+   "test": "direction: right-to-left single-line, site = Harappa",
+   "p": 0.000999000999000999,
+   "q_bh": 0.001123876123876124,
+   "p_holm": 0.03496503496503497
+  },
+  {
+   "test": "direction: primary, no top-1 text-beginner or ender at either end",
+   "p": 0.000999000999000999,
+   "q_bh": 0.001123876123876124,
+   "p_holm": 0.03496503496503497
+  },
+  {
+   "test": "direction: primary, no top-3 text-beginner or ender at either end",
+   "p": 0.000999000999000999,
+   "q_bh": 0.001123876123876124,
+   "p_holm": 0.03496503496503497
+  },
+  {
+   "test": "direction: primary, no top-5 text-beginner or ender at either end",
+   "p": 0.000999000999000999,
+   "q_bh": 0.001123876123876124,
+   "p_holm": 0.03496503496503497
+  },
+  {
+   "test": "direction: primary, no top-10 text-beginner or ender at either end",
+   "p": 0.000999000999000999,
+   "q_bh": 0.001123876123876124,
+   "p_holm": 0.03496503496503497
+  },
+  {
+   "test": "direction: primary, no top-20 text-beginner or ender at either end",
+   "p": 0.8711288711288712,
+   "q_bh": 0.8711288711288712,
+   "p_holm": 0.8711288711288712
+  },
+  {
+   "test": "site = Harappa: sign frequencies differ from the rest",
+   "p": 0.000999000999000999,
+   "q_bh": 0.001123876123876124,
+   "p_holm": 0.03496503496503497
+  },
+  {
+   "test": "site = Harappa: adjacent pairs differ from the rest",
+   "p": 0.000999000999000999,
+   "q_bh": 0.001123876123876124,
+   "p_holm": 0.03496503496503497
+  },
+  {
+   "test": "site = Mohenjodaro: sign frequencies differ from the rest",
+   "p": 0.000999000999000999,
+   "q_bh": 0.001123876123876124,
+   "p_holm": 0.03496503496503497
+  },
+  {
+   "test": "site = Mohenjodaro: adjacent pairs differ from the rest",
+   "p": 0.000999000999000999,
+   "q_bh": 0.001123876123876124,
+   "p_holm": 0.03496503496503497
+  },
+  {
+   "test": "site = other sites: sign frequencies differ from the rest",
+   "p": 0.002997002997002997,
+   "q_bh": 0.00326945781491236,
+   "p_holm": 0.03496503496503497
+  },
+  {
+   "test": "site = other sites: adjacent pairs differ from the rest",
+   "p": 0.000999000999000999,
+   "q_bh": 0.001123876123876124,
+   "p_holm": 0.03496503496503497
+  },
+  {
+   "test": "object type = miniature tablet: sign frequencies differ from the rest",
+   "p": 0.000999000999000999,
+   "q_bh": 0.001123876123876124,
+   "p_holm": 0.03496503496503497
+  },
+  {
+   "test": "object type = miniature tablet: adjacent pairs differ from the rest",
+   "p": 0.000999000999000999,
+   "q_bh": 0.001123876123876124,
+   "p_holm": 0.03496503496503497
+  },
+  {
+   "test": "object type = seal: sign frequencies differ from the rest",
+   "p": 0.000999000999000999,
+   "q_bh": 0.001123876123876124,
+   "p_holm": 0.03496503496503497
+  },
+  {
+   "test": "object type = seal: adjacent pairs differ from the rest",
+   "p": 0.000999000999000999,
+   "q_bh": 0.001123876123876124,
+   "p_holm": 0.03496503496503497
+  },
+  {
+   "test": "object type = sealing: sign frequencies differ from the rest",
+   "p": 0.000999000999000999,
+   "q_bh": 0.001123876123876124,
+   "p_holm": 0.03496503496503497
+  },
+  {
+   "test": "object type = sealing: adjacent pairs differ from the rest",
+   "p": 0.000999000999000999,
+   "q_bh": 0.001123876123876124,
+   "p_holm": 0.03496503496503497
+  },
+  {
+   "test": "field symbol = no field symbol: sign frequencies differ from the rest",
+   "p": 0.000999000999000999,
+   "q_bh": 0.001123876123876124,
+   "p_holm": 0.03496503496503497
+  },
+  {
+   "test": "field symbol = no field symbol: adjacent pairs differ from the rest",
+   "p": 0.000999000999000999,
+   "q_bh": 0.001123876123876124,
+   "p_holm": 0.03496503496503497
+  },
+  {
+   "test": "field symbol = other field symbol: sign frequencies differ from the rest",
+   "p": 0.09490509490509491,
+   "q_bh": 0.09761666904524048,
+   "p_holm": 0.18981018981018982
+  },
+  {
+   "test": "field symbol = other field symbol: adjacent pairs differ from the rest",
+   "p": 0.012987012987012988,
+   "q_bh": 0.013750954927425518,
+   "p_holm": 0.03896103896103896
+  },
+  {
+   "test": "field symbol = unicorn: sign frequencies differ from the rest",
+   "p": 0.000999000999000999,
+   "q_bh": 0.001123876123876124,
+   "p_holm": 0.03496503496503497
+  },
+  {
+   "test": "field symbol = unicorn: adjacent pairs differ from the rest",
+   "p": 0.000999000999000999,
+   "q_bh": 0.001123876123876124,
+   "p_holm": 0.03496503496503497
+  },
+  {
+   "test": "sign before a line break is ender-like more than a medial sign",
+   "p": 2.1746175849657036e-16,
+   "q_bh": 7.828623305876533e-15,
+   "p_holm": 7.828623305876533e-15
+  }
+ ],
+ "provenance": {
+  "python": "3.10.12",
+  "packages": {
+   "numpy": "2.2.6",
+   "scipy": "1.15.3",
+   "pandas": "2.3.3",
+   "matplotlib": "3.10.9"
+  },
+  "git_commit": "da2e03776666e5fcd6af968c932bf3f28fceb35d",
+  "uncommitted_changes": false,
+  "inputs_sha256": {
+   "data/raw/im77/im77_corpus_lines.csv": "385b82bd6a9629e0ab215af46db84ca0c9ec4f6044a2a2ea58a3c64121f26211",
+   "data/raw/yajnadevam/population-script.sql": "a1bcc150e91ede5e1c3ce813073d8ac7bfe370d2709be320132a651ba9c7a54c",
+   "data/raw/reference/cdliatf_unblocked.atf": "2896ec253767fa07fcaa5424af6fc25d6a047dc30b99c95f99d57ce75384d836",
+   "data/raw/reference/lambda_phage.fasta": "78a78913d3585570fa28b7cec05e4fcf067c1aaa3740d37a377f2babda70618c",
+   "data/raw/reference/linear_b_samples.txt": "b535abc5be2e77cb2ac6af60a87341e4091b975c9132e02af0f2b0fb2aa90837",
+   "data/raw/reference/pride_and_prejudice.txt": "3f6bb9d6f78e0293b56acd4714dd68cb7d6d1d293402031ce9d5a216bcaf9d75"
+  },
+  "essen_krn_files_sha256": "471d640f3b1aa04b8e05fd67658e584de71daec4d5fe8f106375b37fdba7af2c",
+  "python_stdlib_tokens_sha256": "96166055545e0a619400e46928889206c5a6bcaa5ca1402473869d613ff850bd"
  }
 }
