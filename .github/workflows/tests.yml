@@ -1,0 +1,13 @@
+name: tests
+on: [push, pull_request]
+jobs:
+  sequence-analysis:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      # only the Milestone 2 dependencies, at the versions pinned in requirements.txt; corpus tests skip without data/raw
+      - run: pip install $(grep -E '^(numpy|scipy|pandas|matplotlib|pytest)==' requirements.txt)
+      - run: python -m pytest -q sequence_analysis

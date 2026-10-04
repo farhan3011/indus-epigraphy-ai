@@ -8,17 +8,24 @@ milestone_2_report.md. Only aggregate statistics are written, never the corpus t
 """
 import argparse
 import csv
+import hashlib
+import importlib.metadata
 import json
-from collections import Counter
+import subprocess
+import sys
+from collections import Counter, defaultdict
 
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.sparse import csr_matrix
+from scipy.stats import chi2, fisher_exact
 
 import ngram
 import stats
-from corpus import EBUDS_PUBLISHED, REFERENCE, ROOT, WELLS_SQL, ebuds, load_lines, load_wells, physical, reference_systems
+from corpus import (EBUDS_PUBLISHED, IM77_CSV, REFERENCE, ROOT, WELLS_SQL, ebuds, ebuds_rows, load_lines, load_wells, physical,
+                    reference_systems)
 from ngram import BOS, EOS, AddK, KneserNey, Positional, Uniform, WittenBell
 
 OUT = ROOT / "reports/milestone_2"
@@ -59,19 +66,25 @@ def language_models(texts, vocab):
     return out
 
 
-def restoration(texts, vocab):
-    """Remove one sign and predict it from both neighbours with the bigram model:
-    P(w | prev, next) is proportional to P(w | prev) * P(next | w). 5-fold, every position of every test text."""
+def restoration(texts, vocab, make=lambda tr, v: WittenBell(tr, v, 2, backoff=True)):
+    """Remove one sign and rank every candidate by the model probability of the text with the candidate
+    in its place, from both sides: only the terms that change are scored (the candidate's own probability
+    and the next order-1 events). For a bigram, P(w | prev, next) is proportional to P(w | prev) * P(next | w).
+    5-fold, every position of every test text."""
     idx = {s: i for i, s in enumerate(vocab)}
     top1 = top5 = in90 = strict = total = 0
     set_sizes = []
     for train, test in ngram.folds(texts):
-        P = ngram.transition_matrix(WittenBell(train, vocab, 2, backoff=True), vocab)  # [context: BOS, signs] x [event: signs, EOS]
+        m = make(train, vocab)
         for t in test:
-            for j, true in enumerate(t):
-                prev = 0 if j == 0 else idx[t[j - 1]] + 1
-                nxt = len(vocab) if j == len(t) - 1 else idx[t[j + 1]]
-                score = P[prev, :len(vocab)] * P[1:, nxt]
+            s = [BOS, *t, EOS]
+            for j, true in enumerate(t, 1):
+                score = np.ones(len(vocab))
+                for k in range(j, min(j + m.order, len(s))):  # events whose history or identity contain position j
+                    lo = max(0, k - m.order + 1)
+                    for ci, w in enumerate(vocab):
+                        h = tuple(w if i == j else s[i] for i in range(lo, k))
+                        score[ci] *= m.prob(w if k == j else s[k], h)
                 order = np.argsort(-score)
                 rank = int(np.where(order == idx[true])[0][0])
                 k90 = int(np.searchsorted(np.cumsum(score[order]) / score.sum(), 0.9) + 1)
@@ -83,14 +96,19 @@ def restoration(texts, vocab):
             "mean_size_of_90pct_set": float(np.mean(set_sizes))}
 
 
+def permute_tokens(texts, rng):
+    """Every token permuted across the corpus, text lengths kept: memoryless, same sign frequencies."""
+    cuts = np.cumsum([len(t) for t in texts])[:-1]
+    return [tuple(t) for t in np.split(rng.permutation(np.concatenate(texts)), cuts)]
+
+
 def structure_test(texts, n_resample, seed=0):
     """Is sign order within a text non-random? Compare adjacent-sign mutual information with the
     same texts after shuffling the signs inside each one (keeps every text's length and contents)."""
     rng = np.random.default_rng(seed)
     observed = stats.mutual_information(texts)
     null = [stats.mutual_information([tuple(rng.permutation(t)) for t in texts]) for _ in range(n_resample)]
-    tokens, cuts = np.concatenate(texts), np.cumsum([len(t) for t in texts])[:-1]
-    memoryless = [stats.mutual_information([tuple(t) for t in np.split(rng.permutation(tokens), cuts)]) for _ in range(20)]
+    memoryless = [stats.mutual_information(permute_tokens(texts, rng)) for _ in range(20)]
     return {"observed_bits": observed, "shuffled_mean_bits": float(np.mean(null)), "all_tokens_permuted_bits": float(np.mean(memoryless)),
             "shuffled_95": np.percentile(null, [2.5, 97.5]).tolist(),
             "p": float((np.sum(np.array(null) >= observed) + 1) / (n_resample + 1))}
@@ -111,7 +129,7 @@ def direction_analysis(lines, texts, n_resample):
         return stats.direction_test(phys, n_resample) if len(phys) >= 30 else {"lines": len(phys), "skipped": "fewer than 30 lines"}
 
     rtl, ltr, single = d.direction == "right-to-left", d.direction == "left-to-right", d.line == "0"
-    out = {
+    out = {"share labelled right-to-left": float(rtl.mean()),
         "primary: labelled right-to-left, single-line": group(rtl & single),
         "same, duplicate texts removed": group(rtl & single, dedupe=True),
         "labelled right-to-left, all lines": group(rtl),
@@ -198,10 +216,9 @@ def cv_stability(texts, vocab, seeds=10):
     makers = {"positional (no sign-to-sign dependence)": Positional, "kneser-ney n=2": KneserNey,
               **{f"witten-bell backoff n={n}": (lambda tr, v, n=n: WittenBell(tr, v, n, backoff=True)) for n in (1, 2, 3)}}
     folds = {name: [ngram.cross_validate(make, texts, vocab, seed=s)[0] for s in range(seeds)] for name, make in makers.items()}
-    out = {name: {"perplexity_mean": 2 ** float(np.mean([np.mean(f) for f in fs])),
-                  "perplexity_sd_across_splits": float(np.std([2 ** np.mean(f) for f in fs], ddof=1)),
-                  "perplexity_range": [2 ** float(min(map(np.mean, fs))), 2 ** float(max(map(np.mean, fs)))]}
-           for name, fs in folds.items()}
+    ppl = {name: [2 ** float(np.mean(f)) for f in fs] for name, fs in folds.items()}
+    out = {name: {"perplexity_mean": float(np.mean(p)), "perplexity_sd_across_splits": float(np.std(p, ddof=1)),
+                  "perplexity_range": [min(p), max(p)]} for name, p in ppl.items()}
     pos, big = np.ravel(folds["positional (no sign-to-sign dependence)"]), np.ravel(folds["witten-bell backoff n=2"])
     out["bigram better than positional"] = {"folds": int((big < pos).sum()), "of": len(big),
                                             "smallest_gain_bits": float((pos - big).min())}
@@ -258,9 +275,8 @@ def cross_system(texts, refs, samples, seed=0):
             s.append(int(successor[s[-1]]))
         return tuple(s)
 
-    tokens, cuts = np.concatenate(texts), np.cumsum(lengths)[:-1]
     systems = {"Indus (IM77, EBUDS)": [texts], **{k: [window(v) for _ in range(samples)] for k, v in refs.items()},
-               "Indus signs permuted across the corpus (memoryless)": [[tuple(t) for t in np.split(rng.permutation(tokens), cuts)] for _ in range(samples)],
+               "Indus signs permuted across the corpus (memoryless)": [permute_tokens(texts, rng) for _ in range(samples)],
                "random, 377 equiprobable signs (Rao type 1)": [[tuple(rng.integers(0, 377, n)) for n in lengths] for _ in range(samples)],
                "rigid, each sign has one fixed successor (Rao type 2)": [[rigid(n) for n in lengths] for _ in range(samples)]}
     out = {}
@@ -268,7 +284,7 @@ def cross_system(texts, refs, samples, seed=0):
         rows = []
         for c in corpora:
             rows.append([len({s for t in c for s in t}), stats.entropy(Counter(s for t in c for s in t).values()),
-                         stats.conditional_entropy(c), dependence(c, rng), dependence(c, rng, top_n=20),
+                         stats.conditional_entropy(c), dependence(c), dependence(c, top_n=20),
                          *[stats.conditional_entropy(c, n) for n in RAO_N]])
         m, sd = np.mean(rows, 0), np.std(rows, 0, ddof=1) if len(rows) > 1 else np.zeros(len(rows[0]))
         out[name] = {"signs_in_sample": float(m[0]), "unigram_entropy": float(m[1]), "conditional_entropy": float(m[2]),
@@ -280,12 +296,13 @@ def cross_system(texts, refs, samples, seed=0):
 RAO_N = (2, 4, 10, 20, 50, 100, 200, 400)
 
 
-def dependence(texts, rng, top_n=None, shuffles=10):
+def dependence(texts, top_n=None, shuffles=10, seed=0):
     """Share of the next sign's uncertainty removed by knowing the current one, beyond what is left
     after shuffling signs within each text (same length and contents):
-    (H_shuffled(next | current) - H(next | current)) / H(sign). 0 = no order dependence, 1 = rigid.
+    (H_shuffled(next | current) - H(next | current)) / H(sign). 0 = no order dependence.
     The plug-in H(next | current) is biased low when most pairs are seen once; the shuffle shares the
     bias, but a large vocabulary still compresses the index (see the report)."""
+    rng = np.random.default_rng(seed)
     counts = Counter(s for t in texts for s in t)
     h = stats.entropy([c for _, c in counts.most_common(top_n)])
     shuffled = np.mean([stats.conditional_entropy([tuple(rng.permutation(t)) for t in texts], top_n) for _ in range(shuffles)])
@@ -300,7 +317,7 @@ def corpus_summary(texts, cv=True):
     attracting, avoiding = stats.significant_pairs(table)
     tested = sum(r[2] >= stats.MIN_PAIR_COUNT for r in table)
     out = {"texts": len(texts), "tokens": sum(counts.values()), "signs": len(vocab), "unigram_entropy": stats.entropy(counts.values()),
-           "dependence_index": dependence(texts, np.random.default_rng(0)),
+           "dependence_index": dependence(texts),
            "pairs_tested": tested, "pairs_attracting": attracting, "pairs_avoiding": avoiding,
            "top_ender": end.most_common(1)[0], "top_ender_share": end.most_common(1)[0][1] / len(texts),
            "enders_covering_80pct": stats.coverage(end.values()),
@@ -313,11 +330,12 @@ def corpus_summary(texts, cv=True):
     return out
 
 
-def corpus_variants(lines, wells):
+def corpus_variants(lines, wells, extra):
     base, _ = ebuds(lines)
     variants = {"IM77, EBUDS (main analysis)": corpus_summary(base),
                 "IM77, doubtful readings kept": corpus_summary(ebuds(lines, keep_doubtful=True)[0]),
-                "IM77, every copy of repeated texts kept": corpus_summary(ebuds(lines, keep_copies=True)[0], cv=False)}
+                "IM77, every copy of repeated texts kept": corpus_summary(ebuds(lines, keep_copies=True)[0], cv=False),
+                **{name: corpus_summary(t) for name, t in extra.items()}}
     if wells:
         w, head = wells
         variants["Wells/ICIT (yajnadevam), signs as listed"] = corpus_summary(w)
@@ -343,6 +361,318 @@ def replication_gaps(texts, lines):
             out["perplexity_protocols"][f"{k}-fold, " + ("no count cutoff" if cut == 1 else "SRILM default cutoff (order 3+ n-grams seen once dropped)")] = \
                 [2 ** float(np.mean(ngram.cross_validate_skipping_unseen(make(n), texts, k=k)[0])) for n in range(1, 6)]
     return out
+
+
+MIN_CLASS_COUNT = 25  # signs rarer than this get no class: expected initial/final counts near 5, where chi-square holds
+
+
+def positional_classes(texts):
+    """Classify each sign with at least MIN_CLASS_COUNT tokens by where it occurs in texts of two or more
+    signs (reading order). Under no positional preference a sign in a text of length L is initial with
+    probability 1/L, final 1/L, medial (L-2)/L; a sign whose observed counts differ from that (chi-square,
+    2 d.o.f., Benjamini-Hochberg 5%) takes the class with the largest observed/expected ratio, else 'free'."""
+    obs, exp = defaultdict(lambda: np.zeros(3)), defaultdict(lambda: np.zeros(3))
+    for t in texts:
+        if len(t) < 2:
+            continue
+        for i, s in enumerate(t):
+            obs[s][0 if i == 0 else 2 if i == len(t) - 1 else 1] += 1
+            exp[s] += [1 / len(t), (len(t) - 2) / len(t), 1 / len(t)]
+    signs = [s for s in obs if obs[s].sum() >= MIN_CLASS_COUNT]
+    p = [chi2.sf(float(((obs[s] - exp[s]) ** 2 / np.maximum(exp[s], 1e-9)).sum()), 2) for s in signs]
+    q = stats.benjamini_hochberg(p) if signs else []
+    return {s: ("initial", "medial", "final")[int(np.argmax(obs[s] / np.maximum(exp[s], 1e-9)))] if qq < 0.05 else "free"
+            for s, qq in zip(signs, q)}
+
+
+def class_order_rule(cls, texts):
+    """Share of texts holding both an initial-class and a final-class sign in which every initial-class sign
+    comes before every final-class sign (reading order)."""
+    both = ok = 0
+    for t in texts:
+        ini = [i for i, s in enumerate(t) if cls.get(s) == "initial"]
+        fin = [i for i, s in enumerate(t) if cls.get(s) == "final"]
+        if ini and fin:
+            both += 1
+            ok += max(ini) < min(fin)
+    return ok, both
+
+
+def syntax(texts, n_resample, seed=0):
+    """Item 1 of the proposal's 'syntax rules': positional sign classes, the order of classes within a text,
+    and recurring multi-sign segments. Rules are learnt on training folds and checked on held-out texts
+    against the same texts with their signs shuffled."""
+    rng = np.random.default_rng(seed)
+    cls = positional_classes(texts)
+    counts = Counter(s for t in texts for s in t)
+    by_class = defaultdict(list)
+    for s, c in sorted(cls.items(), key=lambda kv: -counts[kv[0]]):
+        by_class[c].append(s)
+    # class transitions against within-text shuffles
+    def class_pairs(seqs):
+        labelled = [[cls.get(s, "rare") for s in t] for t in seqs]
+        return Counter(p for l in labelled for p in zip(l, l[1:]))
+
+    # null: medial signs shuffled, first and last kept, so positional preference alone is not counted as order
+    inner = lambda t: t if len(t) < 3 else (t[0], *rng.permutation(t[1:-1]), t[-1])
+    obs = class_pairs(texts)
+    null = [class_pairs([inner(t) for t in texts]) for _ in range(n_resample // 5)]
+    trans = []
+    for pair in sorted(set(obs) | {p for c in null for p in c}):
+        nv = np.array([c[pair] for c in null], float)
+        trans.append({"first": pair[0], "second": pair[1], "observed": obs[pair], "shuffled_mean": float(nv.mean()),
+                      "z": float((obs[pair] - nv.mean()) / max(nv.std(ddof=1), 1e-9))})
+    # held-out checks: classes and segments from training folds only
+    rule_obs = rule_shuf = rule_inner = np.zeros(2)
+    seg_cov = seg_cov_shuf = np.zeros(2)
+    for train, test in ngram.folds(texts):
+        c = positional_classes(train)
+        shuffled = [tuple(rng.permutation(t)) for t in test]
+        rule_obs, rule_shuf = rule_obs + class_order_rule(c, test), rule_shuf + class_order_rule(c, shuffled)
+        rule_inner = rule_inner + class_order_rule(c, [inner(t) for t in test])
+        segs = recurring_segments(train)
+        seg_cov, seg_cov_shuf = seg_cov + coverage_by_segments(segs, test), seg_cov_shuf + coverage_by_segments(segs, shuffled)
+    segs = recurring_segments(texts)
+    seg_pos = {}
+    for seg, n in segs.most_common(15):
+        k = len(seg)
+        at = [(t, i) for t in texts for i in range(len(t) - k + 1) if t[i:i + k] == seg]
+        where = Counter("whole text" if len(t) == k else "initial" if i == 0 else "final" if i == len(t) - k else "medial" for t, i in at)
+        seg_pos[" ".join(map(str, seg))] = {"texts": len({t for t, _ in at}), **where}
+    return {"classes": {k: {"signs": len(v), "examples": v[:12]} for k, v in by_class.items()},
+            "classified_signs": len(cls), "token_share_classified": sum(counts[s] for s in cls) / sum(counts.values()),
+            "class_transitions": sorted(trans, key=lambda r: -abs(r["z"])),
+            "order_rule_heldout": {"texts_with_both": int(rule_obs[1]), "share_obeying": rule_obs[0] / rule_obs[1],
+                                   "share_obeying_after_shuffle": rule_shuf[0] / rule_shuf[1],
+                                   "share_obeying_ends_kept": rule_inner[0] / rule_inner[1]},
+            "segments": {"distinct_recurring": len(segs), "top": seg_pos,
+                         "heldout_token_coverage": seg_cov[0] / seg_cov[1], "heldout_token_coverage_after_shuffle": seg_cov_shuf[0] / seg_cov_shuf[1]}}
+
+
+SEGMENT_MIN_PAIR, SEGMENT_MIN_PMI, SEGMENT_MIN_TEXTS = 3, 1.0, 3
+
+
+def recurring_segments(texts):
+    """Cut each text between adjacent signs that are not strongly associated (pair seen at least
+    SEGMENT_MIN_PAIR times with PMI of at least SEGMENT_MIN_PMI bits); keep the pieces of two or more
+    signs that recur in at least SEGMENT_MIN_TEXTS distinct texts. Returns Counter(segment -> texts)."""
+    table, _ = stats.pair_table(texts)
+    glue = {(a, b) for a, b, k, e, *_ in table if k >= SEGMENT_MIN_PAIR and np.log2(k / e) >= SEGMENT_MIN_PMI}
+    found = Counter()
+    for t in set(texts):
+        piece, pieces = [t[0]], []
+        for a, b in zip(t, t[1:]):
+            if (a, b) in glue:
+                piece.append(b)
+            else:
+                pieces.append(tuple(piece))
+                piece = [b]
+        pieces.append(tuple(piece))
+        found.update({p for p in pieces if len(p) >= 2})
+    return Counter({p: n for p, n in found.items() if n >= SEGMENT_MIN_TEXTS})
+
+
+def coverage_by_segments(segs, texts):
+    """(tokens inside an occurrence of a known segment, all tokens)."""
+    covered = total = 0
+    for t in texts:
+        hit = np.zeros(len(t), bool)
+        for seg in segs:
+            k = len(seg)
+            for i in range(len(t) - k + 1):
+                if t[i:i + k] == seg:
+                    hit[i:i + k] = True
+        covered, total = covered + int(hit.sum()), total + len(t)
+    return np.array([covered, total])
+
+
+def count_matrix(seqs, items):
+    """Sparse texts x items count matrix; items(t) lists the items (signs, pairs) of one text."""
+    keys, rows, cols = {}, [], []
+    for i, t in enumerate(seqs):
+        for k in items(t):
+            rows.append(i)
+            cols.append(keys.setdefault(k, len(keys)))
+    return csr_matrix((np.ones(len(rows)), (rows, cols)), shape=(len(seqs), len(keys)))
+
+
+def icon_group(desc):
+    d = desc.lower()
+    return "unicorn" if "unicorn" in d else "no field symbol" if d.startswith("no field") else "other field symbol"
+
+
+def breakdown(lines, n_perm, seed=0):
+    """Do sign use and sign order differ by site, object type or field symbol (the animal or motif on the
+    object)? Per group: the headline statistics; per group against the rest: Jensen-Shannon divergence of
+    sign and adjacent-pair frequencies, with a permutation p (group labels shuffled across texts).
+    IM77 records no dates ('level' is excavation depth with a datum per site), so period cannot be tested."""
+    rng = np.random.default_rng(seed)
+    x = ebuds_rows(lines).copy()
+    x["field symbol"] = x.fs_description.map(icon_group)
+    x["site_"] = x.site.where(x.site.isin(["Mohenjodaro", "Harappa"]), "other sites")
+    x["object"] = x.object_type.where(x.object_type.isin(["seal", "sealing", "miniature tablet", "copper tablet"]), "other objects")
+    out = {}
+    for name, col in (("site", "site_"), ("object type", "object"), ("field symbol", "field symbol")):
+        rows = x[[col, "signs"]].drop_duplicates()  # one copy of a text per group
+        labels, seqs = rows[col].to_numpy(), list(rows.signs)
+        U, P = count_matrix(seqs, lambda t: t), count_matrix(seqs, lambda t: zip(t, t[1:]))
+        js = lambda M, m: stats.js_divergence(M.T @ m.astype(float), M.T @ (~m).astype(float))
+        groups = {}
+        for g in sorted(set(labels)):
+            m = labels == g
+            if m.sum() < 100:
+                continue
+            obs = (js(U, m), js(P, m))
+            null = np.array([(js(U, pm), js(P, pm)) for pm in (rng.permutation(m) for _ in range(n_perm))])
+            groups[g] = {**{k: v for k, v in corpus_summary(sorted(set(t for t, k in zip(seqs, m) if k))).items() if k != "top20_pairs"},
+                         "js_signs": obs[0], "js_signs_null_mean": float(null[:, 0].mean()), "p_signs": float(((null[:, 0] >= obs[0]).sum() + 1) / (n_perm + 1)),
+                         "js_pairs": obs[1], "js_pairs_null_mean": float(null[:, 1].mean()), "p_pairs": float(((null[:, 1] >= obs[1]).sum() + 1) / (n_perm + 1))}
+        out[name] = groups
+    # which signs go with which field symbol (unicorn against every other group with a field symbol)
+    rows = x[x["field symbol"] != "no field symbol"][["field symbol", "signs"]].drop_duplicates()
+    uni_m = (rows["field symbol"] == "unicorn").to_numpy()
+    a, b = Counter(s for t, k in zip(rows.signs, uni_m) if k for s in set(t)), Counter(s for t, k in zip(rows.signs, uni_m) if not k for s in set(t))
+    na, nb = int(uni_m.sum()), int((~uni_m).sum())
+    assoc = [(s, a[s], b[s], stats.g2(a[s], na - a[s], b[s], nb - b[s])) for s in set(a) | set(b) if a[s] + b[s] >= 10]
+    q = stats.benjamini_hochberg([chi2.sf(g, 1) for *_, g in assoc])
+    out["signs by field symbol"] = {"texts_unicorn": na, "texts_other_field_symbol": nb, "tested_signs": len(assoc),
+                                    "significant": sorted([{"sign": int(s), "texts_unicorn": int(ka), "texts_other": int(kb),
+                                                            "share_unicorn": ka / na, "share_other": kb / nb, "q": float(qq)}
+                                                           for (s, ka, kb, _), qq in zip(assoc, q) if qq < 0.05], key=lambda r: r["q"])}
+    return out
+
+
+def multiline(lines, texts):
+    """Multi-line texts (excluded from EBUDS): does a line break behave like the end of a text? Compares how
+    often the sign before a line break, and the sign after it, is one of the signs that typically end or begin
+    texts. Lines are taken in their recorded order; a text's lines are read line 1 first."""
+    end, begin = Counter(t[-1] for t in texts), Counter(t[0] for t in texts)
+    enders = {s for s, _ in end.most_common(stats.coverage(end.values()))}
+    beginners = {s for s, _ in begin.most_common(stats.coverage(begin.values()))}
+    groups = [g.sort_values("line") for _, g in lines[lines.line != "0"].groupby(["text_no", "side"])]
+    clean = [g for g in groups if not g.damaged.any() and not g.doubtful.any() and len(g) >= 2]
+    before_break = [g.signs.iloc[i][-1] for g in clean for i in range(len(g) - 1)]
+    after_break = [g.signs.iloc[i][0] for g in clean for i in range(1, len(g))]
+    text_end = [g.signs.iloc[-1][-1] for g in clean]
+    medial = [s for t in texts for s in t[1:-1]]
+    share = lambda xs, ref: {"n": len(xs), "share": float(np.mean([s in ref for s in xs]))}
+    k, n = sum(s in enders for s in before_break), len(before_break)
+    km, nm = sum(s in enders for s in medial), len(medial)
+    out = {"groups": len(groups), "groups_fully_legible": len(clean),
+           "alternating_direction": sum({"right-to-left", "left-to-right"} <= set(g.direction) for g in groups),
+           "ender_sets_size": len(enders), "beginner_set_size": len(beginners),
+           "sign before a line break is a typical ender": share(before_break, enders),
+           "last sign of a multi-line text is a typical ender": share(text_end, enders),
+           "medial sign of a single-line text is a typical ender": share(medial, enders),
+           "sign after a line break is a typical beginner": share(after_break, beginners),
+           "share of later lines that are a single sign": float(np.mean([len(g.signs.iloc[i]) == 1 for g in clean for i in range(1, len(g))])),
+           "p_before_break_vs_medial": float(fisher_exact([[k, n - k], [km, nm - km]])[1])}
+    joined = [sum(g.signs, ()) for g in clean]
+    separate = [s for g in clean for s in g.signs]
+    variants = {"IM77, multi-line texts added, lines joined": sorted(set(texts) | set(joined)),  # sequences: never written to disk
+                "IM77, multi-line texts added, each line a text": sorted(set(texts) | set(separate))}
+    return out, variants
+
+
+def estimators(texts, phys, seed=0):
+    """The entropy-based statistics under three estimators, with the all-tokens-permuted corpus as a bias
+    check: a perfect estimator would give that corpus zero mutual information."""
+    rng = np.random.default_rng(seed)
+    perm = permute_tokens(texts, rng)
+    est = {"plug-in": stats.entropy, "Miller-Madow": lambda c: stats.entropy(c, True), "Chao-Shen": stats.entropy_chao_shen}
+    out = {}
+    for name, h in est.items():
+        out[name] = {"unigram_entropy": h(Counter(s for t in texts for s in t).values()), "mutual_information": stats.mutual_information(texts, h),
+                     "mutual_information_permuted_corpus": stats.mutual_information(perm, h),
+                     "conditional_entropy": stats.conditional_entropy(texts, h=h),
+                     "direction_delta_S_primary": float(stats.asymmetry(*stats.terminals(phys), h=h)[1])}
+    return out
+
+
+def sample_size_curves(texts, reps, seed=0):
+    """Headline statistics on random subsets of the corpus, to see whether they have levelled off."""
+    rng = np.random.default_rng(seed)
+    out = []
+    for frac in (0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0):
+        rows = []
+        for _ in range(1 if frac == 1.0 else reps):
+            sub = [texts[i] for i in sorted(rng.choice(len(texts), int(round(frac * len(texts))), replace=False))]
+            vocab = sorted({s for t in sub for s in t})
+            counts = Counter(s for t in sub for s in t)
+            table, _ = stats.pair_table(sub)
+            att, _ = stats.significant_pairs(table)
+            rows.append([stats.entropy(counts.values()), stats.entropy_chao_shen(counts.values()), stats.mutual_information(sub),
+                         stats.mutual_information(sub, stats.entropy_chao_shen), dependence(sub),
+                         2 ** float(np.mean(ngram.cross_validate(lambda tr, v: WittenBell(tr, v, 2, backoff=True), sub, vocab)[0])),
+                         Counter(t[-1] for t in sub).most_common(1)[0][1] / len(sub), att, len(vocab)])
+        m = np.mean(rows, 0)
+        out.append({"fraction": frac, "texts": int(round(frac * len(texts))), **dict(zip(SIZE_METRICS, map(float, m)))})
+    return out
+
+
+SIZE_METRICS = ("unigram_entropy_plugin", "unigram_entropy_chao_shen", "mi_plugin", "mi_chao_shen", "dependence_index",
+                "bigram_perplexity", "top_ender_share", "attracting_pairs", "signs_seen")
+
+
+def resegmentation(texts, reps, seed=0):
+    """No machine-readable list of Mahadevan's compound signs (ligatures) and their components was found, so
+    the effect of flattening them differently is simulated. 'split': a share of sign types is treated as
+    compounds and each occurrence becomes two components drawn from the 50 commonest signs (order fixed per
+    type). 'merged': the same share of types is merged pairwise into one sign."""
+    rng = np.random.default_rng(seed)
+    types = sorted({s for t in texts for s in t})
+    common = [s for s, _ in Counter(s for t in texts for s in t).most_common(50)]
+    out = {}
+    for share in (0.05, 0.1, 0.2):
+        for kind in ("split", "merged"):
+            rows = []
+            for _ in range(reps):
+                chosen = rng.choice(types, int(share * len(types)), replace=False)
+                if kind == "split":
+                    m = {int(s): tuple(int(c) for c in rng.choice(common, 2)) for s in chosen}
+                    new = [tuple(c for s in t for c in m.get(s, (s,))) for t in texts]
+                else:
+                    m = {int(a): int(b) for a, b in zip(chosen[::2], chosen[1::2])}
+                    new = [tuple(m.get(s, s) for s in t) for t in texts]
+                v = corpus_summary(sorted(set(new)))
+                rows.append([v["dependence_index"], v["pairs_attracting"] / v["pairs_tested"], v["top_ender_share"], v["bits_saved_over_positional"]])
+            r = np.array(rows)
+            m_, sd = r.mean(0), r.std(0, ddof=1)
+            out[f"{kind}, {share:.0%} of sign types"] = {**{k: [float(a), float(b)] for k, a, b in
+                                                           zip(("dependence_index", "attracting_share", "top_ender_share", "bits_saved_over_positional"), m_, sd)},
+                                                        "same_direction": bool(((r[:, 0] > 0) & (r[:, 1] > 0.5) & (r[:, 3] > 0)).all())}
+    return out
+
+
+def adjust_all(res):
+    """Every p-value reported as a test in this report, adjusted together: Benjamini-Hochberg (false
+    discovery rate) and Holm (family-wise error). Tests already corrected internally (the pair table,
+    signs by field symbol, positional classes) enter as their count of significant results, not here."""
+    ps = {"sign order vs within-text shuffle (mutual information)": res["structure_test"]["p"]}
+    for name, g in res["direction"].items():
+        if isinstance(g, dict) and isinstance(g.get("delta_S"), dict):
+            ps[f"direction: {name}"] = g["delta_S"]["p_shuffle"]
+    for grouping, groups in res["breakdown"].items():
+        if grouping != "signs by field symbol":
+            for g, v in groups.items():
+                ps[f"{grouping} = {g}: sign frequencies differ from the rest"] = v["p_signs"]
+                ps[f"{grouping} = {g}: adjacent pairs differ from the rest"] = v["p_pairs"]
+    ps["sign before a line break is ender-like more than a medial sign"] = res["multiline"]["p_before_break_vs_medial"]
+    names, p = list(ps), np.array(list(ps.values()))
+    return [{"test": n, "p": float(pp), "q_bh": float(qq), "p_holm": float(hh)}
+            for n, pp, qq, hh in zip(names, p, stats.benjamini_hochberg(p), stats.holm(p))]
+
+
+def provenance(refs):
+    """What produced these numbers: versions and input checksums."""
+    files = [IM77_CSV, WELLS_SQL, *sorted(REFERENCE.glob("*.*"))]
+    sha = lambda f: hashlib.sha256(f.read_bytes()).hexdigest()
+    return {"python": sys.version.split()[0], "packages": {p: importlib.metadata.version(p) for p in ("numpy", "scipy", "pandas", "matplotlib")},
+            "git_commit": subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, cwd=ROOT).stdout.strip(),
+            "uncommitted_changes": bool(subprocess.run(["git", "status", "--porcelain", "sequence_analysis"], capture_output=True, text=True, cwd=ROOT).stdout.strip()),
+            "inputs_sha256": {str(f.relative_to(ROOT)): sha(f) for f in files if f.exists()},
+            "essen_krn_files_sha256": hashlib.sha256(b"".join(f.read_bytes() for f in sorted((REFERENCE / "essen").rglob("*.krn")))).hexdigest(),
+            "python_stdlib_tokens_sha256": hashlib.sha256("\x00".join(refs["Python source, tokens"]).encode()).hexdigest() if refs else None}
 
 
 def figures(res, texts, vocab, P_mle, null_samples):
@@ -397,6 +727,17 @@ def figures(res, texts, vocab, P_mle, null_samples):
         plt.xlabel("number of most frequent signs kept (N)"); plt.ylabel("H(next | current), bits")
         plt.title("Conditional entropy as in Rao et al. 2009, samples matched to the Indus corpus", fontsize=9)
         plt.legend(fontsize=6); plt.tight_layout(); plt.savefig(OUT / "conditional_entropy_systems.png", dpi=130); plt.close()
+
+    ss = res["sample_size"]
+    fig, ax = plt.subplots(2, 3, figsize=(13, 7))
+    panels = [(("unigram_entropy_plugin", "unigram_entropy_chao_shen"), "sign entropy, bits"), (("mi_plugin", "mi_chao_shen"), "adjacent-sign MI, bits"),
+              (("dependence_index",), "dependence index"), (("bigram_perplexity",), "bigram perplexity (5-fold CV)"),
+              (("top_ender_share",), "share of texts ending in the top ender"), (("attracting_pairs", "signs_seen"), "count")]
+    for a_, (keys, label) in zip(ax.ravel(), panels):
+        for k in keys:
+            a_.plot([r["texts"] for r in ss], [r[k] for r in ss], "o-", label=k.replace("_", " "))
+        a_.set_xlabel("texts in the subsample"); a_.set_ylabel(label); a_.legend(fontsize=7)
+    plt.tight_layout(); plt.savefig(OUT / "sample_size.png", dpi=130); plt.close()
 
 
 def write_report(res):
@@ -474,7 +815,7 @@ def write_report(res):
           f"last-read end is the more concentrated one in both groups (delta S {d['stored reading order, lines labelled right-to-left']['delta_S']:+.3f} for lines labelled "
           f"right-to-left, {d['stored reading order, lines labelled left-to-right']['delta_S']:+.3f} for left-to-right), so the physical values below are that fact "
           "combined with the label. What the data supports is: given the recorded labels, the concentrated end is on the physical left in the "
-          "lines labelled right-to-left, which are 92% of lines with a recorded direction. A test that does not depend on the labels needs "
+          f"lines labelled right-to-left, which are {100 * d['share labelled right-to-left']:.0f}% of lines with a recorded direction. A test that does not depend on the labels needs "
           "layout from another source, such as sign positions measured on photographs (Milestone 1's `bbox_xywh`) or the printed concordance. "
           "The proposal asks for 'verifying right-to-left syntax rules'; this report claims consistency with a right-to-left convention and makes no claim about syntax.", "",
           "| Group | Lines | delta S (bootstrap SE) | delta S under within-line shuffle (95%) | p | delta G (bootstrap SE) |", "|---|---|---|---|---|---|"]
@@ -496,7 +837,7 @@ def write_report(res):
                      for k in (1, 3, 5, 10, 20) if 'delta_S' in d[f'primary, no top-{k} text-beginner or ender at either end'])
           + " The asymmetry is not carried by sign 342 alone, but it shrinks steadily as more end-marking signs are removed and is not detectable once the top 20 are excluded. "
           "Either the direction signal lives in a few dozen formulaic end signs, or those are the signs the labels were assigned from; this test cannot tell the two apart.", "",
-          "p is the share of within-line shuffles with an absolute delta S at least as large as observed; 0.001 is the smallest value 1,000 shuffles can give. "
+          f"p is the share of within-line shuffles with an absolute delta S at least as large as observed; {1 / (res['settings']['n_resample'] + 1):.3f} is the smallest value {res['settings']['n_resample']:,} shuffles can give. "
           "delta S (entropy) is the headline measure because it is stable across group sizes. delta G (Gini) shrinks as a group gets smaller and sparser, "
           "so its size should not be compared between groups. delta G here is computed over the full 418-symbol sign list so that groups share one alphabet; "
           f"over only the signs seen at either end, which is closer to Ashraf & Sinha's usage, the primary group gives {d['primary delta_G over signs seen at either end']:+.3f}. "
@@ -520,8 +861,139 @@ def write_report(res):
           f"90%-probability candidate set {100 * res['restoration']['hit_in_90pct_mass_set']:.1f}% of the time (that set holds "
           f"{res['restoration']['mean_size_of_90pct_set']:.0f} signs on average). The published 74% uses the last criterion; it is not top-1 accuracy. "
           "This measures how predictable the notation is and says nothing about meaning.", ""]
+    rb = {"witten-bell backoff n=2": res["restoration"], **res["restoration_by_model"]}
+    L += ["| Model | Top-1 | Top-5 | Inside the 90% set | Same, strict | Mean size of the 90% set |", "|---|---|---|---|---|---|"]
+    L += [f"| {k} | {100 * v['top1']:.1f}% | {100 * v['top5']:.1f}% | {100 * v['hit_in_90pct_mass_set']:.1f}% | {100 * v['hit_in_90pct_mass_set_strict']:.1f}% | {v['mean_size_of_90pct_set']:.0f} |" for k, v in rb.items()]
+    L += ["", "Each model scores a candidate by the probability of the whole text with the candidate in place, so the trigram also uses the sign two places away. "
+          "It gains a few points of top-1 accuracy; the 90%-set figures are not comparable across models because the set sizes differ.", ""]
+    L += syntax_section(res["syntax"])
     L += robustness_section(res)
+    L += extended_section(res)
     (OUT / "milestone_2_report.md").write_text("\n".join(L))
+
+
+def syntax_section(sx):
+    L = ["## Syntax: positional classes, class order and recurring segments", "",
+         f"Each sign with at least {MIN_CLASS_COUNT} tokens is tested for a positional preference against what its texts' lengths imply "
+         "(chi-square, Benjamini-Hochberg 5%) and assigned the position it over-uses most; the rest are 'free'. "
+         f"{sx['classified_signs']} signs qualify, covering {100 * sx['token_share_classified']:.0f}% of tokens.", "",
+         "| Class | Signs | Commonest members |", "|---|---|---|"]
+    L += [f"| {k} | {v['signs']} | {', '.join(map(str, v['examples']))} |" for k, v in sx["classes"].items()]
+    L += ["", "Class-to-class transitions against shuffles of the medial signs, first and last kept (the ten largest departures; z is in shuffle standard deviations):", "",
+          "| First | Then | Observed | Shuffled mean | z |", "|---|---|---|---|---|"]
+    L += [f"| {r['first']} | {r['second']} | {r['observed']} | {r['shuffled_mean']:.1f} | {r['z']:+.1f} |" for r in sx["class_transitions"][:10]]
+    r, s = sx["order_rule_heldout"], sx["segments"]
+    L += ["", f"**Rule checked on held-out texts.** With classes learnt on the training folds only: in the {r['texts_with_both']} held-out texts holding both an "
+          f"initial-class and a final-class sign, every initial-class sign precedes every final-class sign in {100 * r['share_obeying']:.1f}% of texts, "
+          f"against {100 * r['share_obeying_after_shuffle']:.1f}% after shuffling all signs of the same texts and {100 * r['share_obeying_ends_kept']:.1f}% after shuffling only the medial signs. "
+          "Most of the rule restates the classes themselves (initial signs open texts, final signs close them); the order of initial- and final-class signs "
+          f"inside a text adds {100 * (r['share_obeying'] - r['share_obeying_ends_kept']):.1f} points beyond that. The class transitions above use the same "
+          "ends-kept null, so they measure order beyond position.", "",
+          f"**Recurring segments.** Texts are cut between adjacent signs that are not strongly associated (pair seen at least {SEGMENT_MIN_PAIR} times "
+          f"with pointwise mutual information of at least {SEGMENT_MIN_PMI:.0f} bit); pieces of two or more signs found in at least {SEGMENT_MIN_TEXTS} distinct texts are kept. "
+          f"This yields {s['distinct_recurring']} recurring segments. Segments learnt on training folds cover {100 * s['heldout_token_coverage']:.1f}% of held-out sign tokens, "
+          f"against {100 * s['heldout_token_coverage_after_shuffle']:.1f}% of the same texts shuffled: much of the corpus is built from a stock of recurring sign groups.", "",
+          "| Segment (reading order) | Texts containing it | Occurrences: initial | medial | final | whole text |", "|---|---|---|---|---|---|"]
+    L += [f"| {k} | {v['texts']} | {v.get('initial', 0)} | {v.get('medial', 0)} | {v.get('final', 0)} | {v.get('whole text', 0)} |" for k, v in s["top"].items()]
+    L += ["", "Segments keep their own positions: the commonest opening pairs open texts and the pairs ending in 342 close them. These are distributional rules "
+          "of the notation in reading order. They do not show that the segments are words, or that the classes are grammatical categories.", ""]
+    return L
+
+
+def extended_section(res):
+    L = ["### Differences by site, object type and field symbol", "",
+         "Per group, the headline statistics; against the rest of the corpus, the Jensen-Shannon divergence of sign frequencies and of adjacent-pair "
+         f"frequencies, with a permutation p ({res['settings']['n_resample']:,} relabellings; the smallest possible p is {1 / (res['settings']['n_resample'] + 1):.3f}). Groups with fewer than 100 distinct texts are pooled or left out. "
+         "IM77 records no dates ('level' is excavation depth measured from a different datum at each site), so differences by period cannot be tested.", "",
+         "| Grouping | Group | Texts | Dependence index | Top ender (share) | JS signs (shuffled mean), p | JS pairs (shuffled mean), p |", "|---|---|---|---|---|---|---|"]
+    for grouping, groups in res["breakdown"].items():
+        if grouping == "signs by field symbol":
+            continue
+        for g, v in groups.items():
+            L.append(f"| {grouping} | {g} | {v['texts']} | {v['dependence_index']:.3f} | {v['top_ender'][0]} ({100 * v['top_ender_share']:.0f}%) | "
+                     f"{v['js_signs']:.3f} ({v['js_signs_null_mean']:.3f}), {v['p_signs']:.3f} | {v['js_pairs']:.3f} ({v['js_pairs_null_mean']:.3f}), {v['p_pairs']:.3f} |")
+    f = res["breakdown"]["signs by field symbol"]
+    sig = f["significant"]
+    flat = [(gr, g, v) for gr, gs in res["breakdown"].items() if gr != "signs by field symbol" for g, v in gs.items()]
+    gr, g, v = max(flat, key=lambda x: x[2]["js_signs"] - x[2]["js_signs_null_mean"])
+    sig_groups = sum(x[2]["p_signs"] < 0.05 for x in flat)
+    L += ["", f"{sig_groups} of {len(flat)} groups differ from the rest in sign use more than random relabelling produces; the most distinct is {gr} = {g} "
+          f"(commonest ender {v['top_ender'][0]}). "
+          "Site, object type and field symbol overlap, so these differences are not independent of one another.", "",
+          f"**Signs and field symbols.** Comparing the {f['texts_unicorn']} unicorn texts with the {f['texts_other_field_symbol']} texts carrying another field symbol, "
+          f"{f['tested_signs']} signs occurring in at least 10 of them were tested (log-likelihood ratio, Benjamini-Hochberg 5%): "
+          + (", ".join(f"sign {r['sign']} ({100 * r['share_unicorn']:.0f}% of unicorn texts, {100 * r['share_other']:.0f}% of others, q = {r['q']:.3g})" for r in sig[:10]) + "."
+             if sig else "none differs significantly. At this sample size no sign is tied to the unicorn rather than to other animals and motifs.") , ""]
+    ml = res["multiline"]
+    b = ml["sign before a line break is a typical ender"]
+    L += ["### Multi-line and boustrophedon texts", "",
+          f"IM77 has {ml['groups']} multi-line inscriptions (one side of an object with two or three lines), {ml['groups_fully_legible']} of them fully legible and "
+          f"without doubtful readings; {ml['alternating_direction']} have lines labelled in opposite directions (boustrophedon or mixed). Lines are taken in their recorded order. "
+          f"'Typical ender' means one of the {ml['ender_sets_size']} signs that end 80% of EBUDS texts; 'typical beginner', one of the {ml['beginner_set_size']} that begin 80%.", "",
+          "| Position | Signs | Share that are typical enders / beginners |", "|---|---|---|"]
+    for k in ("sign before a line break is a typical ender", "last sign of a multi-line text is a typical ender",
+              "medial sign of a single-line text is a typical ender", "sign after a line break is a typical beginner"):
+        L.append(f"| {k} | {ml[k]['n']} | {100 * ml[k]['share']:.0f}% |")
+    L += ["", f"The sign before a line break is a typical ender far more often than a medial sign (Fisher p = {ml['p_before_break_vs_medial']:.1g}), and more often than "
+          "the last sign of the whole inscription. So a line break behaves like the end of a text, not like a pause inside one: either the lines are separate "
+          f"texts, or the recorded line order is often not the reading order ({100 * ml['share of later lines that are a single sign']:.0f}% of second and third lines are a single sign). The sample is small. Adding the multi-line "
+          "texts to the corpus, joined or line by line, leaves the headline statistics close to the main corpus (see the corpus variants table).", "",
+          "### Estimator bias", "",
+          "The entropy-based statistics under three estimators. The last column but one is the same mutual information on the corpus with all tokens "
+          "permuted, which has no real dependence: whatever remains there is bias.", "",
+          "| Estimator | Sign entropy | Mutual information | MI, permuted corpus | MI in excess of the permuted corpus | H(next given current) | Direction delta S (primary) |", "|---|---|---|---|---|---|---|"]
+    for k, v in res["estimators"].items():
+        L.append(f"| {k} | {v['unigram_entropy']:.3f} | {v['mutual_information']:.3f} | {v['mutual_information_permuted_corpus']:.3f} | "
+                 f"{v['mutual_information'] - v['mutual_information_permuted_corpus']:.3f} | {v['conditional_entropy']:.3f} | {v['direction_delta_S_primary']:+.3f} |")
+    cs_, pi = res["estimators"]["Chao-Shen"], res["estimators"]["plug-in"]
+    L += ["", f"Chao-Shen cuts the bias on the permuted corpus from {pi['mutual_information_permuted_corpus']:.2f} to {cs_['mutual_information_permuted_corpus']:.2f} bits "
+          "but does not remove it, which is why every dependence claim in this report is made against shuffles rather than against zero. "
+          "The direction statistic barely moves across estimators.", ""]
+    ss = res["sample_size"]
+    at = lambda f: next(r for r in ss if abs(r["fraction"] - f) < 1e-9)
+    L += ["### Sample size", "",
+          f"Headline statistics on random subsets of the corpus ({res['settings']['subsets']} subsets per size, means).", "",
+          "| Texts | Signs seen | Entropy, plug-in | Entropy, Chao-Shen | MI, plug-in | MI, Chao-Shen | Dependence index | Bigram perplexity | Top-ender share | Attracting pairs |",
+          "|---|---|---|---|---|---|---|---|---|---|"]
+    L += [f"| {r['texts']} | {r['signs_seen']:.0f} | {r['unigram_entropy_plugin']:.3f} | {r['unigram_entropy_chao_shen']:.3f} | {r['mi_plugin']:.3f} | {r['mi_chao_shen']:.3f} | "
+          f"{r['dependence_index']:.3f} | {r['bigram_perplexity']:.1f} | {r['top_ender_share']:.3f} | {r['attracting_pairs']:.0f} |" for r in ss if round(r["fraction"], 1) in (0.1, 0.2, 0.4, 0.6, 0.8, 1.0)]
+    ch = lambda k: (at(1.0)[k] - at(0.8)[k]) / at(0.8)[k]
+    L += ["", f"From 80% to 100% of the corpus: Chao-Shen entropy changes {100 * ch('unigram_entropy_chao_shen'):+.1f}% and the top-ender share {100 * ch('top_ender_share'):+.1f}%, "
+          f"so those have levelled off; the dependence index changes {100 * ch('dependence_index'):+.1f}%, bigram perplexity {100 * ch('bigram_perplexity'):+.1f}% and the count of "
+          f"significant attracting pairs {100 * ch('attracting_pairs'):+.1f}%, and {at(1.0)['signs_seen'] - at(0.8)['signs_seen']:.0f} more signs appear. "
+          "Pair-level statistics are still moving. Part of that is real (more data supports more context) and part is the sparsity bias of the plug-in estimates "
+          "described under Estimator bias; either way a larger corpus would not reverse them. Their direction is the same at every size.", "",
+          "![Sample size](sample_size.png)", "",
+          "### Compound signs (ligatures)", "",
+          "Mahadevan's list numbers many compound signs separately, and how they are flattened into a sequence is a transcriber's choice. No machine-readable "
+          "list of the compounds and their components was found, so the effect is simulated: a share of sign types is either split into two components "
+          f"(drawn from the 50 commonest signs, order fixed per type) or merged pairwise. Mean (SD) over {res['settings']['subsets']} random draws.", "",
+          "| Change | Dependence index | Share of tested pairs attracting | Top-ender share | Bits gained over positional |", "|---|---|---|---|---|"]
+    base = res["corpus_variants"]["IM77, EBUDS (main analysis)"]
+    L.append(f"| none (main corpus) | {base['dependence_index']:.3f} | {base['pairs_attracting'] / base['pairs_tested']:.2f} | {base['top_ender_share']:.3f} | {base['bits_saved_over_positional']:.2f} |")
+    L += [f"| {k} | {v['dependence_index'][0]:.3f} ({v['dependence_index'][1]:.3f}) | {v['attracting_share'][0]:.2f} ({v['attracting_share'][1]:.2f}) | "
+          f"{v['top_ender_share'][0]:.3f} ({v['top_ender_share'][1]:.3f}) | {v['bits_saved_over_positional'][0]:.2f} ({v['bits_saved_over_positional'][1]:.2f}) |"
+          for k, v in res["resegmentation"].items()]
+    shift = lambda k, b: max(abs(v[k][0] - b) for v in res["resegmentation"].values())
+    L += ["", f"Re-segmenting up to a fifth of the sign list moves the dependence index by at most {shift('dependence_index', base['dependence_index']):.3f}, "
+          f"the share of attracting pairs by at most {shift('attracting_share', base['pairs_attracting'] / base['pairs_tested']):.2f}, the top-ender share by at most "
+          f"{shift('top_ender_share', base['top_ender_share']):.3f} and the gain over position by at most {shift('bits_saved_over_positional', base['bits_saved_over_positional']):.2f} bits; "
+          + ("in every draw dependence stays positive, attracting pairs stay the majority and the gain over position stays positive. "
+             if all(v["same_direction"] for v in res["resegmentation"].values()) else "some draws change direction (see results.json). ") + "Splitting raises the "
+          "dependence index, because each split sign becomes a fixed pair; real compounds would do the same if transcribed as separate signs.", "",
+          "### All tests in this report, corrected together", ""]
+    mc = res["multiple_comparisons"]
+    nb, nh = sum(r["q_bh"] < 0.05 for r in mc), sum(r["p_holm"] < 0.05 for r in mc)
+    L += [f"{len(mc)} p-values are reported as tests in this report (the pair table, the field-symbol signs and the positional classes are corrected internally and enter "
+          f"only through their counts). Corrected together, {nb} stay below 0.05 under Benjamini-Hochberg (false discovery rate) and {nh} under Holm "
+          f"(family-wise error). Permutation p-values cannot go below 1/(resamples + 1) = {1 / (res['settings']['n_resample'] + 1):.3f}, which limits how many can pass Holm. Tests that do not pass:", ""]
+    L += [f"- {r['test']}: p = {r['p']:.3g}, q = {r['q_bh']:.3g}, Holm = {r['p_holm']:.3g}" for r in mc if r["p_holm"] >= 0.05] or ["- none"]
+    pv = res["provenance"]
+    L += ["", "### Provenance", "",
+          f"Python {pv['python']}; " + ", ".join(f"{k} {v}" for k, v in pv["packages"].items()) + f"; code at commit {pv['git_commit'][:7]}" + (" plus uncommitted changes" if pv["uncommitted_changes"] else "") + ". "
+          "Input checksums (SHA-256) and a checksum of the Python-token reference stream (which depends on the local standard library) are in `results.json` under `provenance`. "
+          "Every random step uses a fixed seed.", ""]
+    return L
 
 
 def robustness_section(res):
@@ -529,8 +1001,9 @@ def robustness_section(res):
     L = ["## Robustness checks", "",
          "### Comparison with sign systems of known type", ""]
     if cs:
-        L += ["Each reference system is cut into samples with exactly the Indus text-length distribution (1548 texts, 7000 tokens), "
-              "so sample size and text length, which bias every plug-in estimate, are matched; 10 samples each, mean (SD over samples). "
+        L += [f"Each reference system is cut into samples with exactly the Indus text-length distribution ({res['ebuds']['texts']} texts, {res['ebuds']['tokens']} tokens), "
+              f"so sample size and text length, which bias every plug-in estimate, are matched; {res['settings']['samples']} samples each, mean (SD over samples). "
+              "The samples are windows of a continuous stream, so a window can cross a line or text boundary of the reference system. "
               "Dependence index = share of a sign's uncertainty removed by knowing the previous sign, beyond what remains after shuffling signs "
               "within each text (0 = order carries nothing). Shuffling a short text keeps much of its pair structure, so even the rigid control stays far below 1. Python tokens are from the first 40 modules of the local Python 3.10 standard library, "
               "string and number literals collapsed to one token each.", "",
@@ -539,14 +1012,23 @@ def robustness_section(res):
             top20 = f"{v['dependence_index_top20'][0]:.3f} ({v['dependence_index_top20'][1]:.3f})" if v["signs_in_sample"] >= 20 else "n/a (fewer than 20 signs)"
             L.append(f"| {name} | {v['signs_in_sample']:.0f} | {v['unigram_entropy']:.2f} | {v['conditional_entropy']:.2f} | "
                      f"{v['dependence_index'][0]:.3f} ({v['dependence_index'][1]:.3f}) | {top20} |")
-        ind, rig = cs["Indus (IM77, EBUDS)"], cs["rigid, each sign has one fixed successor (Rao type 2)"]
-        L += ["", "Read this as a scale, not a classification. Sign order in the Indus corpus removes more uncertainty than in any reference system at this sample size, "
-              "on both columns, including English letters and Python code, and far more than DNA or the memoryless and random controls. "
-              f"Over all signs it reaches {ind['dependence_index'][0] / rig['dependence_index'][0]:.0%} of the rigid control; among the 20 commonest signs it "
-              f"exceeds it ({ind['dependence_index_top20'][0]:.2f} against {rig['dependence_index_top20'][0]:.2f}), meaning the common signs occur in near-fixed sequences. "
-              "Strong order dependence is what a formulaic notation would show, linguistic or not, so this places the Indus corpus among highly structured "
-              "systems without saying which kind. The all-signs index for English words is compressed because, at 7000 tokens and over 1,500 word types, "
-              "most word pairs occur once in both the real and the shuffled texts; the top-20 column avoids that. No other ancient script is included.", "",
+        ind = cs["Indus (IM77, EBUDS)"]
+        real = {k: v for k, v in cs.items() if not k.startswith(("Indus", "random", "rigid"))}
+        above = [k for k, v in real.items() if v["dependence_index"][0] > ind["dependence_index"][0]]
+        near = min(real, key=lambda k: abs(real[k]["dependence_index"][0] - ind["dependence_index"][0]) + abs(real[k]["dependence_index_top20"][0] - ind["dependence_index_top20"][0]))
+        L += ["", "Read this as a scale, not a classification. "
+              f"On the all-signs index, {len(real) - len(above)} of the {len(real)} real reference systems show weaker order dependence than the Indus corpus"
+              + (f"; {', '.join(above)} show{'s' if len(above) == 1 else ''} stronger" if above else "") + ". "
+              f"The closest system on both indices is {near} ({real[near]['dependence_index'][0]:.3f} and {real[near]['dependence_index_top20'][0]:.3f}, "
+              f"against {ind['dependence_index'][0]:.3f} and {ind['dependence_index_top20'][0]:.3f}). "
+              f"Cuneiform seal inscriptions, short formulaic texts in a known language, score {real['Cuneiform seal inscriptions (signs)']['dependence_index'][0]:.3f} and "
+              f"{real['Cuneiform seal inscriptions (signs)']['dependence_index_top20'][0]:.3f}; long running text (the novel, Sumerian texts as a whole) and the non-linguistic "
+              "melodies and DNA score lower. Linear B is indicative only: its file mixes real and augmented sequences, and cutting it into windows rather than "
+              "whole lines changes its index markedly. Strong order dependence is what a formulaic notation would show, linguistic or not, so this places the "
+              "Indus corpus beside short seal texts without saying which kind of system it is. "
+              "Sproat's (2014) non-linguistic corpora (Mesopotamian deity symbols, Pictish stones, heraldry) are not publicly released and could not be included; "
+              "the Linear B file mixes 513 real Knossos series D sequences with augmented ones it does not mark. The all-signs index for English words is compressed because, at 7000 tokens and over 1,500 word types, "
+              "most word pairs occur once in both the real and the shuffled texts; the top-20 column avoids that.", "",
               "![Conditional entropy of sign systems](conditional_entropy_systems.png)", ""]
     else:
         L += ["Skipped: reference texts not found under data/raw/reference (see data/README.md).", ""]
@@ -571,7 +1053,7 @@ def robustness_section(res):
           "The main corpus already keeps one copy of each repeated text (EBUDS); the third row shows what counting every copy would change. "
           "The Wells/ICIT rows use an independent transcription with a different sign list (yajnadevam/indus-website, GPL-3.0; single-line texts with every sign readable, one copy each). "
           "That data records no doubtful readings and no usable physical layout, so the direction test cannot be repeated on it. "
-          "'Variant groups merged' maps every sign to the head of its Wells variant group (14 groups, 69 signs). "
+          f"'Variant groups merged' maps every sign to the head of its Wells variant group ({res['wells_variant_groups'][0]} groups covering {res['wells_variant_groups'][1]} signs). "
           "Perplexity is not comparable across sign lists, so it is also given relative to a uniform model.", "",
           "| Corpus | Texts | Tokens | Signs | Dependence index | Pairs tested / attracting / avoiding | Top ender (share of texts) | Enders covering 80% | Bigram perplexity (relative to uniform) | Bits gained over positional | Top-20 pairs shared with main |",
           "|---|---|---|---|---|---|---|---|---|---|---|"]
@@ -587,7 +1069,10 @@ def robustness_section(res):
           f"one dominant text-ender closing {span(lambda v: 100 * v['top_ender_share'])}% of texts; "
           f"{span(lambda v: v['enders_covering_80pct'])} signs covering 80% of endings; "
           f"{span(lambda v: v['bits_saved_over_positional'], '{:.2f}', [v for v in vs if 'bits_saved_over_positional' in v])} bits per event gained over position alone where computable. "
-          f"The vocabulary ranges over {span(lambda v: v['signs'])} signs. None of these conclusions changes direction on any variant.", "",
+          f"The vocabulary ranges over {span(lambda v: v['signs'])} signs. "
+          + ("On every variant dependence is positive, attracting pairs outnumber avoiding ones and the gain over position is positive." if all(
+              v["dependence_index"] > 0 and v["pairs_attracting"] > v["pairs_avoiding"] and v.get("bits_saved_over_positional", 1) > 0 for v in vs)
+             else "At least one variant reverses a conclusion (see results.json)."), "",
           "### Replication gaps", "",
           "Mutual information under the definitions tried:", "", "| Definition | Bits | Nats |", "|---|---|---|"]
     L += [f"| {k} | {v['bits']:.3f} | {v['nats']:.3f} |" for k, v in gaps["mutual_information"].items()]
@@ -606,13 +1091,13 @@ if __name__ == "__main__":
     args = ap.parse_args()
     ngram.selfcheck()
     stats.selfcheck()
-    n_resample, repeats = (100, 2) if args.quick else (1000, 10)
+    n_resample, repeats, samples, subsets = (100, 2, 3, 2) if args.quick else (1000, 10, 10, 5)
     OUT.mkdir(parents=True, exist_ok=True)
 
     lines = load_lines()
     texts, steps = ebuds(lines)
     vocab = sorted({s for t in texts for s in t})
-    res = {"corpus_steps": steps, "ebuds": {"texts": len(texts), "tokens": sum(map(len, texts)), "signs": len(vocab)}}
+    res = {"settings": {"n_resample": n_resample, "error_repeats": repeats, "samples": samples, "subsets": subsets}, "corpus_steps": steps, "ebuds": {"texts": len(texts), "tokens": sum(map(len, texts)), "signs": len(vocab)}}
     print("corpus:", res["ebuds"])
 
     counts = Counter(s for t in texts for s in t)
@@ -631,8 +1116,7 @@ if __name__ == "__main__":
     res["zipf_mandelbrot_fit"] = stats.zipf_mandelbrot(counts.values())
     attracting, avoiding = stats.significant_pairs(pairs)
     rng = np.random.default_rng(0)
-    tokens, cuts = np.concatenate(texts), np.cumsum([len(t) for t in texts])[:-1]
-    flagged = [sum(stats.significant_pairs(stats.pair_table([tuple(t) for t in np.split(rng.permutation(tokens), cuts)])[0])) for _ in range(10)]
+    flagged = [sum(stats.significant_pairs(stats.pair_table(permute_tokens(texts, rng))[0])) for _ in range(10)]
     res["pairs"] = {"distinct": len(pairs), "adjacent_pair_tokens": n_pairs, "tested": int(sum(p[2] >= stats.MIN_PAIR_COUNT for p in pairs)),
                     "attracting": attracting, "avoiding": avoiding, "flagged_under_permutation": float(np.mean(flagged))}
     print("replication:", res["replication"])
@@ -649,7 +1133,8 @@ if __name__ == "__main__":
 
     full = WittenBell(texts, vocab, 2, backoff=True)
     P_smooth = ngram.transition_matrix(full, vocab)
-    back = WittenBell([t[::-1] for t in texts], vocab, 2, backoff=True)  # P(previous | current): texts reversed
+    back = WittenBell([t[::-1] for t in texts], vocab, 2, backoff=True)  # P(previous | current): texts reversed, so <s> marks the text's end
+    np.savez_compressed(OUT / "transition_matrices.npz", signs=np.array(vocab), forward=P_smooth, backward=ngram.transition_matrix(back, vocab))
     P_mle = np.array([[full.counts[(h,)][w_] / max(full.total.get((h,), 0), 1) for w_ in [*vocab, EOS]] for h in [BOS, *vocab]])
     assert np.allclose(P_smooth.sum(1), 1)
 
@@ -671,11 +1156,25 @@ if __name__ == "__main__":
     res["unseen_signs"] = unseen_signs(texts, vocab)
     res["replication_gaps"] = replication_gaps(texts, lines)
     have_refs = all((REFERENCE / f).exists() for f in ("pride_and_prejudice.txt", "lambda_phage.fasta"))
-    res["cross_system"] = cross_system(texts, reference_systems(), 3 if args.quick else 10) if have_refs else None
-    res["corpus_variants"] = corpus_variants(lines, load_wells() if WELLS_SQL.exists() else None)
+    refs = reference_systems() if have_refs else None
+    res["cross_system"] = cross_system(texts, refs, samples) if refs else None
+    res["multiline"], multiline_texts = multiline(lines, texts)
+    wells = load_wells() if WELLS_SQL.exists() else None
+    res["corpus_variants"] = corpus_variants(lines, wells, multiline_texts)
+    res["wells_variant_groups"] = [len(set(wells[1].values())), len(set(wells[1]) | set(wells[1].values()))] if wells else None
     for name, present in (("comparison with other sign systems", have_refs), ("Wells/ICIT corpus", WELLS_SQL.exists())):
         if not present:
             print(f"skipped the {name}: input missing, see data/README.md")
+
+    res["restoration_by_model"] = {"witten-bell backoff n=3": restoration(texts, vocab, lambda tr, v: WittenBell(tr, v, 3, backoff=True)),
+                                   "kneser-ney n=2": restoration(texts, vocab, KneserNey)}
+    res["syntax"] = syntax(texts, n_resample)
+    res["breakdown"] = breakdown(lines, n_resample)
+    res["estimators"] = estimators(texts, phys)
+    res["sample_size"] = sample_size_curves(texts, subsets)
+    res["resegmentation"] = resegmentation(texts, subsets)
+    res["multiple_comparisons"] = adjust_all(res)
+    res["provenance"] = provenance(refs)
 
     (OUT / "results.json").write_text(json.dumps(res, indent=1))
     figures(res, texts, vocab, P_mle, null_samples)

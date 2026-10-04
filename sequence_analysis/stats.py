@@ -7,6 +7,7 @@ from collections import Counter
 
 import numpy as np
 from scipy.optimize import curve_fit
+from scipy.spatial.distance import jensenshannon
 from scipy.stats import chi2
 
 
@@ -19,23 +20,39 @@ def entropy(counts, miller_madow=False):
     return h + (len(c) - 1) / (2 * n * math.log(2)) if miller_madow else h
 
 
+def entropy_chao_shen(counts):
+    """Chao & Shen (2003) entropy in bits: coverage-adjusted probabilities with a Horvitz-Thompson
+    correction for types the sample missed. Far less biased than plug-in when many types occur once."""
+    c = np.asarray([v for v in counts if v > 0], float)
+    n = c.sum()
+    f1 = min((c == 1).sum(), n - 1)  # all singletons would give zero coverage
+    p = (1 - f1 / n) * c / n
+    return float(-(p * np.log2(p) / (1 - (1 - p) ** n)).sum())
+
+
+def js_divergence(p, q):
+    """Jensen-Shannon divergence in bits between two aligned count vectors (0 = identical, 1 = disjoint)."""
+    return float(jensenshannon(p, q, base=2) ** 2)
+
+
 def coverage(counts, frac=0.8):
     """How many of the most frequent types are needed to cover `frac` of the tokens."""
     c = np.sort(np.asarray(list(counts), float))[::-1]
     return int(np.searchsorted(np.cumsum(c), frac * c.sum() - 1e-9) + 1)
 
 
-def mutual_information(texts):
-    """Mutual information in bits between adjacent signs (boundaries not included)."""
+def mutual_information(texts, h=entropy):
+    """Mutual information in bits between adjacent signs (boundaries not included). h: the entropy
+    estimator, plug-in by default; pass entropy_chao_shen for the bias-corrected version."""
     pairs = Counter(p for t in texts for p in zip(t, t[1:]))
     first, second = Counter(), Counter()
     for (a, b), c in pairs.items():
         first[a] += c
         second[b] += c
-    return entropy(first.values()) + entropy(second.values()) - entropy(pairs.values())
+    return h(first.values()) + h(second.values()) - h(pairs.values())
 
 
-def conditional_entropy(texts, top_n=None):
+def conditional_entropy(texts, top_n=None, h=entropy):
     """H(next | current) in bits over adjacent pairs inside texts (Rao et al. 2009). top_n: keep only
     pairs whose two signs are both among the top_n most frequent, as in Rao's curves."""
     pairs = Counter(p for t in texts for p in zip(t, t[1:]))
@@ -45,7 +62,7 @@ def conditional_entropy(texts, top_n=None):
     first = Counter()
     for (a, _), c in pairs.items():
         first[a] += c
-    return entropy(pairs.values()) - entropy(first.values())
+    return h(pairs.values()) - h(first.values())
 
 
 def g2(k11, k12, k21, k22):
@@ -67,6 +84,15 @@ def benjamini_hochberg(p):
     q = np.minimum.accumulate(q[::-1])[::-1]
     out = np.empty_like(q)
     out[order] = np.minimum(q, 1)
+    return out
+
+
+def holm(p):
+    """Holm-adjusted p-values controlling the family-wise error rate."""
+    p = np.asarray(p, float)
+    order = np.argsort(p)
+    out = np.empty_like(p)
+    out[order] = np.minimum(1, np.maximum.accumulate(p[order] * (len(p) - np.arange(len(p)))))
     return out
 
 
@@ -122,7 +148,7 @@ def gini(p):
 SIGNS = np.arange(418)  # 0 (illegible) plus Mahadevan signs 1-417
 
 
-def asymmetry(left, right, alphabet=SIGNS):  # alphabet=None: signs seen at either end (Ashraf & Sinha's usage)
+def asymmetry(left, right, alphabet=SIGNS, h=entropy):  # alphabet=None: signs seen at either end (Ashraf & Sinha's usage)
     """Directional asymmetry of the signs at the two physical ends of each line.
 
     left, right: integer arrays, one terminal sign per line. Both ends are scored over one fixed
@@ -134,7 +160,7 @@ def asymmetry(left, right, alphabet=SIGNS):  # alphabet=None: signs seen at eith
         alphabet = np.unique(np.concatenate([left, right]))
     cl = np.bincount(np.searchsorted(alphabet, left), minlength=len(alphabet))
     cr = np.bincount(np.searchsorted(alphabet, right), minlength=len(alphabet))
-    gl, gr, sl, sr = gini(cl), gini(cr), entropy(cl), entropy(cr)
+    gl, gr, sl, sr = gini(cl), gini(cr), h(cl), h(cr)
     return 2 * (gl - gr) / (gl + gr), 2 * (sl - sr) / (sl + sr)
 
 
@@ -179,9 +205,14 @@ def selfcheck():
     assert g2(10, 10, 10, 10) < 1e-9 and g2(20, 0, 0, 20) > 50
     q = benjamini_hochberg([0.01, 0.04, 0.03, 0.5])
     assert np.allclose(q, [0.04, 0.0533333, 0.0533333, 0.5], atol=1e-5)
+    assert np.allclose(holm([0.01, 0.04, 0.03]), [0.03, 0.06, 0.06])
     assert abs(gini([1, 1, 1, 1])) < 1e-12 and abs(gini([0, 0, 0, 1]) - 0.75) < 1e-12
     assert abs(mutual_information([(1, 2)] * 5 + [(3, 4)] * 5) - 1) < 1e-12
     assert conditional_entropy([(1, 2, 3, 1, 2, 3)]) == 0  # rigid: the next sign is always known
+    assert abs(entropy_chao_shen([50] * 4) - 2) < 1e-6  # no singletons, large n: no correction needed
+    sample = np.random.default_rng(0).integers(0, 400, 300)  # true entropy log2(400) = 8.64
+    assert entropy(Counter(sample).values()) < 8 and abs(entropy_chao_shen(Counter(sample).values()) - math.log2(400)) < 0.2
+    assert js_divergence([2, 1], [4, 2]) < 1e-12 and abs(js_divergence([1, 0], [0, 1]) - 1) < 1e-12
     assert abs(conditional_entropy([(1, 2), (1, 3)]) - 1) < 1e-12 and conditional_entropy([(1, 2), (1, 3)], top_n=2) == 0
     # a toy right-to-left script: every text ends (physical left) in sign 9, starts anywhere
     rng = np.random.default_rng(1)

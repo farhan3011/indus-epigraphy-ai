@@ -41,7 +41,17 @@ curl -sSL -o data/raw/reference/lambda_phage.fasta \
   "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=NC_001416.1&rettype=fasta&retmode=text"
 ```
 
-Python code tokens come from the local Python 3.10 standard library, so nothing is downloaded for them.
+```bash
+# Linear B, Knossos series D sign sequences (Zenodo 7404653, CC BY 4.0); mixes 513 real sequences with unmarked augmented ones
+curl -sSL -o data/raw/reference/linear_b_samples.txt "https://zenodo.org/records/7404653/files/Samples.txt?download=1"
+# CDLI bulk ATF dump (cdli-gh/data, Git LFS object, 87 MB); Sumerian-tagged texts and seal inscriptions are taken from it
+curl -sSL -o data/raw/reference/cdliatf_unblocked.atf https://media.githubusercontent.com/media/cdli-gh/data/master/cdliatf_unblocked.atf
+# Essen folk song collection in Humdrum **kern (ccarh/essen-folksong-collection; see its license.txt), pinned commit
+mkdir -p data/raw/reference/essen && curl -sSL https://codeload.github.com/ccarh/essen-folksong-collection/tar.gz/2d0ca75e87dc7a725556c8090e3681c1fa3a0452 \
+  | tar -xz -C data/raw/reference/essen --strip-components=1
+```
+
+Python code tokens come from the local Python 3.10 standard library, so nothing is downloaded for them. The CDLI dump is a moving `master` file: `results.json` records the SHA-256 of every input used (expected for the dump: `2896ec25…d836`). Any reference input that is missing is skipped.
 
 ## What Milestone 1 actually uses
 
