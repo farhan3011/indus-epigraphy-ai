@@ -43,11 +43,24 @@ Step-by-step instructions: [docs/RUN_GUIDE.md](docs/RUN_GUIDE.md). Design decisi
 
 ## Milestone 2: sign-sequence analysis
 
-N-gram models with Witten-Bell smoothing, transition matrices, sign-pair statistics and writing-direction measures on the IM77 corpus. CPU only, about a minute.
+N-gram models with Witten-Bell smoothing, transition matrices, sign-pair statistics and writing-direction measures on the IM77 corpus. Robustness checks cover:
+- comparison with sign systems of known type (English, DNA, Python code, Rao's controls)
+- the direction test with the likely direction-deciding signs removed
+- a position baseline that counts from both ends
+- repeated cross-validation and the effect of unseen signs
+- a second, independent transcription (Wells/ICIT), with sign variants merged and split
+- corpus variants with doubtful readings and duplicate copies kept
+- the two replication gaps
+
+CPU only, about two minutes. The extra inputs are listed in [data/README.md](data/README.md); without them the affected checks are skipped.
 
 ```bash
 python sequence_analysis/run_milestone2.py
 ```
+
+Planned once Milestone 1 is properly hand-labelled on real seals:
+- an error-propagation test that uses Milestone 1's real confusion matrix instead of uniform errors
+- a direction test that uses sign positions measured on photographs instead of Mahadevan's direction labels
 
 ## Layout
 

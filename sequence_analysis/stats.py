@@ -35,6 +35,19 @@ def mutual_information(texts):
     return entropy(first.values()) + entropy(second.values()) - entropy(pairs.values())
 
 
+def conditional_entropy(texts, top_n=None):
+    """H(next | current) in bits over adjacent pairs inside texts (Rao et al. 2009). top_n: keep only
+    pairs whose two signs are both among the top_n most frequent, as in Rao's curves."""
+    pairs = Counter(p for t in texts for p in zip(t, t[1:]))
+    if top_n:
+        keep = {s for s, _ in Counter(s for t in texts for s in t).most_common(top_n)}
+        pairs = Counter({p: c for p, c in pairs.items() if p[0] in keep and p[1] in keep})
+    first = Counter()
+    for (a, _), c in pairs.items():
+        first[a] += c
+    return entropy(pairs.values()) - entropy(first.values())
+
+
 def g2(k11, k12, k21, k22):
     """Log-likelihood ratio statistic (Dunning 1993) for a 2x2 table; ~chi-square with 1 d.o.f."""
     n = k11 + k12 + k21 + k22
@@ -168,6 +181,8 @@ def selfcheck():
     assert np.allclose(q, [0.04, 0.0533333, 0.0533333, 0.5], atol=1e-5)
     assert abs(gini([1, 1, 1, 1])) < 1e-12 and abs(gini([0, 0, 0, 1]) - 0.75) < 1e-12
     assert abs(mutual_information([(1, 2)] * 5 + [(3, 4)] * 5) - 1) < 1e-12
+    assert conditional_entropy([(1, 2, 3, 1, 2, 3)]) == 0  # rigid: the next sign is always known
+    assert abs(conditional_entropy([(1, 2), (1, 3)]) - 1) < 1e-12 and conditional_entropy([(1, 2), (1, 3)], top_n=2) == 0
     # a toy right-to-left script: every text ends (physical left) in sign 9, starts anywhere
     rng = np.random.default_rng(1)
     rtl = [(9, *rng.integers(1, 9, 3)) for _ in range(300)]

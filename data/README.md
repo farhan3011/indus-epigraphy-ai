@@ -28,6 +28,21 @@ mkdir -p data/raw/im77 && curl -L -o data/raw/im77/im77_corpus_lines.csv \
 - **`im77/im77_corpus_lines.csv`** — third-party export of Mahadevan's 1977 concordance in Mahadevan sign numbers, reading order, `0` = illegible sign. The underlying data belongs to Mahadevan / RMRL and carries no stated open licence: use it locally, do not commit it.
 - **`cisi/`** — 179 Mohenjo-daro artefacts in Parpola numbering; each `features/Pnnn.json` has a `mahadevan_graphemes` field mapping to Mahadevan IDs. Not used by the generator now that IM77 sequences are available.
 
+## Extra inputs for the Milestone 2 robustness checks
+
+```bash
+# second transcription: yajnadevam/indus-website (GPL-3.0), Wells/ICIT sign numbers, pinned commit
+mkdir -p data/raw/yajnadevam && curl -sSL -o data/raw/yajnadevam/population-script.sql \
+  https://raw.githubusercontent.com/yajnadevam/indus-website/2434249618b1e74de3f26d28b90dfde093c3dd94/population-script.sql
+# reference systems: an English novel (Project Gutenberg #1342) and the phage lambda genome (NCBI NC_001416.1)
+mkdir -p data/raw/reference
+curl -sSL -o data/raw/reference/pride_and_prejudice.txt https://www.gutenberg.org/cache/epub/1342/pg1342.txt
+curl -sSL -o data/raw/reference/lambda_phage.fasta \
+  "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=NC_001416.1&rettype=fasta&retmode=text"
+```
+
+Python code tokens come from the local Python 3.10 standard library, so nothing is downloaded for them.
+
 ## What Milestone 1 actually uses
 
 ```bash
