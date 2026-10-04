@@ -38,6 +38,11 @@ def summarise(rows):
     return {"rows": len(rows), "unique_texts": len(texts), "tokens": len(tokens), "signs": len(set(tokens) - {0})}
 
 
+def ebuds_rows(lines):
+    """The EBUDS line filter without de-duplication, keeping each line's metadata (site, object, field symbol)."""
+    return lines[~lines.damaged & ~lines.doubtful & (lines.line == "0")]
+
+
 def ebuds(lines, keep_doubtful=False, keep_copies=False):
     """Yadav et al.'s filter: drop damaged or doubtful texts, drop lines of multi-line texts, keep one
     copy of each repeated text. Returns (sorted list of sign tuples, [(step, counts), ...]).
@@ -98,8 +103,42 @@ def reference_systems():
         with open(f, "rb") as fh:
             code += [t.string if t.type in (tokenize.NAME, tokenize.OP) else tokenize.tok_name[t.type]
                      for t in tokenize.tokenize(fh.readline) if t.type in (tokenize.NAME, tokenize.OP, tokenize.NUMBER, tokenize.STRING)]
-    return {"English, words": re.findall(r"[a-z]+", eng), "English, letters": list(re.sub(r"[^a-z]", "", eng)),
-            "DNA (phage lambda)": list(dna), "Python source, tokens": code}
+    out = {"English, words": re.findall(r"[a-z]+", eng), "English, letters": list(re.sub(r"[^a-z]", "", eng)),
+           "DNA (phage lambda)": list(dna), "Python source, tokens": code}
+    linear_b = REFERENCE / "linear_b_samples.txt"
+    if linear_b.exists():  # syllabograms and logograms; the file mixes 513 real sequences with unmarked augmented copies
+        out["Linear B, Knossos series D (signs)"] = [s for line in sorted(set(linear_b.read_text().split("\n"))) for s in re.split(r"[-\s]+", line) if s]
+    cdli = REFERENCE / "cdliatf_unblocked.atf"
+    if cdli.exists():
+        sux, seals = cuneiform(cdli)
+        out["Sumerian cuneiform, all texts (signs)"], out["Cuneiform seal inscriptions (signs)"] = sux, seals
+    essen = sorted((REFERENCE / "essen").rglob("*.krn"))
+    if essen:  # non-linguistic: pitches of folk melodies, octave and accidental kept, rhythm dropped
+        notes = (re.search(r"([a-gA-G])\1*[#-]*", line.split("\t")[0]) for f in essen for line in f.read_text(errors="ignore").split("\n")
+                 if line and line[0] not in "!*=" and "r" not in line.split("\t")[0])
+        out["Folk melodies, Essen collection (notes)"] = [m.group() for m in notes if m]
+    return out
+
+
+def cuneiform(path):
+    """Sign readings from CDLI ATF texts tagged Sumerian: (stream of all such texts, stream of seal texts only).
+    Lines with a broken or unreadable sign are dropped; determinatives count as signs; damage marks are removed."""
+    sux, seals, lang, obj = [], [], None, None
+    for line in path.read_text(errors="ignore").split("\n"):
+        if line.startswith("&"):
+            lang = obj = None
+        elif line.startswith("#atf: lang"):
+            lang = line.split()[-1]
+        elif line.startswith("@object"):
+            obj = line.split()[-1]
+        elif lang == "sux" and re.match(r"^\d+'?\.", line):
+            body = re.sub(r"[#?!*\[\]<>_⸢⸣]", "", line.split(".", 1)[1]).lower()
+            signs = [s for s in re.split(r"[-\s.{}+:]+", body) if s]
+            if signs and not any("x" == s or "..." in s or s == "$" for s in signs):
+                sux += signs
+                if obj == "seal":
+                    seals += signs
+    return sux, seals
 
 
 def physical(row):

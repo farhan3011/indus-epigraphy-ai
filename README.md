@@ -43,16 +43,22 @@ Step-by-step instructions: [docs/RUN_GUIDE.md](docs/RUN_GUIDE.md). Design decisi
 
 ## Milestone 2: sign-sequence analysis
 
-N-gram models with Witten-Bell smoothing, transition matrices, sign-pair statistics and writing-direction measures on the IM77 corpus. Robustness checks cover:
-- comparison with sign systems of known type (English, DNA, Python code, Rao's controls)
+N-gram models with Witten-Bell smoothing, transition matrices, sign-pair statistics and writing-direction measures on the IM77 corpus, plus distributional syntax: positional sign classes, class-order rules and recurring segments, checked on held-out texts. Robustness checks cover:
+- comparison with sign systems of known type (English, DNA, Python code, Linear B, Sumerian cuneiform and cuneiform seal inscriptions, folk melodies, Rao's controls)
 - the direction test with the likely direction-deciding signs removed
 - a position baseline that counts from both ends
 - repeated cross-validation and the effect of unseen signs
 - a second, independent transcription (Wells/ICIT), with sign variants merged and split
-- corpus variants with doubtful readings and duplicate copies kept
+- corpus variants with doubtful readings, duplicate copies and multi-line texts
+- differences by site, object type and field symbol
+- line breaks in multi-line and boustrophedon texts
+- bias-corrected entropy estimators and sample-size curves
+- missing-sign restoration with trigram and Kneser-Ney models
+- simulated re-segmentation of compound signs
 - the two replication gaps
+- every p-value in the report corrected together (Benjamini-Hochberg and Holm)
 
-CPU only, about two minutes. The extra inputs are listed in [data/README.md](data/README.md); without them the affected checks are skipped.
+CPU only, a few minutes (`--quick` for a fast check). Every random step uses a fixed seed, and `results.json` records the Python and package versions and the SHA-256 of every input. Tests: `python -m pytest -q sequence_analysis`; CI runs them on every push. The extra inputs are listed in [data/README.md](data/README.md); without them the affected checks are skipped.
 
 ```bash
 python sequence_analysis/run_milestone2.py

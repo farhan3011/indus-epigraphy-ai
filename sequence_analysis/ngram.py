@@ -30,12 +30,13 @@ class WittenBell:
             for i in range(1, len(s)):
                 for k in range(min(order, i + 1)):
                     self.counts[tuple(s[i - k:i])][s[i]] += 1
-        for h in [h for h in self.counts if len(h) >= 2 and min_count > 1]:
-            kept = Counter({w: c for w, c in self.counts[h].items() if c >= min_count})
-            if kept:
-                self.counts[h] = kept
-            else:
-                del self.counts[h]
+        if min_count > 1:
+            for h in [h for h in self.counts if len(h) >= 2]:
+                kept = Counter({w: c for w, c in self.counts[h].items() if c >= min_count})
+                if kept:
+                    self.counts[h] = kept
+                else:
+                    del self.counts[h]
         self.total = {h: sum(c.values()) for h, c in self.counts.items()}
         self._p, self._alpha = {}, {}
 
@@ -102,12 +103,13 @@ class KneserNey:
         cont = Counter(w for c in self.counts.values() for w in c)  # distinct left contexts per event
         n, t, n_events = sum(cont.values()), len(cont), len(vocab) + 1
         self.cont = lambda w: (cont[w] + t / n_events) / (n + t)
+        self.total = {h: sum(c.values()) for h, c in self.counts.items()}
 
     def prob(self, w, history=()):
         c = self.counts.get(history[-1])
         if not c:
             return self.cont(w)
-        total = sum(c.values())
+        total = self.total[history[-1]]
         return max(c[w] - self.d, 0) / total + self.d * len(c) / total * self.cont(w)
 
 
