@@ -15,3 +15,4 @@ tqdm==4.70.1
 pyyaml==6.0.3
 kagglehub
 pytest==9.1.1
+streamlit==1.65.0

@@ -8,3 +8,5 @@ Both show the same object: stamp seal and modern impression, unicorn and incense
 | `met_detail.jpg` | File:Stamp seal and modern impression, unicorn and incense burner, ca. 2600–1900 B.C. Indus (detail).jpg |
 
 Each photo shows the carved seal (left) and its impression (right) side by side, so no single seal/impression flag applies; they are used for visual inspection only.
+
+`met_impression.jpg` and `met_seal.jpg` are crops of `met_cropped.jpg` (the impression on the right, the carved seal on the left), one object per image, used by the demo app.

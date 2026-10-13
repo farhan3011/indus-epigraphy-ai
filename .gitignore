@@ -233,3 +233,6 @@ reports/quick/
 CLAUDE.md
 research_notes/
 archive/
+
+# Demo images exported for the upload path (synthetic seals can carry corpus texts)
+demo_images/
