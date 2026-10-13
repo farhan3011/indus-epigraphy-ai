@@ -276,9 +276,6 @@ def milestone1():
     view = cv2.flip(img, 1) if mirror else img  # boxes are in impression view
     hit = match(truth, out["signs"]) if truth else None
     with right:
-        if truth is None:
-            st.html('<div class="note"><b>Not a reading.</b> The detector has only seen synthetic seals. On real photographs it '
-                    'merges neighbouring signs and boxes the animal. Closing this gap needs hand-labelled real seals.</div>')
         st.image(draw(view, out["signs"], hit), width="stretch")
         if truth:
             gold = [g[0] for g in sorted(truth, key=lambda g: -(g[1] + g[3]) / 2)]
@@ -289,7 +286,7 @@ def milestone1():
                     + '<div class="label">True sequence</div>' + tiles(gold)
                     + '<div class="label">Pipeline output</div>' + tiles(out["sequence"], marks=["ok" if r else "bad" for r in right_signs]))
         elif out["sequence"]:
-            st.html('<div class="label">Pipeline output, not a reading</div>' + tiles(out["sequence"]))
+            st.html('<div class="label">Pipeline output</div>' + tiles(out["sequence"]))
 
     if out["signs"]:
         section("Sign by sign", "Each crop next to the reference drawing it matched best, with the classifier's five closest signs.")
