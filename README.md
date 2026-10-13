@@ -30,6 +30,15 @@ uv pip install -r requirements.txt
 
 Raw data is not in the repository. The two download commands are in [data/README.md](data/README.md).
 
+## Demo app
+
+```bash
+streamlit run app.py     # opens http://localhost:8501
+python app.py            # self-check
+```
+
+One page, two tabs. Milestone 1: pick a synthetic seal with a known answer, a real Met Museum photo, or upload a JPEG; the app draws the boxes, names each sign and shows the top five guesses. Milestone 2: guess a hidden sign in an unseen inscription, compare a real inscription with its reorderings, and explore where each sign sits and what its neighbours are. It needs the raw data, `runs/` and `models/` on the machine, so it runs locally only.
+
 ## Milestone 1: grapheme extraction
 
 A single-class detector (YOLOv8n or RT-DETR) finds the signs, and a DINOv2 nearest-neighbour classifier names each one with a Mahadevan sign number. One command generates the synthetic seals, trains both detectors, builds the classifier and writes the report; it needs a GPU to be practical.
