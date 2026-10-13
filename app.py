@@ -497,9 +497,7 @@ if __name__ == "__main__":
         selftest()
         raise SystemExit
     st.set_page_config(page_title="Indus script · computational epigraphy", layout="wide")
-    st.html(CSS + '<div class="masthead"><div class="eyebrow">Computational epigraphy</div><h1>Reading the Indus script by machine</h1>'
-            '<p>Two parts of a student project on an undeciphered script: finding and naming the signs on a seal, '
-            'then measuring how those signs are ordered.</p></div>')
+    st.html(CSS + '<div class="masthead"><div class="eyebrow">Computational epigraphy</div><h1>Reading the Indus script by machine</h1></div>')
     only = st.session_state.get("_only")  # set by the self-check, which cannot click tabs
     m1, m2 = st.tabs(["Seal to sign numbers", "Sign-sequence statistics"])
     if only != "m2":
