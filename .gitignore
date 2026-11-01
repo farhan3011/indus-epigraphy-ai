@@ -221,6 +221,7 @@ __marimo__/
 # Indus project data & artifacts
 data/raw/
 data/synthetic/
+data/derived/
 runs/
 models/
 *.pt

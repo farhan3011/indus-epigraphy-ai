@@ -13,7 +13,7 @@ Scope and milestones: [Indus_Epigraphy_AI_Project_Proposal.md](Indus_Epigraphy_A
 |---|---|---|---|
 | 1. Seal photo to ordered sign IDs | Done on synthetic seals; does not yet work on real photographs | `grapheme_extraction/` | [report](reports/milestone_1/milestone_1_report.md), [findings](reports/milestone_1/milestone_1_findings.md) |
 | 2. Sign-sequence statistics | Done on the IM77 corpus | `sequence_analysis/` | [report](reports/milestone_2/milestone_2_report.md) |
-| 3. Masked-sign prediction | Not started | | |
+| 3. Masked-sign prediction | Done: a small transformer is compared with the Milestone 2 bigram (the bigram wins) | `sequence_analysis/masked_model.py` | [report](reports/milestone_3/milestone_3_report.md) |
 | 4. Hallucination benchmark | Not started | | |
 
 ## Setup
@@ -76,6 +76,15 @@ python sequence_analysis/run_milestone2.py
 Planned once Milestone 1 is properly hand-labelled on real seals:
 - an error-propagation test that uses Milestone 1's real confusion matrix instead of uniform errors
 - a direction test that uses sign positions measured on photographs instead of Mahadevan's direction labels
+
+## Milestone 3: masked-sign prediction
+
+```bash
+python sequence_analysis/masked_model.py                          # 5-fold evaluation, 3 seeds, about 6 minutes on a laptop CPU
+python sequence_analysis/masked_model.py predict "267 99 ? 342"    # fill gaps; reading order, ? for each missing sign
+```
+
+A small transformer reads the whole inscription and ranks every sign for a hidden position. It is scored on exactly the trials Milestone 2 used for the bigram (every sign of every held-out text, 5-fold), with calibrated confidences. Result: first guess right 30.0% for the transformer against 38.0% for the bigram; averaging the two ties the bigram. With about 1,500 short texts, the two neighbours carry nearly everything a model can use. The final model is also run on the 337 corpus texts with one illegible sign.
 
 ## Layout
 
