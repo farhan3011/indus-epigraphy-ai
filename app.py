@@ -25,12 +25,14 @@ ROOT = Path(__file__).resolve().parent
 sys.path[:0] = [str(ROOT / "grapheme_extraction"), str(ROOT / "sequence_analysis")]
 
 import corpus  # noqa: E402
+import masked_model  # noqa: E402
 import ngram  # noqa: E402
 from classifier import crop_sign, load_classifier  # noqa: E402
 from pipeline import extract, iou, levenshtein, load_detector  # noqa: E402
 from synthetic_generator import GLYPH_DIR, degradation, load_glyphs, load_sequences, make_seal  # noqa: E402
 
 M2 = ROOT / "reports/milestone_2"
+M3 = ROOT / "reports/milestone_3"
 PUBLISHED_PERPLEXITY = {1: 68.82, 2: 26.69, 3: 26.09, 4: 25.26, 5: 25.26}  # Yadav et al. 2010
 M1_SIGN_ERROR_RATE = 0.237  # Milestone 1, YOLOv8n, synthetic test seals
 DETECTORS = {"YOLOv8n": ROOT / "runs/yolov8n/weights/best.pt", "RT-DETR-L": ROOT / "runs/rtdetr-l/weights/best.pt",
@@ -472,6 +474,83 @@ def milestone2():
         results_tab(res)
 
 
+# ---------- Milestone 3 ----------
+
+@st.cache_resource
+def gap_models():
+    """The masked-sign transformer and a bigram, both trained on every EBUDS text, plus the damaged corpus texts."""
+    model, tokens, temperature = masked_model.load()
+    lines = corpus.load_lines()
+    texts, _ = corpus.ebuds(lines)
+    vocab = sorted({s for t in texts for s in t})
+    return model, tokens, temperature, ngram.WittenBell(texts, vocab, 2, backoff=True), vocab, masked_model.damaged_texts(lines, vocab)
+
+
+def guess_cards(top):
+    """top: [(sign, probability)] best first."""
+    return '<div class="grid five">' + "".join(
+        f'<div class="card guess"><img src="{glyph_uri(s)}" alt=""><b>{s}</b><div class="bar1"><div style="width:{100 * p:.1f}%"></div></div>'
+        f'<small>{p:.0%}</small></div>' for s, p in top) + "</div>"
+
+
+def set90(probs):
+    p = np.sort(probs)[::-1]
+    return int(np.argmax(np.cumsum(p) >= 0.9) + 1)
+
+
+def new_damaged(n):
+    st.session_state.damaged = random.SystemRandom().randrange(n)
+
+
+def milestone3():
+    if not masked_model.MODEL_FILE.exists():
+        st.html('<div class="note">No trained model yet. Run <code>python sequence_analysis/masked_model.py</code> first.</div>')
+        return
+    model, tokens, temperature, bigram, vocab, damaged = gap_models()
+    res = json.loads((M3 / "results.json").read_text())
+    st.html('<p class="lede">Some corpus inscriptions have a sign that can no longer be read. Two models suggest what it was: the '
+            'Milestone 2 bigram, which looks only at the two neighbours, and a small transformer that reads the whole inscription. '
+            'Nobody knows the right answers for these texts, so the suggestions are candidates with a confidence, not readings.</p>')
+    if "damaged" not in st.session_state:
+        new_damaged(len(damaged))
+    text = damaged[st.session_state.damaged]
+    gap = text.index(0)
+    section("A damaged inscription", f"One of the {len(damaged)} single-line corpus texts with exactly one illegible sign.")
+    a, b = st.columns([3, 1], vertical_alignment="center")
+    a.html(tiles(text, hidden=gap))
+    b.button("Another inscription", key="next_damaged", on_click=new_damaged, args=(len(damaged),), width="stretch")
+    net = masked_model.fill(model, tokens, temperature, [None if s == 0 else s for s in text], k=len(vocab))[gap]
+    bi = candidates(bigram, vocab, text, gap)
+    order = np.argsort(-bi)
+    left, right = st.columns(2, gap="large")
+    left.html('<div class="label">Transformer: reads the whole inscription</div>' + guess_cards(net[:5])
+              + f'<p class="lede">Nine times in ten the right sign is among its top {set90(np.array([p for _, p in net]))}.</p>')
+    right.html('<div class="label">Bigram: reads the two neighbours</div>' + guess_cards([(vocab[k], bi[k]) for k in order[:5]])
+               + f'<p class="lede">Nine times in ten the right sign is among its top {set90(bi)}.</p>')
+
+    section("Try your own", "Type signs in reading order (first-read sign first) and a ? for each missing sign.")
+    typed = st.text_input("Inscription", "267 99 ? 342", label_visibility="collapsed")
+    parts = typed.split()
+    bad = [t for t in parts if t != "?" and not (t.isdigit() and int(t) in tokens.out)]
+    if not parts or "?" not in parts or bad or len(parts) > masked_model.MAX_LEN - 2:
+        st.html('<div class="note">Use sign numbers that occur in the corpus, at least one ?, and at most '
+                f'{masked_model.MAX_LEN - 2} signs.' + (f' Not recognised: {", ".join(bad)}.' if bad else "") + "</div>")
+    else:
+        seq = [None if t == "?" else int(t) for t in parts]
+        for g, top in masked_model.fill(model, tokens, temperature, seq).items():
+            st.html(f'<div class="label">Gap {g + 1}: transformer suggestions</div>' + guess_cards(top))
+        if len([t for t in seq if t is None]) > 1:
+            st.caption("Several gaps are masked together and each is filled on its own.")
+
+    r = res["models"]
+    section("How good is it", "Measured the same way as Milestone 2: every sign of every held-out text hidden in turn, 5-fold.")
+    st.html(stats(("Bigram, first guess right", f"{r['bigram']['top1']:.1%}"),
+                  ("Transformer, first guess right", f"{r['net_calibrated']['top1']:.1%}", f"± {100 * r['net_calibrated']['top1_sd']:.1f}"),
+                  ("Both averaged", f"{r['average']['top1']:.1%}"),
+                  ("Transformer calibration error", f"{r['net_calibrated']['ece_top1']:.3f}", "0 is perfect")))
+    st.caption(res["verdict"] + " Full report: reports/milestone_3/milestone_3_report.md")
+
+
 def selftest():
     signs = [{"bbox_xywh": [100, 10, 30, 50], "top_k": [[7, 1.0]]}, {"bbox_xywh": [300, 300, 30, 50], "top_k": [[9, 1.0]]}]
     assert match([(7, 98, 9, 131, 61), (5, 10, 10, 40, 60)], signs) == [7, None]  # second box overlaps no true sign
@@ -484,7 +563,7 @@ def selftest():
     assert draw(np.zeros((100, 200, 3), np.uint8), signs[:1]).size == (900, 450)
     from streamlit.testing.v1 import AppTest
     os.environ["INDUS_APP_UNDER_TEST"] = "1"
-    for tab in ("m1", "m2"):
+    for tab in ("m1", "m2", "m3"):
         at = AppTest.from_file(__file__, default_timeout=300)
         at.session_state["_only"] = tab
         at.run()
@@ -499,10 +578,13 @@ if __name__ == "__main__":
     st.set_page_config(page_title="Indus script · computational epigraphy", layout="wide")
     st.html(CSS + '<div class="masthead"><div class="eyebrow">Computational epigraphy</div><h1>Reading the Indus script by machine</h1></div>')
     only = st.session_state.get("_only")  # set by the self-check, which cannot click tabs
-    m1, m2 = st.tabs(["Seal to sign numbers", "Sign-sequence statistics"])
-    if only != "m2":
+    m1, m2, m3 = st.tabs(["Seal to sign numbers", "Sign-sequence statistics", "Filling damaged inscriptions"])
+    if only in (None, "m1"):
         with m1:
             milestone1()
-    if only != "m1":
+    if only in (None, "m2"):
         with m2:
             milestone2()
+    if only in (None, "m3"):
+        with m3:
+            milestone3()
