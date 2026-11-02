@@ -8,7 +8,9 @@ Writes (default reports/milestone_1/) <out>/eval_results.json, <out>/per_class_f
 import argparse
 import csv
 import json
+import math
 import shutil
+import sys
 import time
 from collections import Counter
 from pathlib import Path
@@ -20,8 +22,11 @@ from sklearn.metrics import precision_recall_fscore_support
 from ultralytics import RTDETR, YOLO
 
 from classifier import DATA, DEVICE, N_SIGNS, ROOT, load_classifier, load_crops, read_labels
-from pipeline import annotate, extract, iou, levenshtein, load_detector
-from synthetic_generator import IM77_CSV
+from pipeline import annotate, extract, iou, levenshtein, load_detector, rescore
+from synthetic_generator import IM77_CSV, load_glyphs, load_sequences, split_of
+
+sys.path.insert(0, str(ROOT / "sequence_analysis"))
+import ngram  # noqa: E402
 
 # metric -> (numerator, denominator) summed over seals; "seals" is 1 per seal
 METRICS = {
@@ -37,8 +42,10 @@ METRICS = {
 BUCKETS = ["50 most frequent signs", "signs ranked 51-200", "rarer signs"]
 
 
-def seal_records(detect, classifier, split):
-    """One record of counts per seal, plus mean milliseconds per image."""
+def seal_records(detect, classifier, split, keep=None):
+    """One record of counts per seal, plus mean milliseconds per image. keep: a list that receives
+    (gold sequence, pipeline signs, seal source) per seal, for rescoring without re-running the pipeline."""
+    sources = json.loads((DATA / f"sources_{split}.json").read_text()) if (DATA / f"sources_{split}.json").exists() else {}
     records, files = [], sorted((DATA / "images" / split).glob("*.jpg"))
     t0 = time.perf_counter()
     for f in files:
@@ -59,6 +66,8 @@ def seal_records(detect, classifier, split):
         gold = [g[0] for g in gt]
         r.update(edits=levenshtein(gold, out["sequence"]), exact=int(gold == out["sequence"]), count_ok=int(len(gold) == len(pred)))
         records.append(r)
+        if keep is not None:
+            keep.append((gold, out["signs"], sources.get(f.stem, "unknown")))
     return records, (time.perf_counter() - t0) / max(len(files), 1) * 1000
 
 
@@ -110,8 +119,89 @@ def detector_ap(weights, split, name):
     return {"AP50": float(res.box.map50), "AP50-95": float(res.box.map)}
 
 
+WEIGHTS = (0, 0.25, 0.5, 1, 2, 4)
+
+
+def sequence_lm():
+    """Kneser-Ney trigram (the best Milestone 2 n-gram) on the corpus texts of the synthetic train split only, so no
+    test-seal text is in it. Returns lm(prefix, sign) -> natural log P, sign None for the end of the text."""
+    texts = [tuple(s) for s in load_sequences() if split_of(s) == "train"]
+    m = ngram.KneserNey(texts, list(range(1, N_SIGNS + 1)), order=3)
+    return lambda prefix, s: math.log(m.prob(ngram.EOS if s is None else s, (ngram.BOS, *prefix)))
+
+
+SIZE_WEIGHTS = (0, 1, 4, 16, 32, 64, 128, 256)
+
+
+def size_adjusted(signs, heights, lam):
+    """Top-1 sequence after penalising candidates whose drawn height does not fit the box: the classifier letterboxes
+    every crop, which hides the size that separates e.g. 99 (two short strokes) from 87 (two long). Heights are compared
+    relative to the seal's median, since each seal is drawn at one scale."""
+    if len(signs) < 2 or lam == 0:
+        return [s["top_k"][0][0] for s in signs]
+    obs = np.array([s["bbox_xywh"][3] for s in signs], float)
+    ref = np.median([heights[s["top_k"][0][0]] for s in signs])
+    out = []
+    for o, s in zip(np.log(obs / np.median(obs)), signs):
+        out.append(max(s["top_k"], key=lambda c: math.log(max(c[1], 1e-12)) - lam * (o - math.log(heights[c[0]] / ref)) ** 2)[0])
+    return out
+
+
+def rescoring(detect, classifier):
+    """Sign error rate and exact match with and without n-gram rescoring of the top-5, weight chosen on val seals."""
+    lm, kept = sequence_lm(), {}
+    for split in ("val", "test"):
+        kept[split] = []
+        seal_records(detect, classifier, split, kept[split])
+    def ser(rows, w):
+        return sum(levenshtein(g, rescore(sg, lm, w)) for g, sg, _ in rows) / sum(len(g) for g, _, _ in rows)
+    val = [r for r in kept["val"] if r[2] == "corpus"]  # tuned for real inscriptions, not random sign strings
+    weight = min(WEIGHTS, key=lambda w: ser(val, w))
+    out = {"weight": weight, "val_corpus_sign_error_rate_by_weight": {str(w): ser(val, w) for w in WEIGHTS}}
+    for group in ("all", "corpus", "random"):
+        rows = [r for r in kept["test"] if group == "all" or r[2] == group]
+        if not rows:
+            continue
+        res = {}
+        for name, w in (("top1", 0), ("rescored", weight)):
+            seqs = [rescore(sg, lm, w) for _, sg, _ in rows]
+            res[name] = {"sign_error_rate": bootstrap([levenshtein(g, q) for (g, _, _), q in zip(rows, seqs)], [len(g) for g, _, _ in rows]),
+                         "exact_match": bootstrap([int(g == q) for (g, _, _), q in zip(rows, seqs)], [1] * len(rows))}
+        out[group] = {"seals": len(rows), **res}
+    heights = {s: g.shape[0] for s, g in load_glyphs().items()}
+    size_ser = lambda rows, lam: sum(levenshtein(g, size_adjusted(sg, heights, lam)) for g, sg, _ in rows) / sum(len(g) for g, _, _ in rows)
+    lam = min(SIZE_WEIGHTS, key=lambda l: size_ser(kept["val"], l))
+    rows = kept["test"]
+    out["size"] = {"weight": lam, "val_sign_error_rate_by_weight": {str(l): size_ser(kept["val"], l) for l in SIZE_WEIGHTS},
+                   **{name: bootstrap([levenshtein(g, size_adjusted(sg, heights, l)) for g, sg, _ in rows], [len(g) for g, _, _ in rows])
+                      for name, l in (("top1_sign_error_rate", 0), ("size_adjusted_sign_error_rate", lam))}}
+    return out
+
+
 def fmt(v):
     return f"{v[0]:.3f} [{v[1]:.3f}, {v[2]:.3f}]"
+
+
+def rescoring_lines(rs):
+    lines = []
+    lines += ["", "## Re-ranking the classifier's top 5 with a sign-sequence model", "",
+              f"YOLOv8n output, each sign's top 5 re-ranked by beam search with the best Milestone 2 n-gram (Kneser-Ney trigram) trained on "
+              f"the corpus texts of the training split only; synthetic train, val and test seals use disjoint corpus texts. Weight chosen on "
+              f"the val seals that carry corpus texts: {rs['weight']} (0 = no re-ranking).", "",
+              "| Test seals | Seals | Sign error rate, top-1 | Sign error rate, re-ranked | Exact match, top-1 | Exact match, re-ranked |",
+              "|---|---|---|---|---|---|"]
+    for group, label in (("all", "All"), ("corpus", "Real corpus texts"), ("random", "Random sign strings")):
+        if group in rs:
+            g = rs[group]
+            lines.append(f"| {label} | {g['seals']} | {fmt(g['top1']['sign_error_rate'])} | {fmt(g['rescored']['sign_error_rate'])} | "
+                         f"{fmt(g['top1']['exact_match'])} | {fmt(g['rescored']['exact_match'])} |")
+    lines += ["", "Half the synthetic seals carry random sign strings, which a sequence model cannot help and may hurt; real inscriptions "
+              "behave like the corpus-text rows."]
+    if "size" in rs:
+        z = rs["size"]
+        lines += ["", f"**Sign size.** Penalising candidates whose drawn height does not fit the box (weight {z['weight']}, chosen on val seals) "
+                  f"changes the sign error rate on all test seals from {fmt(z['top1_sign_error_rate'])} to {fmt(z['size_adjusted_sign_error_rate'])}."]
+    return lines
 
 
 def write_report(results, out_dir):
@@ -156,6 +246,10 @@ def write_report(results, out_dir):
         "Intervals here resample crops. The reference bank and the test crops are both augmentations of the same "
         "417 source drawings (IM-417 has one drawing per sign), so this measures robustness to the generator's "
         "distortions, not recognition of real carved signs. Per-sign precision, recall and F1 are in `per_class_f1.csv`.",
+    ]
+    if results.get("rescoring"):
+        lines += rescoring_lines(results["rescoring"])
+    lines += [
         "",
         "## Real photographs",
         "",
@@ -186,7 +280,17 @@ if __name__ == "__main__":
     ap.add_argument("--runs", nargs="*", default=["yolov8n", "rtdetr-l"], help="run folders under runs/")
     ap.add_argument("--split", default="test")
     ap.add_argument("--out", default=str(ROOT / "reports/milestone_1"))
+    ap.add_argument("--rescoring-only", action="store_true",
+                    help="only the n-gram re-ranking check (YOLOv8n): writes rescoring.json and rescoring.md, keeps the main report")
     args = ap.parse_args()
+    if args.rescoring_only:
+        rs = rescoring(load_detector(ROOT / "runs/yolov8n/weights/best.pt"), load_classifier())
+        Path(args.out, "rescoring.json").write_text(json.dumps(rs, indent=1))
+        Path(args.out, "rescoring.md").write_text("\n".join(["# Milestone 1: re-ranking with a sign-sequence model", "",
+            "Synthetic test seals regenerated with corpus texts disjoint across train, val and test (`synthetic_generator.split_of`); "
+            "the detector and classifier bank are the ones from the main report.", *rescoring_lines(rs)[2:]]) + "\n")
+        print(json.dumps({k: rs[k] for k in ("weight", "all")}, indent=1))
+        raise SystemExit
     out_dir = Path(args.out)
     (out_dir / "figures").mkdir(parents=True, exist_ok=True)
 
@@ -213,6 +317,9 @@ if __name__ == "__main__":
         results["seals"], results["signs"] = len(records), sum(r["n_gt"] for r in records)
         print(name, {k: round(v[0], 3) for k, v in entry["metrics"].items()})
     results["classifier"] = classifier_report(classifier, args.split, out_dir)
+    if "yolov8n" in results["detectors"] and args.split == "test":
+        results["rescoring"] = rescoring(load_detector(ROOT / "runs/yolov8n/weights/best.pt"), classifier)
+        print("rescoring:", {k: v for k, v in results["rescoring"].items() if k in ("weight", "all")})
     (out_dir / "eval_results.json").write_text(json.dumps(results, indent=1))
     write_report(results, out_dir)
     print(f"report -> {out_dir / 'milestone_1_report.md'}")
