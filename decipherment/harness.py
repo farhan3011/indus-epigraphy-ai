@@ -184,6 +184,10 @@ def test_key(cp, key, tables, draws, rng, bin_counts=(10,)):
     for name, arr in nulls.items():
         res["nulls"][name] = {sc: {"mean": float(arr[:, i].mean()), "sd": float(arr[:, i].std()), "p": p_value(obs[i], arr[:, i]),
                                    "percentile": float(100 * (arr[:, i] < obs[i]).mean())} for i, sc in enumerate(SCORERS)}
+    lo = min(arr[:, PRIMARY].min() for arr in nulls.values())
+    hi = max(arr[:, PRIMARY].max() for arr in nulls.values())
+    edges = np.linspace(min(lo, obs[PRIMARY]), max(hi, obs[PRIMARY]), 41)
+    res["primary_histogram"] = {"edges": edges.tolist(), **{n: np.histogram(nulls[n][:, PRIMARY], edges)[0].tolist() for n in ("value_shuffle", "binned_10")}}
     res["null_correlation_with_naive_bayes"] = {sc: float(np.corrcoef(nulls["value_shuffle"][:, i], nulls["value_shuffle"][:, 2])[0, 1]) for i, sc in enumerate(SCORERS[:2])}
     return res, nulls
 
