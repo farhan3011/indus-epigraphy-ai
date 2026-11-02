@@ -1,6 +1,6 @@
 # Milestone 4 report: testing claimed decipherments against chance
 
-A claimed decipherment of the Indus script is a table from signs to sounds. This harness applies a table to the inscriptions, measures how Sanskrit-like the result is, and compares that with thousands of tables made by shuffling the claim's own sound values among its signs. Everything was fixed in `decipherment/prereg.json` and committed before any claim was scored (pre-registration SHA-256 `647c654ca242…`, commit `ee0357e504`). **The test can only show that a particular table does or does not carry a signal beyond chance; it cannot show that the script is or is not a language.**
+A claimed decipherment of the Indus script is a table from signs to sounds. This harness applies a table to the inscriptions, measures how Sanskrit-like the result is, and compares that with thousands of tables made by shuffling the claim's own sound values among its signs. Everything was fixed in `decipherment/prereg.json` and committed before any claim was scored (pre-registration SHA-256 `647c654ca242…`, commit `e3d9af1368`). **The test can only show that a particular table does or does not carry a signal beyond chance; it cannot show that the script is or is not a language.**
 
 ## Revision of the pre-registration
 
