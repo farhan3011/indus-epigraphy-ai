@@ -14,7 +14,7 @@ Scope and milestones: [Indus_Epigraphy_AI_Project_Proposal.md](Indus_Epigraphy_A
 | 1. Seal photo to ordered sign IDs | Done on synthetic seals; does not yet work on real photographs | `grapheme_extraction/` | [report](reports/milestone_1/milestone_1_report.md), [findings](reports/milestone_1/milestone_1_findings.md) |
 | 2. Sign-sequence statistics | Done on the IM77 corpus | `sequence_analysis/` | [report](reports/milestone_2/milestone_2_report.md) |
 | 3. Masked-sign prediction | Done: neural models against the best n-gram (the trigram wins alone; a mixture adds 0.6 points) | `sequence_analysis/masked_model.py` | [report](reports/milestone_3/milestone_3_report.md) |
-| 4. Hallucination benchmark | Not started | | |
+| 4. Decipherment-claim test harness | Done: the one runnable Sanskrit key is not distinguishable from shuffled versions of itself | `decipherment/` | [report](reports/milestone_4/milestone_4_report.md) |
 
 ## Setup
 
@@ -85,6 +85,15 @@ python sequence_analysis/masked_model.py predict "267 99 ? 342"    # fill gaps; 
 ```
 
 Small neural models (transformer or bidirectional LSTM, chosen per fold on an inner split) read the whole inscription and rank every sign for a hidden position. They are scored on exactly the trials Milestone 2 used (every sign of every held-out text, 5-fold) against the best n-gram, the trigram, with calibrated confidences and conformal candidate sets. Result: the neural model alone gets the first guess right 32.2% of the time against the trigram's 40.2%; a fitted mixture of the two reaches 40.9%, a small but reliable gain of 0.6 points. The neighbouring signs carry almost everything a model can use. The final model is also run on the 337 corpus texts with one illegible sign.
+
+## Milestone 4: testing claimed decipherments
+
+```bash
+python decipherment/data.py       # fetch the pinned keys and corpora into data/raw/decipherment (never committed)
+python decipherment/harness.py    # controls + every claim in decipherment/prereg.json; about 5 minutes on a laptop CPU
+```
+
+A claimed decipherment is a sign-to-sound table. The harness applies a table to the inscriptions, scores how Sanskrit-like the order of the output is, and compares it with 10,000 tables made by shuffling the claim's own values, under rules committed in advance (`decipherment/prereg.json`). A positive control (Sanskrit enciphered with a known table) shows the test detects true tables 95-100% of the time; a negative control shows it does not fire falsely. Of the published claims, only Yajnadevam's Sanskrit key can be run in full; it is not distinguishable from shuffled versions of itself (frequency-matched null, Holm p about 0.65). Most other claims publish no fixed table and are listed as untestable. The test can reject a specific table; it cannot show whether the script records a language.
 
 ## Layout
 
