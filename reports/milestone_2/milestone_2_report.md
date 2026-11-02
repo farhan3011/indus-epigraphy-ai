@@ -61,6 +61,7 @@ Notes on comparability:
 | add-1 n=2 | 6.149, 0.051 | 70.94 | 106.21 |
 | add-0.01 n=2 | 5.302, 0.124 | 39.44 | 68.60 |
 | kneser-ney n=2 | 4.827, 0.087 | 28.38 | 49.09 |
+| kneser-ney n=3 | 4.740, 0.089 | 26.73 | 46.28 |
 
 The positional model, which knows only how far into the text a sign is, reaches 5.970 bits per event; the bigram model reaches 4.899. This baseline counts position from the start only; a baseline that also knows the distance to the end is under Robustness checks.
 The vocabulary is fixed at the 377 signs of the filtered corpus plus end-of-text; every model gives unseen signs non-zero probability.
@@ -134,8 +135,9 @@ With one sign removed and predicted from both neighbours by the bigram model (70
 | Model | Top-1 | Top-5 | Inside the 90% set | Same, strict | Mean size of the 90% set |
 |---|---|---|---|---|---|
 | witten-bell backoff n=2 | 38.0% | 62.4% | 86.1% | 79.5% | 44 |
-| witten-bell backoff n=3 | 40.1% | 63.0% | 82.5% | 69.9% | 37 |
+| witten-bell backoff n=3 | 40.2% | 63.0% | 82.5% | 69.9% | 37 |
 | kneser-ney n=2 | 38.7% | 63.2% | 86.7% | 77.0% | 55 |
+| kneser-ney n=3 | 42.2% | 64.5% | 85.5% | 68.0% | 53 |
 
 Each model scores a candidate by the probability of the whole text with the candidate in place, so the trigram also uses the sign two places away. It gains a few points of top-1 accuracy; the 90%-set figures are not comparable across models because the set sizes differ.
 
@@ -187,6 +189,8 @@ Class-to-class transitions against shuffles of the medial signs, first and last 
 | 222 254 | 15 | 0 | 2 | 12 | 1 |
 | 216 254 | 19 | 1 | 2 | 15 | 1 |
 
+**Do segments describe the texts better than signs?** On held-out folds, a model over recurring segments costs 5.47 bits per sign (segment unigram) and 4.91 (segment bigram), against 4.90 for the sign bigram (end of text counted, segments learnt on the training folds only). Treating the recurring segments as units does not predict held-out texts better than the sign bigram, so they are a description of frequent sign groups, not a better model of the texts.
+
 Segments keep their own positions: the commonest opening pairs open texts and the pairs ending in 342 close them. These are distributional rules of the notation in reading order. They do not show that the segments are words, or that the classes are grammatical categories.
 
 ## Robustness checks
@@ -201,7 +205,7 @@ Each reference system is cut into samples with exactly the Indus text-length dis
 | English, words | 1555 | 8.67 | 3.23 | 0.037 (0.001) | 0.232 (0.020) |
 | English, letters | 26 | 4.18 | 3.53 | 0.123 (0.003) | 0.120 (0.004) |
 | DNA (phage lambda) | 4 | 2.00 | 1.98 | 0.006 (0.001) | n/a (fewer than 20 signs) |
-| Python source, tokens | 953 | 6.52 | 3.39 | 0.105 (0.003) | 0.327 (0.013) |
+| Python source, tokens | 991 | 6.61 | 3.45 | 0.099 (0.005) | 0.326 (0.008) |
 | Linear B, Knossos series D (signs) | 108 | 5.55 | 3.11 | 0.269 (0.005) | 0.358 (0.007) |
 | Sumerian cuneiform, all texts (signs) | 685 | 7.94 | 3.38 | 0.085 (0.003) | 0.228 (0.016) |
 | Cuneiform seal inscriptions (signs) | 439 | 6.66 | 2.95 | 0.202 (0.003) | 0.417 (0.011) |
@@ -320,6 +324,7 @@ The entropy-based statistics under three estimators. The last column but one is 
 | plug-in | 6.681 | 3.115 | 1.947 | 1.168 | 3.221 | -0.418 |
 | Miller-Madow | 6.720 | 2.911 | 1.565 | 1.346 | 3.465 | -0.419 |
 | Chao-Shen | 6.753 | 2.861 | 1.251 | 1.610 | 3.545 | -0.405 |
+| NSB (sign entropy only) | 6.738 | | | | | |
 
 Chao-Shen cuts the bias on the permuted corpus from 1.95 to 1.25 bits but does not remove it, which is why every dependence claim in this report is made against shuffles rather than against zero. The direction statistic barely moves across estimators.
 
@@ -365,4 +370,4 @@ Re-segmenting up to a fifth of the sign list moves the dependence index by at mo
 
 ### Provenance
 
-Python 3.10.12; numpy 2.2.6, scipy 1.15.3, pandas 2.3.3, matplotlib 3.10.9; code at commit da2e037. Input checksums (SHA-256) and a checksum of the Python-token reference stream (which depends on the local standard library) are in `results.json` under `provenance`. Every random step uses a fixed seed.
+Python 3.10.21; numpy 2.2.6, scipy 1.15.3, pandas 2.3.3, matplotlib 3.10.9; code at commit f220c6f. Input checksums (SHA-256) and a checksum of the Python-token reference stream (which depends on the local standard library) are in `results.json` under `provenance`. Every random step uses a fixed seed.

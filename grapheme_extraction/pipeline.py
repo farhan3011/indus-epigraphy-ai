@@ -7,6 +7,7 @@ Metrics live in evaluate.py.
 """
 import argparse
 import json
+import math
 from pathlib import Path
 
 import cv2
@@ -92,6 +93,17 @@ def extract(img, detect, classifier, is_seal_matrix=False, artifact_id="unknown"
             "sign_count": len(signs), "sequence": [s["top_k"][0][0] for s in signs], "signs": signs}
 
 
+def rescore(signs, lm, weight, beam=5):
+    """Re-rank each sign's top-k with a sign-sequence model. signs: extract()["signs"] (reading order); lm(prefix, sign)
+    -> log P(sign | prefix), with sign None for the end of the text. Beam search maximising classifier log-probability
+    plus weight x sequence log-probability; weight 0 gives the top-1 sequence."""
+    beams = [(0.0, ())]
+    for s in signs:
+        beams = sorted(((sc + math.log(max(p, 1e-12)) + weight * lm(seq, sid), seq + (sid,))
+                        for sc, seq in beams for sid, p in s["top_k"]), reverse=True)[:beam]
+    return list(max((sc + weight * lm(seq, None), seq) for sc, seq in beams)[1])
+
+
 def levenshtein(a, b):
     prev = list(range(len(b) + 1))
     for i, x in enumerate(a, 1):
@@ -139,6 +151,10 @@ def demo():
     img[:, 50:70] = 255
     assert extract(img, lit, clf)["signs"][0]["bbox_xywh"][0] == 50
     assert extract(img, lit, clf, is_seal_matrix=True)["signs"][0]["bbox_xywh"][0] == 330
+    two_signs = [{"top_k": [[5, 0.6], [7, 0.4]]}, {"top_k": [[8, 0.55], [9, 0.45]]}]
+    assert rescore(two_signs, lambda prefix, s: 0.0, 1.0) == [5, 8]  # a flat sequence model keeps the classifier's choice
+    likes_79 = lambda prefix, s: 0.0 if (prefix, s) in {((), 7), ((7,), 9), ((7, 9), None)} else -5.0
+    assert rescore(two_signs, likes_79, 0.0) == [5, 8] and rescore(two_signs, likes_79, 1.0) == [7, 9]
     print("ok")
 
 

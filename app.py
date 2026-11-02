@@ -22,7 +22,7 @@ import streamlit as st
 from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parent
-sys.path[:0] = [str(ROOT / "grapheme_extraction"), str(ROOT / "sequence_analysis")]
+sys.path[:0] = [str(ROOT / "grapheme_extraction"), str(ROOT / "sequence_analysis"), str(ROOT / "decipherment")]
 
 import corpus  # noqa: E402
 import masked_model  # noqa: E402
@@ -33,6 +33,7 @@ from synthetic_generator import GLYPH_DIR, degradation, load_glyphs, load_sequen
 
 M2 = ROOT / "reports/milestone_2"
 M3 = ROOT / "reports/milestone_3"
+M4 = ROOT / "reports/milestone_4"
 PUBLISHED_PERPLEXITY = {1: 68.82, 2: 26.69, 3: 26.09, 4: 25.26, 5: 25.26}  # Yadav et al. 2010
 M1_SIGN_ERROR_RATE = 0.237  # Milestone 1, YOLOv8n, synthetic test seals
 DETECTORS = {"YOLOv8n": ROOT / "runs/yolov8n/weights/best.pt", "RT-DETR-L": ROOT / "runs/rtdetr-l/weights/best.pt",
@@ -81,7 +82,7 @@ button[data-baseweb="tab"] p { font-size: .98rem; }
 .card.ok { border-color: var(--good); }
 .card .head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 .card .n { font: 500 .78rem/1 var(--mono); color: var(--muted); }
-.chip { font-size: .72rem; padding: 3px 9px; border-radius: 99px; border: 1px solid var(--line); color: var(--muted); }
+.chip { font-size: .72rem; padding: 3px 9px; white-space: nowrap; border-radius: 99px; border: 1px solid var(--line); color: var(--muted); }
 .chip.ok { color: var(--good); border-color: var(--good); } .chip.bad { color: var(--bad); border-color: var(--bad); }
 .chip.near { color: var(--amber); border-color: var(--amber); }
 .pair { display: flex; gap: 10px; margin-bottom: 10px; }
@@ -478,12 +479,12 @@ def milestone2():
 
 @st.cache_resource
 def gap_models():
-    """The masked-sign transformer and a bigram, both trained on every EBUDS text, plus the damaged corpus texts."""
+    """The neural masked-sign model and the best n-gram (Kneser-Ney trigram), both trained on every EBUDS text, plus the damaged corpus texts."""
     model, tokens, temperature = masked_model.load()
     lines = corpus.load_lines()
     texts, _ = corpus.ebuds(lines)
     vocab = sorted({s for t in texts for s in t})
-    return model, tokens, temperature, ngram.WittenBell(texts, vocab, 2, backoff=True), vocab, masked_model.damaged_texts(lines, vocab)
+    return model, tokens, temperature, masked_model.best_ngram(texts, vocab), vocab, masked_model.damaged_texts(lines, vocab)
 
 
 def guess_cards(top):
@@ -506,10 +507,10 @@ def milestone3():
     if not masked_model.MODEL_FILE.exists():
         st.html('<div class="note">No trained model yet. Run <code>python sequence_analysis/masked_model.py</code> first.</div>')
         return
-    model, tokens, temperature, bigram, vocab, damaged = gap_models()
+    model, tokens, temperature, trigram, vocab, damaged = gap_models()
     res = json.loads((M3 / "results.json").read_text())
     st.html('<p class="lede">Some corpus inscriptions have a sign that can no longer be read. Two models suggest what it was: the '
-            'Milestone 2 bigram, which looks only at the two neighbours, and a small transformer that reads the whole inscription. '
+            'best Milestone 2 n-gram, which looks at the neighbouring signs, and a small neural model that reads the whole inscription. '
             'Nobody knows the right answers for these texts, so the suggestions are candidates with a confidence, not readings.</p>')
     if "damaged" not in st.session_state:
         new_damaged(len(damaged))
@@ -520,13 +521,14 @@ def milestone3():
     a.html(tiles(text, hidden=gap))
     b.button("Another inscription", key="next_damaged", on_click=new_damaged, args=(len(damaged),), width="stretch")
     net = masked_model.fill(model, tokens, temperature, [None if s == 0 else s for s in text], k=len(vocab))[gap]
-    bi = candidates(bigram, vocab, text, gap)
+    bi = masked_model.ngram.candidate_scores(trigram, vocab, [text], [(0, gap)])[0]
+    bi = bi / bi.sum()
     order = np.argsort(-bi)
     left, right = st.columns(2, gap="large")
-    left.html('<div class="label">Transformer: reads the whole inscription</div>' + guess_cards(net[:5])
-              + f'<p class="lede">Nine times in ten the right sign is among its top {set90(np.array([p for _, p in net]))}.</p>')
-    right.html('<div class="label">Bigram: reads the two neighbours</div>' + guess_cards([(vocab[k], bi[k]) for k in order[:5]])
-               + f'<p class="lede">Nine times in ten the right sign is among its top {set90(bi)}.</p>')
+    left.html('<div class="label">Neural model: reads the whole inscription</div>' + guess_cards(net[:5])
+              + f'<p class="lede">Its 90% probability set holds {set90(np.array([p for _, p in net]))} signs.</p>')
+    right.html('<div class="label">Best n-gram: reads the neighbouring signs</div>' + guess_cards([(vocab[k], bi[k]) for k in order[:5]])
+               + f'<p class="lede">Its 90% probability set holds {set90(bi)} signs.</p>')
 
     section("Try your own", "Type signs in reading order (first-read sign first) and a ? for each missing sign.")
     typed = st.text_input("Inscription", "267 99 ? 342", label_visibility="collapsed")
@@ -538,17 +540,110 @@ def milestone3():
     else:
         seq = [None if t == "?" else int(t) for t in parts]
         for g, top in masked_model.fill(model, tokens, temperature, seq).items():
-            st.html(f'<div class="label">Gap {g + 1}: transformer suggestions</div>' + guess_cards(top))
+            st.html(f'<div class="label">Gap {g + 1}: neural model suggestions</div>' + guess_cards(top))
         if len([t for t in seq if t is None]) > 1:
             st.caption("Several gaps are masked together and each is filled on its own.")
 
     r = res["models"]
     section("How good is it", "Measured the same way as Milestone 2: every sign of every held-out text hidden in turn, 5-fold.")
-    st.html(stats(("Bigram, first guess right", f"{r['bigram']['top1']:.1%}"),
-                  ("Transformer, first guess right", f"{r['net_calibrated']['top1']:.1%}", f"± {100 * r['net_calibrated']['top1_sd']:.1f}"),
-                  ("Both averaged", f"{r['average']['top1']:.1%}"),
-                  ("Transformer calibration error", f"{r['net_calibrated']['ece_top1']:.3f}", "0 is perfect")))
+    st.html(stats(("Best n-gram, first guess right", f"{r['kn_trigram']['top1']:.1%}"),
+                  ("Neural model alone", f"{r['net_calibrated']['top1']:.1%}", f"± {100 * r['net_calibrated']['top1_sd']:.1f}"),
+                  ("Neural + n-gram mixture", f"{r['mixture']['top1']:.1%}", f"± {100 * r['mixture']['top1_sd']:.1f}"),
+                  ("Mixture calibration error", f"{r['mixture']['ece_top1']:.3f}", "0 is perfect")))
     st.caption(res["verdict"] + " Full report: reports/milestone_3/milestone_3_report.md")
+
+
+# ---------- Milestone 4 ----------
+
+@st.cache_resource
+def decipher_tools():
+    """The current Yajnadevam key, the scoring tables and the Wells texts the key can read (local data only)."""
+    import data as dec_data
+    import harness
+    key = dec_data.load_key("xlits_2026-07-15.csv")
+    target = [dec_data.skeleton(l) for l in dec_data.dcs_lines("train")]
+    control = [dec_data.skeleton(l) for l in dec_data.control_lines()]
+    lm = harness.lm_table(target)
+    tables = ((lm, harness.lm_table(target, order=1)), (lm, harness.lm_table(control)), harness.nb_tables(target, control))
+    texts = [t for t in corpus.load_wells()[0] if all(s in key for s in t) and len(t) >= 3]
+    return harness, dec_data, key, tables, texts
+
+
+def new_wells(n):
+    st.session_state.wells = random.SystemRandom().randrange(n)
+
+
+def milestone4():
+    if not (M4 / "results.json").exists():
+        st.html('<div class="note">No results yet. Run <code>python decipherment/harness.py</code> first.</div>')
+        return
+    res = json.loads((M4 / "results.json").read_text())
+    claim = res["claims"]["yajnadevam-2026-07-15"]
+    st.html('<p class="lede">A claimed decipherment is a table from signs to sounds. The test applies the table to the '
+            'inscriptions, measures how Sanskrit-like the order of the result is, and compares that with 10,000 tables made by '
+            'shuffling the claim\'s own sounds among its signs. The rules were committed before any claim was scored. It can show '
+            'that a table carries no signal beyond chance; it cannot show whether the script records a language.</p>')
+    pc, nc = res["positive_control"], res["negative_control"]
+    p = claim["nulls"]["binned_10"]["sequence"]
+    st.html(stats(("Known tables detected (positive control)", f"{min(v['power'] for v in pc['0'].values()):.0%}"),
+                  ("Random tables flagged (5% expected)", f"{nc['share_below_0.05']:.1%}"),
+                  ("Claimed table beats", f"{p['percentile']:.0f}%", "of frequency-matched shuffles"),
+                  ("After correction for 12 tests", f"p = {claim['holm']['sequence']['binned_10']:.2f}", "not significant" if claim['holm']['sequence']['binned_10'] >= 0.05 else "significant")))
+
+    section("The claimed table against shuffled versions of itself", "Yajnadevam's Sanskrit key (version of 15 July 2026), "
+            "scored on the inscriptions it can read. Higher means more Sanskrit-like sign order.")
+    h = claim["primary_histogram"]
+    centres = [(a + b) / 2 for a, b in zip(h["edges"][:-1], h["edges"][1:])]
+    rows = [{"score": c, "keys": n, "null": label} for label, k in (("Any shuffle", "value_shuffle"), ("Frequency-matched shuffle", "binned_10"))
+            for c, n in zip(centres, h[k])]
+    bars = alt.Chart(pd.DataFrame(rows)).mark_bar(opacity=0.75, binSpacing=0).encode(
+        alt.X("score:Q", title="Sanskrit sequence score, bits per phoneme", bin=alt.Bin(binned=True, step=centres[1] - centres[0])),
+        alt.Y("keys:Q", title="Shuffled tables", stack=None),
+        alt.Color("null:N", scale=alt.Scale(domain=["Any shuffle", "Frequency-matched shuffle"], range=[MUTED, BLUE])),
+        tooltip=["null", alt.Tooltip("score:Q", format=".2f"), "keys"])
+    mark = pd.DataFrame({"score": [claim["observed"]["sequence"]], "label": ["claimed table"]})
+    rule = alt.Chart(mark).mark_rule(color=ACCENT, strokeWidth=3).encode(x="score:Q")
+    label = alt.Chart(mark).mark_text(align="left", dx=6, color=INK, fontSize=12).encode(x="score:Q", y=alt.value(10), text="label:N")
+    st.altair_chart(themed(bars + rule + label, 280), theme=None, width="stretch")
+    st.caption(claim["sentence"][0].upper() + claim["sentence"][1:])
+
+    oe, rv, sh = res["order_effect"], res["read_vs_unread"], res["shaw"]
+    st.html(stats(("Real order vs shuffled order", f"z = {oe['claim_z']:.1f}", f"random tables {oe['random_keys_z_mean']:+.1f} ± {oe['random_keys_z_sd']:.1f}"),
+                  ("Texts he read vs left unread", f"{rv['difference_bits_per_phoneme']:+.2f} bits", f"p = {rv['p']:.3f}"),
+                  ("Shaw 2026: values follow sign numbering", f"{sh['observed']} of {sh['pairs']}", f"{sh['expected']:.0f} expected")))
+    st.caption("Any table carries some of the inscriptions' own sign order into its output, so the order effect is not specific to "
+               "the claim. The table fits the texts its author read better than the ones he left unread, which is a sign of fitting.")
+
+    section("Which claims can be tested")
+    chip = {"TESTED": "ok", "NO_TARGET_LANGUAGE": "near", "NOT_RUN": "near", "NOT_TESTABLE_NO_TABLE": "bad"}
+    st.html('<table class="rep"><tr><th>Claim</th><th>Status</th><th>Note</th></tr>' + "".join(
+        f'<tr><td>{c}</td><td><span class="chip {chip.get(v["status"], "")}">{v["status"].replace("_", " ").lower()}</span></td>'
+        f'<td>{v.get("done", v.get("reason", "no fixed sign-to-value table is published"))}</td></tr>' for c, v in res["claims_table"].items()) + "</table>")
+
+    section("Try it", "A real inscription read with the claimed table and with three shuffled tables. Each gets the same score.")
+    try:
+        harness, dec_data, key, tables, texts = decipher_tools()
+    except (FileNotFoundError, OSError):
+        st.html('<div class="note">Needs the local data: run <code>python decipherment/data.py</code>.</div>')
+        return
+    if "wells" not in st.session_state:
+        new_wells(len(texts))
+    text = texts[st.session_state.wells]
+    a, b = st.columns([3, 1], vertical_alignment="center")
+    a.html('<div class="label">Signs in reading order (Wells numbers)</div><p class="lede" style="font-family:var(--mono)">'
+           + " · ".join(map(str, text)) + "</p>")
+    b.button("Another inscription", key="next_wells", on_click=new_wells, args=(len(texts),), width="stretch")
+    rng = np.random.default_rng(st.session_state.wells)
+    us = harness.units(key)
+    tables_rows = [("Claimed table", {s: cv[1] for s, cv in key.items()})] + [(f"Shuffled table {i}", harness.shuffled(us, rng)) for i in (1, 2, 3)]
+    cp = harness.Corpus([text], key)
+    out = []
+    for name, values in tables_rows:
+        reading = " ".join(values[s] for s in text)
+        score = cp.score(cp.codes(values), tables, per_text=True)[0][0]
+        out.append(f'<tr><td>{name}</td><td class="num">{reading}</td><td class="num">{dec_data.skeleton(reading)}</td><td class="num">{score:+.2f}</td></tr>')
+    st.html('<table class="rep"><tr><th>Table</th><th>Reading</th><th>Consonants scored</th><th>Score</th></tr>' + "".join(out) + "</table>")
+    st.caption("Full report: reports/milestone_4/milestone_4_report.md")
 
 
 def selftest():
@@ -563,7 +658,7 @@ def selftest():
     assert draw(np.zeros((100, 200, 3), np.uint8), signs[:1]).size == (900, 450)
     from streamlit.testing.v1 import AppTest
     os.environ["INDUS_APP_UNDER_TEST"] = "1"
-    for tab in ("m1", "m2", "m3"):
+    for tab in ("m1", "m2", "m3", "m4"):
         at = AppTest.from_file(__file__, default_timeout=300)
         at.session_state["_only"] = tab
         at.run()
@@ -578,7 +673,7 @@ if __name__ == "__main__":
     st.set_page_config(page_title="Indus script · computational epigraphy", layout="wide")
     st.html(CSS + '<div class="masthead"><div class="eyebrow">Computational epigraphy</div><h1>Reading the Indus script by machine</h1></div>')
     only = st.session_state.get("_only")  # set by the self-check, which cannot click tabs
-    m1, m2, m3 = st.tabs(["Seal to sign numbers", "Sign-sequence statistics", "Filling damaged inscriptions"])
+    m1, m2, m3, m4 = st.tabs(["Seal to sign numbers", "Sign-sequence statistics", "Filling damaged inscriptions", "Testing decipherment claims"])
     if only in (None, "m1"):
         with m1:
             milestone1()
@@ -588,3 +683,6 @@ if __name__ == "__main__":
     if only in (None, "m3"):
         with m3:
             milestone3()
+    if only in (None, "m4"):
+        with m4:
+            milestone4()

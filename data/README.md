@@ -65,3 +65,11 @@ mkdir -p data/raw/im77 && curl -sSL -o data/raw/im77/im77_corpus_lines.csv \
 ```
 
 The IM77 export carries no clear licence for the underlying Mahadevan/RMRL data, so it is downloaded per user and never committed. The CISI JSON corpus uses Parpola numbering (`P###`); its `features/P###.json` files hold a `mahadevan_graphemes` cross-reference if a P-to-M mapping is needed later.
+
+## Milestone 4 inputs
+
+```bash
+python decipherment/data.py
+```
+
+Fetches into `data/raw/decipherment/`: the Yajnadevam key at two pinned commits and his readings file (github.com/yajnadevam/lipi, no licence, so never committed), the Shaw 2026 and Fuls 2024 key transcriptions (paragorth/Indus-, pinned), five post-Vedic texts from the Digital Corpus of Sanskrit (CC BY 4.0, pinned commit) and five Sangam anthologies from Project Madurai (SHA-256 recorded at first fetch). It then checks the pins and the reading direction.

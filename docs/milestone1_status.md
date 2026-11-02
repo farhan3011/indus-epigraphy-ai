@@ -24,9 +24,17 @@ Milestone 1 is complete on synthetic data. The full run (YOLOv8n, RT-DETR-L, Ope
 - `synthetic_generator.py`. It now supplies the crops for the classifier bank (the plan's Level 3) and is the plan's Level 4 if real-data recall stays below 0.85.
 - Synthetic evaluation (`evaluate.py`), on a held-out synthetic test split.
 
+## Done since, without real labels
+
+- Synthetic train, val and test seals use disjoint corpus texts (`synthetic_generator.split_of`); each seal's source (corpus text or random string) is recorded in `data/synthetic/sources_<split>.json`.
+- `pipeline.rescore`: beam search over each sign's top 5 with the Kneser-Ney trigram; `evaluate.size_adjusted`: a sign-size penalty. Results in `reports/milestone_1/rescoring.md` (corpus-text seals: sign error rate 0.170 to 0.134; size: 0.224 to 0.202 on all seals).
+- `synthetic_generator.py --relief`: shaded carved relief instead of flat masks. Not yet used for training.
+
 ## Not done
 
 - Collecting and hand-labelling real seals: 50-100 frozen test seals first, then 150-250 train/val. This is manual work.
+- Retraining the detectors on relief-shaded synthetic seals (`--relief`, GPU).
+- A "not a sign" class: it can only be measured on real photographs, where the detector boxes animals; synthetic detections have almost no false positives.
 - Retraining the detector on real data. (The YOLOv8n vs RT-DETR comparison on synthetic data is done.) The current `best.pt` was trained on synthetic data with the default `fliplr=0.5`; retrain it.
 - Evaluation on a real test split. `evaluate.py` already reports bootstrap intervals and frequency buckets, on the synthetic test split.
 - Copy-paste augmentation (plan Level 2).

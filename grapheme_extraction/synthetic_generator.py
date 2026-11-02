@@ -8,6 +8,8 @@ Label class = Mahadevan sign ID - 1, so one label file serves the single-class d
 """
 import argparse
 import csv
+import hashlib
+import json
 import random
 from pathlib import Path
 
@@ -44,6 +46,13 @@ def load_sequences():
             if 1 <= len(seq) <= MAX_LEN:
                 seqs.append(seq)
     return seqs
+
+
+def split_of(seq):
+    """Corpus texts go to one split only (test 10%, val 10%, train 80%, by a stable hash of the text), so a test seal
+    never shows a text the detector, classifier or n-gram rescoring saw in training."""
+    h = int(hashlib.md5(" ".join(map(str, seq)).encode()).hexdigest(), 16) % 10
+    return "test" if h == 0 else "val" if h == 1 else "train"
 
 
 def stone_texture():
@@ -95,13 +104,13 @@ def motif(top):
     return m
 
 
-def make_seal(glyphs, seqs, degrade):
-    """Returns (BGR uint8 image, [(sign_id, x0, y0, x1, y1), ...])."""
+def make_seal(glyphs, seqs, degrade, relief=False, return_source=False):
+    """Returns (BGR uint8 image, [(sign_id, x0, y0, x1, y1), ...]) and, with return_source, "corpus" or "random"."""
     # Half real texts (real sign frequencies and neighbours), half uniform random signs of a real
     # length: the corpus is Zipfian (112 signs occur once), and the classifier needs every sign.
-    ids = random.choice(seqs)[::-1]  # reading order is right-to-left, layout below is left-to-right
+    ids, source = random.choice(seqs)[::-1], "corpus"  # reading order is right-to-left, layout below is left-to-right
     if random.random() < 0.5:
-        ids = random.choices(range(1, N_SIGNS + 1), k=len(ids))
+        ids, source = random.choices(range(1, N_SIGNS + 1), k=len(ids)), "random"
     # One scale per seal (+-8% per sign): relative sign size is the only thing separating
     # e.g. short strokes (99) from long strokes (87), so it must survive compositing.
     scale = min(random.uniform(0.9, 1.9), (SIZE - 70) / sum(glyphs[i].shape[1] + 10 for i in ids))
@@ -126,12 +135,34 @@ def make_seal(glyphs, seqs, degrade):
     depth = random.uniform(0.3, 0.75) * random.choice([1, 1, -0.6])
     if stone.mean() > 150:  # lightening an already pale stone saturates the signs away
         depth = abs(depth)
-    img = engrave(stone, canvas, depth)
-    img = engrave(img, motif(yc + line_h // 2 + 10), depth)
+    carve = relief_shade if relief else engrave
+    img = carve(stone, canvas, depth)
+    img = carve(img, motif(yc + line_h // 2 + 10), depth)
     img = np.clip(img, 0, 255).astype(np.uint8)
 
     out = degrade(image=img, bboxes=[b[1:] for b in boxes], signs=[b[0] for b in boxes])
-    return out["image"], [(int(s), *b) for s, b in zip(out["signs"], out["bboxes"])]
+    result = out["image"], [(int(s), *b) for s, b in zip(out["signs"], out["bboxes"])]
+    return (*result, source) if return_source else result
+
+
+def relief_shade(img, mask, depth):
+    """Carved relief instead of a flat darkened mask: a height map from the distance to the stroke edge (deepest at
+    the stroke centre), lit from a random direction (Lambert), plus a soft cast shadow. Real seals are deep relief;
+    the flat masks are why the detector merged neighbouring signs on real photographs. Opt-in (--relief) until the
+    detectors are retrained on it."""
+    m = (mask > 60).astype(np.uint8)
+    if not m.any():
+        return img
+    height = cv2.GaussianBlur(cv2.distanceTransform(m, cv2.DIST_L2, 3), (0, 0), 1.2)
+    height = -np.sign(depth) * height / max(height.max(), 1e-6) * 6  # intaglio (seal) sinks, impression rises
+    gy, gx = np.gradient(height)
+    a = random.uniform(0, 2 * np.pi)
+    light = np.array([np.cos(a), np.sin(a), random.uniform(0.6, 1.2)])
+    normal = np.dstack([-gx, -gy, np.ones_like(gx)])
+    shade = (normal @ light) / np.linalg.norm(normal, axis=2) / np.linalg.norm(light)
+    shadow = np.roll(cv2.GaussianBlur(m.astype(np.float32), (0, 0), 2), (round(3 * np.sin(a)), round(3 * np.cos(a))), (0, 1))
+    k = np.clip(shade, 0.2, 1.3) * (1 - 0.25 * abs(depth) * shadow * (1 - m))
+    return img * np.where(m[..., None] | (shadow[..., None] > 0.05), k[..., None], 1)
 
 
 def degradation():
@@ -146,18 +177,20 @@ def degradation():
     ], bbox_params=A.BboxParams(format="pascal_voc", label_fields=["signs"], min_visibility=0.6))
 
 
-def generate(n, split, glyphs, seqs):
+def generate(n, split, glyphs, seqs, relief=False):
     img_dir, lbl_dir = OUT / "images" / split, OUT / "labels" / split
     img_dir.mkdir(parents=True, exist_ok=True)
     lbl_dir.mkdir(parents=True, exist_ok=True)
     degrade = degradation()
+    sources = {}
     for i in range(n):
-        img, boxes = make_seal(glyphs, seqs, degrade)
+        img, boxes, sources[f"{split}_{i:05d}"] = make_seal(glyphs, seqs, degrade, relief, return_source=True)
         assert all(0 <= x0 < x1 <= SIZE and 0 <= y0 < y1 <= SIZE for _, x0, y0, x1, y1 in boxes), boxes
         cv2.imwrite(str(img_dir / f"{split}_{i:05d}.jpg"), img)
         (lbl_dir / f"{split}_{i:05d}.txt").write_text("\n".join(
             f"{s - 1} {(x0 + x1) / 2 / SIZE:.6f} {(y0 + y1) / 2 / SIZE:.6f} {(x1 - x0) / SIZE:.6f} {(y1 - y0) / SIZE:.6f}"
             for s, x0, y0, x1, y1 in boxes))
+    (OUT / f"sources_{split}.json").write_text(json.dumps(sources))
 
 
 if __name__ == "__main__":
@@ -166,14 +199,16 @@ if __name__ == "__main__":
     ap.add_argument("--val", type=int, default=300)
     ap.add_argument("--test", type=int, default=300, help="held out: never used for model selection or tuning")
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--relief", action="store_true", help="shaded carved relief instead of flat masks (retrain the detectors on it)")
     args = ap.parse_args()
     random.seed(args.seed)
     np.random.seed(args.seed)
 
     glyphs, seqs = load_glyphs(), load_sequences()
-    generate(args.train, "train", glyphs, seqs)
-    generate(args.val, "val", glyphs, seqs)
-    generate(args.test, "test", glyphs, seqs)
+    by_split = {k: [s for s in seqs if split_of(s) == k] for k in ("train", "val", "test")}
+    assert not ({tuple(s) for s in by_split["test"]} & {tuple(s) for s in by_split["train"] + by_split["val"]})
+    for split, n in (("train", args.train), ("val", args.val), ("test", args.test)):
+        generate(n, split, glyphs, by_split[split], args.relief)
     names = "\n".join(f"  {i}: '{i + 1}'" for i in range(N_SIGNS))
     (OUT / "data.yaml").write_text(f"path: {OUT.as_posix()}\ntrain: images/train\nval: images/val\ntest: images/test\nnames:\n{names}\n")
     print(f"wrote {args.train} train + {args.val} val + {args.test} test seals to {OUT}")

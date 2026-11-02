@@ -90,27 +90,46 @@ class AddK:
 
 
 class KneserNey:
-    """Bigram interpolated Kneser-Ney with a fixed discount; continuation counts are Witten-Bell
-    smoothed toward uniform so unseen signs keep non-zero probability."""
-    order = 2
+    """Interpolated Kneser-Ney with a fixed discount, any order. Lower orders use continuation counts (how many
+    distinct signs precede an n-gram); the unigram continuation is Witten-Bell smoothed toward uniform so unseen
+    signs keep non-zero probability. order=2 is the bigram used throughout Milestone 2."""
 
-    def __init__(self, texts, vocab, discount=0.75):
-        self.d, self.counts = discount, defaultdict(Counter)
+    def __init__(self, texts, vocab, discount=0.75, order=2):
+        self.d, self.order = discount, order
+        self.counts = defaultdict(Counter)  # full available history (up to order-1 events) -> next event
+        left = defaultdict(set)  # (history, event) -> distinct preceding events, for continuation counts
         for t in texts:
             s = [BOS, *t, EOS]
-            for a, b in zip(s, s[1:]):
-                self.counts[a][b] += 1
-        cont = Counter(w for c in self.counts.values() for w in c)  # distinct left contexts per event
-        n, t, n_events = sum(cont.values()), len(cont), len(vocab) + 1
-        self.cont = lambda w: (cont[w] + t / n_events) / (n + t)
+            for i in range(1, len(s)):
+                for k in range(1, order):
+                    if i - k >= 0:
+                        h = tuple(s[i - k:i])
+                        if k == order - 1 or i - k == 0:  # highest order available at this position: raw counts
+                            self.counts[h][s[i]] += 1
+                        if i - k - 1 >= 0:
+                            left[(h, s[i])].add(s[i - k - 1])
+                if i >= 1:
+                    left[((), s[i])].add(s[i - 1])
+        self.cont = defaultdict(Counter)
+        for (h, w), us in left.items():
+            self.cont[h][w] = len(us)
+        uni, n_events = self.cont[()], len(vocab) + 1
+        n, t = sum(uni.values()), len(uni)
+        self.base = lambda w: (uni[w] + t / n_events) / (n + t)
         self.total = {h: sum(c.values()) for h, c in self.counts.items()}
+        self.ctotal = {h: sum(c.values()) for h, c in self.cont.items()}
 
     def prob(self, w, history=()):
-        c = self.counts.get(history[-1])
+        h = tuple(history)[-(self.order - 1):] if self.order > 1 else ()
+        return self._prob(w, h, True)
+
+    def _prob(self, w, h, top):
+        if not h:
+            return self.base(w)
+        c, total = (self.counts.get(h), self.total.get(h)) if top else (self.cont.get(h), self.ctotal.get(h))
         if not c:
-            return self.cont(w)
-        total = self.total[history[-1]]
-        return max(c[w] - self.d, 0) / total + self.d * len(c) / total * self.cont(w)
+            return self._prob(w, h[1:], False)
+        return max(c[w] - self.d, 0) / total + self.d * len(c) / total * self._prob(w, h[1:], False)
 
 
 class Positional:
@@ -221,6 +240,23 @@ def cross_validate_skipping_unseen(make_model, texts, k=5, seed=0):
     return bits, 1 - scored / total
 
 
+def candidate_scores(model, vocab, texts, pairs):
+    """Score of every candidate w at each (text index, position) gap: the product of the model's
+    probabilities for every event whose history or identity contains the gap (for a bigram,
+    P(w | prev) * P(next | w)). Normalising over vocab gives P(w | both sides). Products, not log sums,
+    so rankings match the original loop exactly (ties included)."""
+    out = np.ones((len(pairs), len(vocab)))
+    for row, (k, j) in enumerate(pairs):
+        s = [BOS, *texts[k], EOS]
+        j += 1
+        for e in range(j, min(j + model.order, len(s))):  # events whose history or identity contain position j
+            lo = max(0, e - model.order + 1)
+            for ci, w in enumerate(vocab):
+                h = tuple(w if i == j else s[i] for i in range(lo, e))
+                out[row, ci] *= model.prob(w if e == j else s[e], h)
+    return out
+
+
 def transition_matrix(model, vocab):
     """P[context, event]: contexts are <s> then the signs, events are the signs then </s>. Rows sum to 1."""
     return np.array([[model.prob(w, (h,)) for w in [*vocab, EOS]] for h in [BOS, *vocab]])
@@ -238,7 +274,7 @@ def selfcheck():
     assert abs(2 ** (-ll / n) - 2.72) < 0.01
     for model in (m, WittenBell(train, vocab, 3), WittenBell(train, vocab, 2, backoff=True),
                   WittenBell(train, vocab, 3, backoff=True), AddK(train, vocab), KneserNey(train, vocab),
-                  Uniform(train, vocab), Positional(train, vocab)):
+                  KneserNey(train, vocab, order=3), Uniform(train, vocab), Positional(train, vocab)):
         for h in [(BOS,), ("a",), ("f",), ("a", "b"), (BOS, "c")]:
             total = sum(model.prob(w, h) for w in [*vocab, EOS])
             assert abs(total - 1) < 1e-9, (type(model).__name__, h, total)

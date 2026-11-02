@@ -123,3 +123,19 @@ The whole chain has been run once on Linux with an RTX 5090 (see `reports/milest
 ## Read before trusting any number
 
 Every metric above is measured on synthetic images. On three real seal photos the synthetic-trained detector merged neighbouring signs and boxed the animal motif, so these scores say nothing yet about real seals. See `docs/milestone1_status.md`.
+
+## Optional: retrain on relief-shaded seals (GPU)
+
+The generator can render signs as shaded carved relief instead of flat darkened shapes, which should transfer better to real photographs. It is off by default because the current detectors were trained on flat shapes.
+
+```bash
+mv data/synthetic data/synthetic_flat          # keep the flat set for comparison
+python grapheme_extraction/synthetic_generator.py --train 4000 --val 400 --test 400 --relief
+python grapheme_extraction/train_detector.py --name yolov8n-relief
+python grapheme_extraction/train_detector.py --model rtdetr-l.pt --name rtdetr-l-relief
+python grapheme_extraction/classifier.py
+python grapheme_extraction/evaluate.py --runs yolov8n-relief rtdetr-l-relief --out reports/milestone_1_relief
+```
+
+Send back `reports/milestone_1_relief/` and both `runs/*-relief/weights/best.pt`. Look at the figures of the real Met photos first: the question is whether the boxes on real seals improve.
+

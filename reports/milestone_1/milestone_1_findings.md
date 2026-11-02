@@ -28,3 +28,12 @@ Two photos cannot rank the detectors. They do confirm that scores on synthetic s
 - Milestones 2 to 4 run on the IM77 corpus text and do not depend on this pipeline.
 - The synthetic sign error rate (about 0.24) is the only available operating point for Milestone 2's error-propagation study, and it is optimistic for real seals.
 - To make the pipeline work on real photographs: labelled real seals (see `docs/milestone1_status.md`) or a generator that renders relief.
+
+## Later checks without real labels (laptop, 2 Nov 2026)
+
+`rescoring.md` and `rescoring.json` in this folder. The synthetic seals were regenerated so that train, val and test use disjoint corpus texts; the detector and classifier bank are the ones above.
+
+- **Re-ranking the classifier's top 5 with the best Milestone 2 n-gram** (Kneser-Ney trigram trained on train-split texts only, weight chosen on val) cuts the sign error rate on seals carrying real corpus texts from 0.170 to 0.134 and raises exact match from 59% to 67%. On random sign strings it hurts (0.270 to 0.362), as expected: real inscriptions are the corpus-text case.
+- **Using sign size**, by penalising candidates whose drawn height does not fit the box, lowers the sign error rate on all test seals from 0.224 to 0.202. This addresses the size confusions in finding 6.
+- **Relief shading** for the generator exists (`synthetic_generator.py --relief`) but is off by default: the detectors have to be retrained on it, which needs the GPU (see `docs/RUN_GUIDE.md`).
+
