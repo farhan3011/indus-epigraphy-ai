@@ -4,76 +4,149 @@
    "top1": 0.10214285714285715,
    "top5": 0.2347142857142857,
    "bits_per_sign": 6.768673179062113,
-   "hit_in_90pct_set": 0.904,
-   "hit_in_90pct_set_strict": 0.9025714285714286,
-   "mean_90pct_set_size": 134.396,
-   "ece_top1": 0.003246787741176052
+   "ece_top1": 0.003246787741176052,
+   "hit_in_90pct_mass_set": 0.9041428571428571,
+   "mean_90pct_mass_set_size": 134.396,
+   "conformal_lac_coverage": 0.9041428571428571,
+   "conformal_lac_mean_size": 134.36942857142859,
+   "conformal_aps_coverage": 0.9002857142857142,
+   "conformal_aps_mean_size": 131.00085714285714
   },
   "bigram": {
    "top1": 0.37957142857142856,
-   "top5": 0.6242857142857143,
+   "top5": 0.6237142857142857,
    "bits_per_sign": 4.400764535568519,
-   "hit_in_90pct_set": 0.8605714285714285,
-   "hit_in_90pct_set_strict": 0.795,
-   "mean_90pct_set_size": 44.03628571428571,
-   "ece_top1": 0.023313890472743203
+   "ece_top1": 0.023313890472743203,
+   "hit_in_90pct_mass_set": 0.8607142857142858,
+   "mean_90pct_mass_set_size": 44.03628571428571,
+   "conformal_lac_coverage": 0.9042857142857142,
+   "conformal_lac_mean_size": 70.75271428571429,
+   "conformal_aps_coverage": 0.9105714285714286,
+   "conformal_aps_mean_size": 106.721
   },
   "bigram_calibrated": {
    "top1": 0.37957142857142856,
-   "top5": 0.6242857142857143,
+   "top5": 0.6237142857142857,
    "bits_per_sign": 4.388541946976258,
-   "hit_in_90pct_set": 0.8888571428571429,
-   "hit_in_90pct_set_strict": 0.8398571428571429,
-   "mean_90pct_set_size": 60.990857142857145,
-   "ece_top1": 0.0274991584394825
+   "ece_top1": 0.0274991584394825,
+   "hit_in_90pct_mass_set": 0.889,
+   "mean_90pct_mass_set_size": 60.990857142857145,
+   "conformal_lac_coverage": 0.9031428571428571,
+   "conformal_lac_mean_size": 70.63185714285714,
+   "conformal_aps_coverage": 0.9111428571428571,
+   "conformal_aps_mean_size": 105.63742857142857
+  },
+  "trigram": {
+   "top1": 0.4024285714285714,
+   "top5": 0.6302857142857143,
+   "bits_per_sign": 4.403511713593074,
+   "ece_top1": 0.08062548389377514,
+   "hit_in_90pct_mass_set": 0.8248571428571428,
+   "mean_90pct_mass_set_size": 37.10171428571429,
+   "conformal_lac_coverage": 0.8985714285714286,
+   "conformal_lac_mean_size": 68.43128571428572,
+   "conformal_aps_coverage": 0.906,
+   "conformal_aps_mean_size": 132.4737142857143
+  },
+  "trigram_calibrated": {
+   "top1": 0.4024285714285714,
+   "top5": 0.6302857142857143,
+   "bits_per_sign": 4.325178126884153,
+   "ece_top1": 0.02435366395747166,
+   "hit_in_90pct_mass_set": 0.9012857142857142,
+   "mean_90pct_mass_set_size": 76.25871428571429,
+   "conformal_lac_coverage": 0.8984285714285715,
+   "conformal_lac_mean_size": 67.41885714285715,
+   "conformal_aps_coverage": 0.9042857142857142,
+   "conformal_aps_mean_size": 125.28014285714286
   },
   "net": {
-   "top1": 0.3004761904761905,
-   "top5": 0.5125714285714286,
-   "bits_per_sign": 5.43577512105306,
-   "hit_in_90pct_set": 0.7615238095238096,
-   "hit_in_90pct_set_strict": 0.6936190476190477,
-   "mean_90pct_set_size": 34.54828571428572,
-   "ece_top1": 0.10046100258153108,
-   "top1_sd": 0.011025223605694162,
-   "top5_sd": 0.011170904871417463,
-   "bits_per_sign_sd": 0.040667471825760027,
-   "hit_in_90pct_set_sd": 0.00974877165353842,
-   "hit_in_90pct_set_strict_sd": 0.01961893203849448,
-   "mean_90pct_set_size_sd": 4.194981175312292,
-   "ece_top1_sd": 0.007398456682432114
+   "top1": 0.3221428571428571,
+   "top5": 0.5300952380952381,
+   "bits_per_sign": 5.139198621114095,
+   "ece_top1": 0.0652816799297219,
+   "hit_in_90pct_mass_set": 0.8051428571428572,
+   "mean_90pct_mass_set_size": 42.54947619047619,
+   "conformal_lac_coverage": 0.8996190476190477,
+   "conformal_lac_mean_size": 93.14090476190476,
+   "conformal_aps_coverage": 0.8915238095238095,
+   "conformal_aps_mean_size": 103.24680952380952,
+   "top1_sd": 0.00475093975666168,
+   "top5_sd": 0.010802703953104191,
+   "bits_per_sign_sd": 0.02864567563158908,
+   "ece_top1_sd": 0.010544734796104776,
+   "hit_in_90pct_mass_set_sd": 0.005614606800463366,
+   "mean_90pct_mass_set_size_sd": 3.4086909836801342,
+   "conformal_lac_coverage_sd": 0.0033509737306207745,
+   "conformal_lac_mean_size_sd": 2.372266754721223,
+   "conformal_aps_coverage_sd": 0.0033489430423842377,
+   "conformal_aps_mean_size_sd": 1.779667080130372
   },
   "net_calibrated": {
-   "top1": 0.3004761904761905,
-   "top5": 0.5125714285714286,
-   "bits_per_sign": 5.228240172068278,
-   "hit_in_90pct_set": 0.8744285714285714,
-   "hit_in_90pct_set_strict": 0.8696666666666667,
-   "mean_90pct_set_size": 81.69804761904761,
-   "ece_top1": 0.03753871046166334,
-   "top1_sd": 0.011025223605694162,
-   "top5_sd": 0.011170904871417463,
-   "bits_per_sign_sd": 0.0701768867340579,
-   "hit_in_90pct_set_sd": 0.004174754056057868,
-   "hit_in_90pct_set_strict_sd": 0.005820832085518395,
-   "mean_90pct_set_size_sd": 4.9544165802638815,
-   "ece_top1_sd": 0.0033374145060292575
+   "top1": 0.3221428571428571,
+   "top5": 0.5300952380952381,
+   "bits_per_sign": 5.034626483917236,
+   "ece_top1": 0.02468195362460045,
+   "hit_in_90pct_mass_set": 0.8731904761904762,
+   "mean_90pct_mass_set_size": 73.13171428571428,
+   "conformal_lac_coverage": 0.9012857142857142,
+   "conformal_lac_mean_size": 95.53171428571427,
+   "conformal_aps_coverage": 0.898095238095238,
+   "conformal_aps_mean_size": 101.02504761904761,
+   "top1_sd": 0.00475093975666168,
+   "top5_sd": 0.010802703953104191,
+   "bits_per_sign_sd": 0.04730542296751035,
+   "ece_top1_sd": 0.004972118087997823,
+   "hit_in_90pct_mass_set_sd": 0.002368539069608716,
+   "mean_90pct_mass_set_size_sd": 2.232870697335699,
+   "conformal_lac_coverage_sd": 0.004807873361321343,
+   "conformal_lac_mean_size_sd": 3.8141496462264737,
+   "conformal_aps_coverage_sd": 0.004950549111758854,
+   "conformal_aps_mean_size_sd": 1.681135145871626
   },
-  "average": {
-   "top1": 0.384047619047619,
-   "top5": 0.6203333333333334,
-   "bits_per_sign": 4.471883919578487,
-   "hit_in_90pct_set": 0.9134761904761906,
-   "hit_in_90pct_set_strict": 0.9064285714285715,
-   "mean_90pct_set_size": 82.2512857142857,
-   "ece_top1": 0.09477018539555182,
-   "top1_sd": 0.001225207650501773,
-   "top5_sd": 0.0003563483225498698,
-   "bits_per_sign_sd": 0.01719408969140644,
-   "hit_in_90pct_set_sd": 0.0023338191913986205,
-   "hit_in_90pct_set_strict_sd": 0.0031558174334820567,
-   "mean_90pct_set_size_sd": 2.6605205336933775,
-   "ece_top1_sd": 0.004680907586709264
+  "mixture": {
+   "top1": 0.4088095238095238,
+   "top5": 0.6356190476190476,
+   "bits_per_sign": 4.24839977884947,
+   "ece_top1": 0.026937492545126743,
+   "hit_in_90pct_mass_set": 0.8990952380952382,
+   "mean_90pct_mass_set_size": 64.84614285714285,
+   "conformal_lac_coverage": 0.8992857142857144,
+   "conformal_lac_mean_size": 62.84590476190476,
+   "conformal_aps_coverage": 0.8971904761904761,
+   "conformal_aps_mean_size": 90.61671428571428,
+   "top1_sd": 0.0008754655386119056,
+   "top5_sd": 0.0016092138332110494,
+   "bits_per_sign_sd": 0.007615408474264477,
+   "ece_top1_sd": 0.0011959377354257051,
+   "hit_in_90pct_mass_set_sd": 0.0014998110236213089,
+   "mean_90pct_mass_set_size_sd": 2.054231077490526,
+   "conformal_lac_coverage_sd": 0.003209255322951302,
+   "conformal_lac_mean_size_sd": 1.5298150630007932,
+   "conformal_aps_coverage_sd": 0.0012848321488792293,
+   "conformal_aps_mean_size_sd": 1.6825744608564925
+  },
+  "residual_calibrated": {
+   "top1": 0.4025238095238095,
+   "top5": 0.6310476190476191,
+   "bits_per_sign": 4.316358248392741,
+   "ece_top1": 0.024805652289340896,
+   "hit_in_90pct_mass_set": 0.904,
+   "mean_90pct_mass_set_size": 79.04009523809525,
+   "conformal_lac_coverage": 0.899,
+   "conformal_lac_mean_size": 67.55647619047619,
+   "conformal_aps_coverage": 0.9058095238095238,
+   "conformal_aps_mean_size": 125.06061904761906,
+   "top1_sd": 0.0015223207012519944,
+   "top5_sd": 0.000374952755905326,
+   "bits_per_sign_sd": 0.0017477425715419852,
+   "ece_top1_sd": 0.002393770090580053,
+   "hit_in_90pct_mass_set_sd": 0.0036159134298227925,
+   "mean_90pct_mass_set_size_sd": 3.0496811706521707,
+   "conformal_lac_coverage_sd": 0.000420560041253702,
+   "conformal_lac_mean_size_sd": 0.6018272893179554,
+   "conformal_aps_coverage_sd": 0.0015922146187905136,
+   "conformal_aps_mean_size_sd": 2.5091001512815327
   }
  },
  "milestone_2_restoration": {
@@ -84,7 +157,7 @@
   "hit_in_90pct_mass_set_strict": 0.795,
   "mean_size_of_90pct_set": 44.03628571428571
  },
- "milestone_2_other": {
+ "milestone_2_restoration_by_model": {
   "witten-bell backoff n=3": {
    "trials": 7000,
    "top1": 0.40114285714285713,
@@ -102,42 +175,109 @@
    "mean_size_of_90pct_set": 55.34442857142857
   }
  },
- "difference_top1_vs_bigram": [
-  -0.09242857142857142,
-  -0.10392724499952041,
-  -0.08149984266795787
+ "chosen_configurations": [
+  {
+   "arch": "transformer",
+   "d": 64,
+   "layers": 2
+  },
+  {
+   "arch": "lstm",
+   "d": 64,
+   "layers": 1
+  },
+  {
+   "arch": "lstm",
+   "d": 64,
+   "layers": 1
+  },
+  {
+   "arch": "transformer",
+   "d": 64,
+   "layers": 2
+  },
+  {
+   "arch": "lstm",
+   "d": 64,
+   "layers": 2
+  }
  ],
- "difference_top1_average_vs_bigram": [
-  0.0030000000000000027,
-  -0.002853924761077876,
-  0.008617617930048177
- ],
- "verdict": "The transformer's top-1 is reliably lower than the bigram's. With about 1,100 training texts per fold it does not even match the neighbour statistics a bigram counts directly, and averaging the two only ties the bigram, so the wider context the network can read adds nothing measurable on this corpus.",
+ "difference_top1_vs_trigram": {
+  "net_calibrated": [
+   -0.0802857142857143,
+   -0.09014898131373848,
+   -0.06997054735569577
+  ],
+  "mixture": [
+   0.006380952380952376,
+   0.00301002166242686,
+   0.009555248164939663
+  ],
+  "residual_calibrated": [
+   9.523809523809268e-05,
+   -0.002611372424566358,
+   0.002871793033107958
+  ]
+ },
+ "verdict": "Neural model is reliably worse than the trigram (-8.0 points, 95% interval -9.0 to -7.0); Mixture of neural model and trigram is reliably better than the trigram (+0.6 points, 95% interval +0.3 to +1.0); Residual model: trigram + learned correction is statistically tied with the trigram (+0.0 points, 95% interval -0.3 to +0.3). The neural model cannot replace the n-gram on about 1,200 short training texts per fold, and what it adds on top is small: the neighbouring signs carry almost everything a model can use.",
+ "ngram_partitions": {
+  "bigram": {
+   "top1": [
+    0.37957142857142856,
+    0.3822857142857143,
+    0.3831428571428571,
+    0.37842857142857145,
+    0.38457142857142856
+   ],
+   "top5": [
+    0.6237142857142857,
+    0.6248571428571429,
+    0.6245714285714286,
+    0.6261428571428571,
+    0.6231428571428571
+   ]
+  },
+  "trigram": {
+   "top1": [
+    0.4024285714285714,
+    0.4055714285714286,
+    0.4032857142857143,
+    0.3985714285714286,
+    0.4065714285714286
+   ],
+   "top5": [
+    0.6302857142857143,
+    0.6274285714285714,
+    0.6292857142857143,
+    0.6278571428571429,
+    0.6254285714285714
+   ]
+  }
+ },
  "damaged_texts": {
   "texts": 337,
-  "median_top1_confidence": 0.17653238773345947,
-  "confident_over_50pct": 49,
-  "confident_over_80pct": 6,
-  "median_90pct_set_size": 94.0,
+  "median_top1_confidence": 0.1990586221218109,
+  "confident_over_50pct": 63,
+  "confident_over_80pct": 13,
   "most_common_top1": [
    [
     342,
-    80
+    76
+   ],
+   [
+    211,
+    31
    ],
    [
     65,
     26
    ],
    [
+    67,
+    19
+   ],
+   [
     267,
-    23
-   ],
-   [
-    211,
-    18
-   ],
-   [
-    87,
     17
    ]
   ]
@@ -151,22 +291,77 @@
    1,
    2
   ],
-  "config": {
-   "d": 96,
-   "layers": 2,
-   "heads": 4,
+  "grid": [
+   {
+    "arch": "transformer",
+    "d": 32,
+    "layers": 1
+   },
+   {
+    "arch": "transformer",
+    "d": 32,
+    "layers": 2
+   },
+   {
+    "arch": "transformer",
+    "d": 64,
+    "layers": 1
+   },
+   {
+    "arch": "transformer",
+    "d": 64,
+    "layers": 2
+   },
+   {
+    "arch": "lstm",
+    "d": 32,
+    "layers": 1
+   },
+   {
+    "arch": "lstm",
+    "d": 32,
+    "layers": 2
+   },
+   {
+    "arch": "lstm",
+    "d": 64,
+    "layers": 1
+   },
+   {
+    "arch": "lstm",
+    "d": 64,
+    "layers": 2
+   }
+  ],
+  "base": {
    "dropout": 0.2,
    "lr": 0.002,
    "weight_decay": 0.01,
-   "batch": 64,
-   "max_epochs": 400,
-   "patience": 40,
+   "batch": 128,
+   "max_epochs": 200,
+   "patience": 10,
    "inner_val_share": 0.1
   },
-  "parameters": 297497,
-  "median_epochs": 70,
-  "median_temperature_bigram": 1.1,
-  "median_temperature_net": 1.3,
+  "final_config": {
+   "dropout": 0.2,
+   "lr": 0.002,
+   "weight_decay": 0.01,
+   "batch": 128,
+   "max_epochs": 200,
+   "patience": 10,
+   "inner_val_share": 0.1,
+   "arch": "transformer",
+   "d": 64,
+   "layers": 2
+  },
+  "median_epochs": 9,
+  "median_mixture_lambda": 0.2,
+  "median_temperature": {
+   "bigram": 1.1,
+   "trigram": 1.2,
+   "net": 1.15
+  },
+  "runtime_min": 14.182757035891216,
   "quick": false
  }
 }

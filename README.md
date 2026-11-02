@@ -13,7 +13,7 @@ Scope and milestones: [Indus_Epigraphy_AI_Project_Proposal.md](Indus_Epigraphy_A
 |---|---|---|---|
 | 1. Seal photo to ordered sign IDs | Done on synthetic seals; does not yet work on real photographs | `grapheme_extraction/` | [report](reports/milestone_1/milestone_1_report.md), [findings](reports/milestone_1/milestone_1_findings.md) |
 | 2. Sign-sequence statistics | Done on the IM77 corpus | `sequence_analysis/` | [report](reports/milestone_2/milestone_2_report.md) |
-| 3. Masked-sign prediction | Done: a small transformer is compared with the Milestone 2 bigram (the bigram wins) | `sequence_analysis/masked_model.py` | [report](reports/milestone_3/milestone_3_report.md) |
+| 3. Masked-sign prediction | Done: neural models against the best n-gram (the trigram wins alone; a mixture adds 0.6 points) | `sequence_analysis/masked_model.py` | [report](reports/milestone_3/milestone_3_report.md) |
 | 4. Hallucination benchmark | Not started | | |
 
 ## Setup
@@ -80,11 +80,11 @@ Planned once Milestone 1 is properly hand-labelled on real seals:
 ## Milestone 3: masked-sign prediction
 
 ```bash
-python sequence_analysis/masked_model.py                          # 5-fold evaluation, 3 seeds, about 6 minutes on a laptop CPU
+python sequence_analysis/masked_model.py                          # 5-fold evaluation, 3 seeds, about 15 minutes on a laptop CPU
 python sequence_analysis/masked_model.py predict "267 99 ? 342"    # fill gaps; reading order, ? for each missing sign
 ```
 
-A small transformer reads the whole inscription and ranks every sign for a hidden position. It is scored on exactly the trials Milestone 2 used for the bigram (every sign of every held-out text, 5-fold), with calibrated confidences. Result: first guess right 30.0% for the transformer against 38.0% for the bigram; averaging the two ties the bigram. With about 1,500 short texts, the two neighbours carry nearly everything a model can use. The final model is also run on the 337 corpus texts with one illegible sign.
+Small neural models (transformer or bidirectional LSTM, chosen per fold on an inner split) read the whole inscription and rank every sign for a hidden position. They are scored on exactly the trials Milestone 2 used (every sign of every held-out text, 5-fold) against the best n-gram, the trigram, with calibrated confidences and conformal candidate sets. Result: the neural model alone gets the first guess right 32.2% of the time against the trigram's 40.2%; a fitted mixture of the two reaches 40.9%, a small but reliable gain of 0.6 points. The neighbouring signs carry almost everything a model can use. The final model is also run on the 337 corpus texts with one illegible sign.
 
 ## Layout
 

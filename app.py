@@ -478,12 +478,12 @@ def milestone2():
 
 @st.cache_resource
 def gap_models():
-    """The masked-sign transformer and a bigram, both trained on every EBUDS text, plus the damaged corpus texts."""
+    """The neural masked-sign model and a trigram, both trained on every EBUDS text, plus the damaged corpus texts."""
     model, tokens, temperature = masked_model.load()
     lines = corpus.load_lines()
     texts, _ = corpus.ebuds(lines)
     vocab = sorted({s for t in texts for s in t})
-    return model, tokens, temperature, ngram.WittenBell(texts, vocab, 2, backoff=True), vocab, masked_model.damaged_texts(lines, vocab)
+    return model, tokens, temperature, ngram.WittenBell(texts, vocab, 3, backoff=True), vocab, masked_model.damaged_texts(lines, vocab)
 
 
 def guess_cards(top):
@@ -506,10 +506,10 @@ def milestone3():
     if not masked_model.MODEL_FILE.exists():
         st.html('<div class="note">No trained model yet. Run <code>python sequence_analysis/masked_model.py</code> first.</div>')
         return
-    model, tokens, temperature, bigram, vocab, damaged = gap_models()
+    model, tokens, temperature, trigram, vocab, damaged = gap_models()
     res = json.loads((M3 / "results.json").read_text())
     st.html('<p class="lede">Some corpus inscriptions have a sign that can no longer be read. Two models suggest what it was: the '
-            'Milestone 2 bigram, which looks only at the two neighbours, and a small transformer that reads the whole inscription. '
+            'Milestone 2 trigram, which looks at the neighbouring signs, and a small neural model that reads the whole inscription. '
             'Nobody knows the right answers for these texts, so the suggestions are candidates with a confidence, not readings.</p>')
     if "damaged" not in st.session_state:
         new_damaged(len(damaged))
@@ -520,13 +520,14 @@ def milestone3():
     a.html(tiles(text, hidden=gap))
     b.button("Another inscription", key="next_damaged", on_click=new_damaged, args=(len(damaged),), width="stretch")
     net = masked_model.fill(model, tokens, temperature, [None if s == 0 else s for s in text], k=len(vocab))[gap]
-    bi = candidates(bigram, vocab, text, gap)
+    bi = masked_model.ngram.candidate_scores(trigram, vocab, [text], [(0, gap)])[0]
+    bi = bi / bi.sum()
     order = np.argsort(-bi)
     left, right = st.columns(2, gap="large")
-    left.html('<div class="label">Transformer: reads the whole inscription</div>' + guess_cards(net[:5])
-              + f'<p class="lede">Nine times in ten the right sign is among its top {set90(np.array([p for _, p in net]))}.</p>')
-    right.html('<div class="label">Bigram: reads the two neighbours</div>' + guess_cards([(vocab[k], bi[k]) for k in order[:5]])
-               + f'<p class="lede">Nine times in ten the right sign is among its top {set90(bi)}.</p>')
+    left.html('<div class="label">Neural model: reads the whole inscription</div>' + guess_cards(net[:5])
+              + f'<p class="lede">Its 90% probability set holds {set90(np.array([p for _, p in net]))} signs.</p>')
+    right.html('<div class="label">Trigram: reads the neighbouring signs</div>' + guess_cards([(vocab[k], bi[k]) for k in order[:5]])
+               + f'<p class="lede">Its 90% probability set holds {set90(bi)} signs.</p>')
 
     section("Try your own", "Type signs in reading order (first-read sign first) and a ? for each missing sign.")
     typed = st.text_input("Inscription", "267 99 ? 342", label_visibility="collapsed")
@@ -538,16 +539,16 @@ def milestone3():
     else:
         seq = [None if t == "?" else int(t) for t in parts]
         for g, top in masked_model.fill(model, tokens, temperature, seq).items():
-            st.html(f'<div class="label">Gap {g + 1}: transformer suggestions</div>' + guess_cards(top))
+            st.html(f'<div class="label">Gap {g + 1}: neural model suggestions</div>' + guess_cards(top))
         if len([t for t in seq if t is None]) > 1:
             st.caption("Several gaps are masked together and each is filled on its own.")
 
     r = res["models"]
     section("How good is it", "Measured the same way as Milestone 2: every sign of every held-out text hidden in turn, 5-fold.")
-    st.html(stats(("Bigram, first guess right", f"{r['bigram']['top1']:.1%}"),
-                  ("Transformer, first guess right", f"{r['net_calibrated']['top1']:.1%}", f"± {100 * r['net_calibrated']['top1_sd']:.1f}"),
-                  ("Both averaged", f"{r['average']['top1']:.1%}"),
-                  ("Transformer calibration error", f"{r['net_calibrated']['ece_top1']:.3f}", "0 is perfect")))
+    st.html(stats(("Trigram, first guess right", f"{r['trigram']['top1']:.1%}"),
+                  ("Neural model alone", f"{r['net_calibrated']['top1']:.1%}", f"± {100 * r['net_calibrated']['top1_sd']:.1f}"),
+                  ("Neural + trigram mixture", f"{r['mixture']['top1']:.1%}", f"± {100 * r['mixture']['top1_sd']:.1f}"),
+                  ("Mixture calibration error", f"{r['mixture']['ece_top1']:.3f}", "0 is perfect")))
     st.caption(res["verdict"] + " Full report: reports/milestone_3/milestone_3_report.md")
 
 

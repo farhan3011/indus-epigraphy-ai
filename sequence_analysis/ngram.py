@@ -221,6 +221,23 @@ def cross_validate_skipping_unseen(make_model, texts, k=5, seed=0):
     return bits, 1 - scored / total
 
 
+def candidate_scores(model, vocab, texts, pairs):
+    """Score of every candidate w at each (text index, position) gap: the product of the model's
+    probabilities for every event whose history or identity contains the gap (for a bigram,
+    P(w | prev) * P(next | w)). Normalising over vocab gives P(w | both sides). Products, not log sums,
+    so rankings match the original loop exactly (ties included)."""
+    out = np.ones((len(pairs), len(vocab)))
+    for row, (k, j) in enumerate(pairs):
+        s = [BOS, *texts[k], EOS]
+        j += 1
+        for e in range(j, min(j + model.order, len(s))):  # events whose history or identity contain position j
+            lo = max(0, e - model.order + 1)
+            for ci, w in enumerate(vocab):
+                h = tuple(w if i == j else s[i] for i in range(lo, e))
+                out[row, ci] *= model.prob(w if e == j else s[e], h)
+    return out
+
+
 def transition_matrix(model, vocab):
     """P[context, event]: contexts are <s> then the signs, events are the signs then </s>. Rows sum to 1."""
     return np.array([[model.prob(w, (h,)) for w in [*vocab, EOS]] for h in [BOS, *vocab]])

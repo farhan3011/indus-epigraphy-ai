@@ -76,21 +76,15 @@ def restoration(texts, vocab, make=lambda tr, v: WittenBell(tr, v, 2, backoff=Tr
     set_sizes = []
     for train, test in ngram.folds(texts):
         m = make(train, vocab)
-        for t in test:
-            s = [BOS, *t, EOS]
-            for j, true in enumerate(t, 1):
-                score = np.ones(len(vocab))
-                for k in range(j, min(j + m.order, len(s))):  # events whose history or identity contain position j
-                    lo = max(0, k - m.order + 1)
-                    for ci, w in enumerate(vocab):
-                        h = tuple(w if i == j else s[i] for i in range(lo, k))
-                        score[ci] *= m.prob(w if k == j else s[k], h)
-                order = np.argsort(-score)
-                rank = int(np.where(order == idx[true])[0][0])
-                k90 = int(np.searchsorted(np.cumsum(score[order]) / score.sum(), 0.9) + 1)
-                top1, top5, in90, total = top1 + (rank == 0), top5 + (rank < 5), in90 + (rank < k90), total + 1
-                strict += rank < k90 - 1  # the sign that crosses the 90% line not counted
-                set_sizes.append(k90)
+        pairs = [(k, j) for k, t in enumerate(test) for j in range(len(t))]
+        for (k, j), score in zip(pairs, ngram.candidate_scores(m, vocab, test, pairs)):
+            true = test[k][j]
+            order = np.argsort(-score)
+            rank = int(np.where(order == idx[true])[0][0])
+            k90 = int(np.searchsorted(np.cumsum(score[order]) / score.sum(), 0.9) + 1)
+            top1, top5, in90, total = top1 + (rank == 0), top5 + (rank < 5), in90 + (rank < k90), total + 1
+            strict += rank < k90 - 1  # the sign that crosses the 90% line not counted
+            set_sizes.append(k90)
     return {"trials": total, "top1": top1 / total, "top5": top5 / total, "hit_in_90pct_mass_set": in90 / total,
             "hit_in_90pct_mass_set_strict": strict / total,
             "mean_size_of_90pct_set": float(np.mean(set_sizes))}
