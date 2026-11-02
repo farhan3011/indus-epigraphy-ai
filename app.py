@@ -479,12 +479,12 @@ def milestone2():
 
 @st.cache_resource
 def gap_models():
-    """The neural masked-sign model and a trigram, both trained on every EBUDS text, plus the damaged corpus texts."""
+    """The neural masked-sign model and the best n-gram (Kneser-Ney trigram), both trained on every EBUDS text, plus the damaged corpus texts."""
     model, tokens, temperature = masked_model.load()
     lines = corpus.load_lines()
     texts, _ = corpus.ebuds(lines)
     vocab = sorted({s for t in texts for s in t})
-    return model, tokens, temperature, ngram.WittenBell(texts, vocab, 3, backoff=True), vocab, masked_model.damaged_texts(lines, vocab)
+    return model, tokens, temperature, masked_model.best_ngram(texts, vocab), vocab, masked_model.damaged_texts(lines, vocab)
 
 
 def guess_cards(top):
@@ -510,7 +510,7 @@ def milestone3():
     model, tokens, temperature, trigram, vocab, damaged = gap_models()
     res = json.loads((M3 / "results.json").read_text())
     st.html('<p class="lede">Some corpus inscriptions have a sign that can no longer be read. Two models suggest what it was: the '
-            'Milestone 2 trigram, which looks at the neighbouring signs, and a small neural model that reads the whole inscription. '
+            'best Milestone 2 n-gram, which looks at the neighbouring signs, and a small neural model that reads the whole inscription. '
             'Nobody knows the right answers for these texts, so the suggestions are candidates with a confidence, not readings.</p>')
     if "damaged" not in st.session_state:
         new_damaged(len(damaged))
@@ -527,7 +527,7 @@ def milestone3():
     left, right = st.columns(2, gap="large")
     left.html('<div class="label">Neural model: reads the whole inscription</div>' + guess_cards(net[:5])
               + f'<p class="lede">Its 90% probability set holds {set90(np.array([p for _, p in net]))} signs.</p>')
-    right.html('<div class="label">Trigram: reads the neighbouring signs</div>' + guess_cards([(vocab[k], bi[k]) for k in order[:5]])
+    right.html('<div class="label">Best n-gram: reads the neighbouring signs</div>' + guess_cards([(vocab[k], bi[k]) for k in order[:5]])
                + f'<p class="lede">Its 90% probability set holds {set90(bi)} signs.</p>')
 
     section("Try your own", "Type signs in reading order (first-read sign first) and a ? for each missing sign.")
@@ -546,9 +546,9 @@ def milestone3():
 
     r = res["models"]
     section("How good is it", "Measured the same way as Milestone 2: every sign of every held-out text hidden in turn, 5-fold.")
-    st.html(stats(("Trigram, first guess right", f"{r['trigram']['top1']:.1%}"),
+    st.html(stats(("Best n-gram, first guess right", f"{r['kn_trigram']['top1']:.1%}"),
                   ("Neural model alone", f"{r['net_calibrated']['top1']:.1%}", f"± {100 * r['net_calibrated']['top1_sd']:.1f}"),
-                  ("Neural + trigram mixture", f"{r['mixture']['top1']:.1%}", f"± {100 * r['mixture']['top1_sd']:.1f}"),
+                  ("Neural + n-gram mixture", f"{r['mixture']['top1']:.1%}", f"± {100 * r['mixture']['top1_sd']:.1f}"),
                   ("Mixture calibration error", f"{r['mixture']['ece_top1']:.3f}", "0 is perfect")))
     st.caption(res["verdict"] + " Full report: reports/milestone_3/milestone_3_report.md")
 

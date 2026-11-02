@@ -60,6 +60,30 @@
    "conformal_aps_coverage": 0.9042857142857142,
    "conformal_aps_mean_size": 125.28014285714286
   },
+  "kn_trigram": {
+   "top1": 0.422,
+   "top5": 0.6447142857142857,
+   "bits_per_sign": 4.201580293777156,
+   "ece_top1": 0.07812971016403121,
+   "hit_in_90pct_mass_set": 0.8544285714285714,
+   "mean_90pct_mass_set_size": 53.35628571428571,
+   "conformal_lac_coverage": 0.9035714285714286,
+   "conformal_lac_mean_size": 65.34657142857142,
+   "conformal_aps_coverage": 0.8978571428571429,
+   "conformal_aps_mean_size": 177.99842857142858
+  },
+  "kn_trigram_calibrated": {
+   "top1": 0.422,
+   "top5": 0.6447142857142857,
+   "bits_per_sign": 4.149053785061423,
+   "ece_top1": 0.01862204548882278,
+   "hit_in_90pct_mass_set": 0.9091428571428571,
+   "mean_90pct_mass_set_size": 90.718,
+   "conformal_lac_coverage": 0.9041428571428571,
+   "conformal_lac_mean_size": 62.57642857142857,
+   "conformal_aps_coverage": 0.8975714285714286,
+   "conformal_aps_mean_size": 168.62485714285714
+  },
   "net": {
    "top1": 0.3221428571428571,
    "top5": 0.5300952380952381,
@@ -105,74 +129,82 @@
    "conformal_aps_mean_size_sd": 1.681135145871626
   },
   "mixture": {
-   "top1": 0.4088095238095238,
-   "top5": 0.6356190476190476,
-   "bits_per_sign": 4.24839977884947,
-   "ece_top1": 0.026937492545126743,
-   "hit_in_90pct_mass_set": 0.8990952380952382,
-   "mean_90pct_mass_set_size": 64.84614285714285,
-   "conformal_lac_coverage": 0.8992857142857144,
-   "conformal_lac_mean_size": 62.84590476190476,
-   "conformal_aps_coverage": 0.8971904761904761,
-   "conformal_aps_mean_size": 90.61671428571428,
-   "top1_sd": 0.0008754655386119056,
-   "top5_sd": 0.0016092138332110494,
-   "bits_per_sign_sd": 0.007615408474264477,
-   "ece_top1_sd": 0.0011959377354257051,
-   "hit_in_90pct_mass_set_sd": 0.0014998110236213089,
-   "mean_90pct_mass_set_size_sd": 2.054231077490526,
-   "conformal_lac_coverage_sd": 0.003209255322951302,
-   "conformal_lac_mean_size_sd": 1.5298150630007932,
-   "conformal_aps_coverage_sd": 0.0012848321488792293,
-   "conformal_aps_mean_size_sd": 1.6825744608564925
+   "top1": 0.42357142857142854,
+   "top5": 0.6484761904761905,
+   "bits_per_sign": 4.113809385835574,
+   "ece_top1": 0.018643472700895603,
+   "hit_in_90pct_mass_set": 0.9085714285714285,
+   "mean_90pct_mass_set_size": 79.03133333333334,
+   "conformal_lac_coverage": 0.9015714285714286,
+   "conformal_lac_mean_size": 59.334,
+   "conformal_aps_coverage": 0.8938095238095238,
+   "conformal_aps_mean_size": 125.45857142857143,
+   "top1_sd": 0.0005084322977157682,
+   "top5_sd": 0.0010583862271853805,
+   "bits_per_sign_sd": 0.004295643874908431,
+   "ece_top1_sd": 0.0014797121105742815,
+   "hit_in_90pct_mass_set_sd": 0.0007284313590846603,
+   "mean_90pct_mass_set_size_sd": 1.4060193258526688,
+   "conformal_lac_coverage_sd": 0.0010367400503370218,
+   "conformal_lac_mean_size_sd": 0.5755744010607701,
+   "conformal_aps_coverage_sd": 0.0022926482128020668,
+   "conformal_aps_mean_size_sd": 3.1709298020492054
   },
   "residual_calibrated": {
-   "top1": 0.4025238095238095,
-   "top5": 0.6310476190476191,
-   "bits_per_sign": 4.316358248392741,
-   "ece_top1": 0.024805652289340896,
-   "hit_in_90pct_mass_set": 0.904,
-   "mean_90pct_mass_set_size": 79.04009523809525,
-   "conformal_lac_coverage": 0.899,
-   "conformal_lac_mean_size": 67.55647619047619,
-   "conformal_aps_coverage": 0.9058095238095238,
-   "conformal_aps_mean_size": 125.06061904761906,
-   "top1_sd": 0.0015223207012519944,
-   "top5_sd": 0.000374952755905326,
-   "bits_per_sign_sd": 0.0017477425715419852,
-   "ece_top1_sd": 0.002393770090580053,
-   "hit_in_90pct_mass_set_sd": 0.0036159134298227925,
-   "mean_90pct_mass_set_size_sd": 3.0496811706521707,
-   "conformal_lac_coverage_sd": 0.000420560041253702,
-   "conformal_lac_mean_size_sd": 0.6018272893179554,
-   "conformal_aps_coverage_sd": 0.0015922146187905136,
-   "conformal_aps_mean_size_sd": 2.5091001512815327
+   "top1": 0.42123809523809524,
+   "top5": 0.645952380952381,
+   "bits_per_sign": 4.135441303253174,
+   "ece_top1": 0.018837785462183607,
+   "hit_in_90pct_mass_set": 0.9062380952380953,
+   "mean_90pct_mass_set_size": 84.3397142857143,
+   "conformal_lac_coverage": 0.9025714285714286,
+   "conformal_lac_mean_size": 62.461000000000006,
+   "conformal_aps_coverage": 0.8999047619047619,
+   "conformal_aps_mean_size": 166.79761904761907,
+   "top1_sd": 0.0006424160744396243,
+   "top5_sd": 0.0007766431633476399,
+   "bits_per_sign_sd": 0.0008032815052263392,
+   "ece_top1_sd": 0.0014528423145356178,
+   "hit_in_90pct_mass_set_sd": 0.0007939681905015877,
+   "mean_90pct_mass_set_size_sd": 0.7169743778569778,
+   "conformal_lac_coverage_sd": 0.0007095078297976825,
+   "conformal_lac_mean_size_sd": 0.4839257125201072,
+   "conformal_aps_coverage_sd": 0.0010837911120705618,
+   "conformal_aps_mean_size_sd": 0.9820950418375005
   }
  },
  "milestone_2_restoration": {
   "trials": 7000,
   "top1": 0.37957142857142856,
   "top5": 0.6242857142857143,
-  "hit_in_90pct_mass_set": 0.8607142857142858,
+  "hit_in_90pct_mass_set": 0.8605714285714285,
   "hit_in_90pct_mass_set_strict": 0.795,
   "mean_size_of_90pct_set": 44.03628571428571
  },
  "milestone_2_restoration_by_model": {
   "witten-bell backoff n=3": {
    "trials": 7000,
-   "top1": 0.40114285714285713,
-   "top5": 0.6297142857142857,
-   "hit_in_90pct_mass_set": 0.8248571428571428,
-   "hit_in_90pct_mass_set_strict": 0.699,
+   "top1": 0.4022857142857143,
+   "top5": 0.6302857142857143,
+   "hit_in_90pct_mass_set": 0.8247142857142857,
+   "hit_in_90pct_mass_set_strict": 0.6992857142857143,
    "mean_size_of_90pct_set": 37.10171428571429
   },
   "kneser-ney n=2": {
    "trials": 7000,
    "top1": 0.3871428571428571,
-   "top5": 0.6321428571428571,
-   "hit_in_90pct_mass_set": 0.8667142857142857,
-   "hit_in_90pct_mass_set_strict": 0.7697142857142857,
+   "top5": 0.6324285714285715,
+   "hit_in_90pct_mass_set": 0.8665714285714285,
+   "hit_in_90pct_mass_set_strict": 0.7698571428571429,
    "mean_size_of_90pct_set": 55.34442857142857
+  },
+  "kneser-ney n=3": {
+   "trials": 7000,
+   "top1": 0.422,
+   "top5": 0.645,
+   "hit_in_90pct_mass_set": 0.8545714285714285,
+   "hit_in_90pct_mass_set_strict": 0.6798571428571428,
+   "mean_size_of_90pct_set": 53.35628571428571
   }
  },
  "chosen_configurations": [
@@ -204,22 +236,22 @@
  ],
  "difference_top1_vs_trigram": {
   "net_calibrated": [
-   -0.0802857142857143,
-   -0.09014898131373848,
-   -0.06997054735569577
+   -0.09985714285714287,
+   -0.11001217561148427,
+   -0.08961875685034143
   ],
   "mixture": [
-   0.006380952380952376,
-   0.00301002166242686,
-   0.009555248164939663
+   0.0015714285714286125,
+   -0.0006690107412879647,
+   0.0038599689539125124
   ],
   "residual_calibrated": [
-   9.523809523809268e-05,
-   -0.002611372424566358,
-   0.002871793033107958
+   -0.0007619047619047969,
+   -0.003359755416599677,
+   0.0021128762373776415
   ]
  },
- "verdict": "Neural model is reliably worse than the trigram (-8.0 points, 95% interval -9.0 to -7.0); Mixture of neural model and trigram is reliably better than the trigram (+0.6 points, 95% interval +0.3 to +1.0); Residual model: trigram + learned correction is statistically tied with the trigram (+0.0 points, 95% interval -0.3 to +0.3). The neural model cannot replace the n-gram on about 1,200 short training texts per fold, and what it adds on top is small: the neighbouring signs carry almost everything a model can use.",
+ "verdict": "Neural model is reliably worse than the Kneser-Ney trigram (-10.0 points, 95% interval -11.0 to -9.0); Mixture of neural model and Kneser-Ney trigram is statistically tied with the Kneser-Ney trigram (+0.2 points, 95% interval -0.1 to +0.4); Residual model: Kneser-Ney trigram + learned correction is statistically tied with the Kneser-Ney trigram (-0.1 points, 95% interval -0.3 to +0.2). The neural model cannot replace the n-gram on about 1,200 short training texts per fold, and what it adds on top is small: the neighbouring signs carry almost everything a model can use.",
  "ngram_partitions": {
   "bigram": {
    "top1": [
@@ -251,6 +283,22 @@
     0.6292857142857143,
     0.6278571428571429,
     0.6254285714285714
+   ]
+  },
+  "kn_trigram": {
+   "top1": [
+    0.422,
+    0.41914285714285715,
+    0.42314285714285715,
+    0.4145714285714286,
+    0.4207142857142857
+   ],
+   "top5": [
+    0.6447142857142857,
+    0.6451428571428571,
+    0.6484285714285715,
+    0.6451428571428571,
+    0.6444285714285715
    ]
   }
  },
@@ -355,13 +403,14 @@
    "layers": 2
   },
   "median_epochs": 9,
-  "median_mixture_lambda": 0.2,
+  "median_mixture_lambda": 0.15,
   "median_temperature": {
    "bigram": 1.1,
    "trigram": 1.2,
+   "kn_trigram": 1.15,
    "net": 1.15
   },
-  "runtime_min": 14.182757035891216,
+  "runtime_min": 21.89050186475118,
   "quick": false
  }
 }

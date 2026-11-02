@@ -26,7 +26,7 @@ from torch import nn
 
 import ngram
 from corpus import ROOT, ebuds, load_lines
-from ngram import WittenBell
+from ngram import KneserNey, WittenBell
 
 OUT = ROOT / "reports/milestone_3"
 DERIVED = ROOT / "data/derived"
@@ -156,8 +156,13 @@ def unigram_logp(train, vocab, pairs):
     return np.tile(np.log(p / p.sum()), (len(pairs), 1))
 
 
-def cross_fit(texts, vocab, order=3, k=5):
-    """Trigram log-probabilities for every (text, position) of texts, each scored by a model fitted without
+def best_ngram(train, vocab):
+    """The strongest n-gram in Milestone 2's restoration table: interpolated Kneser-Ney trigram."""
+    return KneserNey(train, vocab, order=3)
+
+
+def cross_fit(texts, vocab, k=5):
+    """Best-n-gram log-probabilities for every (text, position) of texts, each scored by a model fitted without
     that text, so a residual model never sees its own answer in the prior. Aligned with trials(texts)."""
     pairs = trials(texts)
     out = np.zeros((len(pairs), len(vocab)))
@@ -165,7 +170,7 @@ def cross_fit(texts, vocab, order=3, k=5):
     for g in range(k):
         rest = [t for t, gg in zip(texts, group) if gg != g]
         rows = [r for r, (t, _) in enumerate(pairs) if group[t] == g]
-        out[rows] = ngram_logp(WittenBell(rest, vocab, order, backoff=True), vocab, texts, [pairs[r] for r in rows])
+        out[rows] = ngram_logp(best_ngram(rest, vocab), vocab, texts, [pairs[r] for r in rows])
     return out
 
 
@@ -279,9 +284,11 @@ def evaluate(texts, vocab, seeds, grid, log=print):
 
         add("unigram", unigram_logp(train, vocab, pairs), unigram_logp(fit, vocab, val_pairs))
         ng = {}
-        for n, name in ((2, "bigram"), (3, "trigram")):
-            test_lp = ngram_logp(WittenBell(train, vocab, n, backoff=True), vocab, test, pairs)
-            val_lp = ngram_logp(WittenBell(fit, vocab, n, backoff=True), vocab, val, val_pairs)
+        makers = {"bigram": lambda tr: WittenBell(tr, vocab, 2, backoff=True), "trigram": lambda tr: WittenBell(tr, vocab, 3, backoff=True),
+                  "kn_trigram": lambda tr: best_ngram(tr, vocab)}
+        for name, make in makers.items():
+            test_lp = ngram_logp(make(train), vocab, test, pairs)
+            val_lp = ngram_logp(make(fit), vocab, val, val_pairs)
             T = fit_temperature(val_lp, val_y)
             info["temperatures"].setdefault(name, []).append(T)
             add(name, test_lp, val_lp)
@@ -298,7 +305,7 @@ def evaluate(texts, vocab, seeds, grid, log=print):
         cfg = grid[best_i]
         info["chosen"].append({k: cfg[k] for k in ("arch", "d", "layers")})
 
-        tri_test, tri_val = ng["trigram"][2], ng["trigram"][3]
+        tri_test, tri_val = ng["kn_trigram"][2], ng["kn_trigram"][3]
         prior_fit, prior_train = cross_fit(fit, vocab), cross_fit(train, vocab)
         for s in seeds:
             model, tokens, ep = first if s == seeds[0] else train_net(fit, val, vocab, 1000 * s + f, cfg)
@@ -310,10 +317,10 @@ def evaluate(texts, vocab, seeds, grid, log=print):
             info["temperatures"].setdefault("net", []).append(T)
             add(f"net_seed{s}", log_softmax(test_lg), log_softmax(val_lg))
             add(f"net_seed{s}_calibrated", log_softmax(test_lg, T), log_softmax(val_lg, T))
-            lam, Tm = fit_mixture(log_softmax(val_lg, T), ng["trigram"][1], val_y)
+            lam, Tm = fit_mixture(log_softmax(val_lg, T), ng["kn_trigram"][1], val_y)
             info["mixture_lambda"].append(lam)
-            add(f"mixture_seed{s}", log_softmax(mix(log_softmax(test_lg, T), ng["trigram"][0], lam), Tm),
-                log_softmax(mix(log_softmax(val_lg, T), ng["trigram"][1], lam), Tm))
+            add(f"mixture_seed{s}", log_softmax(mix(log_softmax(test_lg, T), ng["kn_trigram"][0], lam), Tm),
+                log_softmax(mix(log_softmax(val_lg, T), ng["kn_trigram"][1], lam), Tm))
 
             res, res_tok, ep_r = train_net(fit, val, vocab, 1000 * s + f, RESIDUAL, prior=prior_fit, val_prior=tri_val)
             val_r = net_logits(res, res_tok, val, val_pairs, tri_val)
@@ -333,7 +340,8 @@ FAMILIES = {"net": "net_seed{}", "net_calibrated": "net_seed{}_calibrated", "mix
 
 def collapse(outcomes, seeds):
     """Mean and sd over seeds for the network rows; single values for the n-gram rows."""
-    res = {name: summary(outcomes[name]) for name in ("unigram", "bigram", "bigram_calibrated", "trigram", "trigram_calibrated")}
+    res = {name: summary(outcomes[name]) for name in ("unigram", "bigram", "bigram_calibrated", "trigram", "trigram_calibrated",
+                                                       "kn_trigram", "kn_trigram_calibrated")}
     for fam, pattern in FAMILIES.items():
         per = [summary(outcomes[pattern.format(s)]) for s in seeds]
         res[fam] = {k: float(np.mean([p[k] for p in per])) for k in per[0]} | {f"{k}_sd": float(np.std([p[k] for p in per])) for k in per[0]}
@@ -342,14 +350,15 @@ def collapse(outcomes, seeds):
 
 def ngram_partitions(texts, vocab, partitions=5):
     """Top-1 / top-5 of the bigram and trigram over several random 5-fold partitions."""
-    out = {"bigram": {"top1": [], "top5": []}, "trigram": {"top1": [], "top5": []}}
+    out = {"bigram": {"top1": [], "top5": []}, "trigram": {"top1": [], "top5": []}, "kn_trigram": {"top1": [], "top5": []}}
     idx = {s: i for i, s in enumerate(vocab)}
     for p in range(partitions):
-        for n, name in ((2, "bigram"), (3, "trigram")):
+        for name, make in (("bigram", lambda tr: WittenBell(tr, vocab, 2, backoff=True)), ("trigram", lambda tr: WittenBell(tr, vocab, 3, backoff=True)),
+                           ("kn_trigram", lambda tr: best_ngram(tr, vocab))):
             hit1 = hit5 = total = 0
             for train, test in ngram.folds(texts, seed=p):
                 pairs = trials(test)
-                rank = np.argsort(-ngram.candidate_scores(WittenBell(train, vocab, n, backoff=True), vocab, test, pairs), 1, kind="stable")
+                rank = np.argsort(-ngram.candidate_scores(make(train), vocab, test, pairs), 1, kind="stable")
                 y = np.array([idx[test[k][j]] for k, j in pairs])
                 hit1 += (rank[:, 0] == y).sum(); hit5 += (rank[:, :5] == y[:, None]).any(1).sum(); total += len(y)
             out[name]["top1"].append(hit1 / total); out[name]["top5"].append(hit5 / total)
@@ -427,10 +436,11 @@ def pct(x):
 
 
 LABELS = {"unigram": "Most frequent signs (no context)", "bigram": "Bigram (Milestone 2)", "bigram_calibrated": "Bigram, calibrated",
-          "trigram": "Trigram (best n-gram, Milestone 2)", "trigram_calibrated": "Trigram, calibrated",
+          "trigram": "Witten-Bell trigram (Milestone 2)", "trigram_calibrated": "Witten-Bell trigram, calibrated",
+          "kn_trigram": "Kneser-Ney trigram (best n-gram, Milestone 2)", "kn_trigram_calibrated": "Kneser-Ney trigram, calibrated",
           "net": "Neural model, raw", "net_calibrated": "Neural model, calibrated",
-          "mixture": "Mixture of neural model and trigram, fitted weight, calibrated",
-          "residual_calibrated": "Residual model: trigram + learned correction, calibrated"}
+          "mixture": "Mixture of neural model and Kneser-Ney trigram, fitted weight, calibrated",
+          "residual_calibrated": "Residual model: Kneser-Ney trigram + learned correction, calibrated"}
 
 
 def write_report(res):
@@ -453,12 +463,12 @@ def write_report(res):
         "Small neural models are trained to fill one hidden sign from the rest of its inscription and compared with the "
         "Milestone 2 n-grams on the same task. All models use the same 5 folds of the "
         f"{s['texts']:,} EBUDS texts and score the same {s['trials']:,} trials: every position of every held-out text, ranked "
-        f"over the same {s['candidates']} candidate signs. **The bar is the best n-gram, the trigram**, not the bigram.",
+        f"over the same {s['candidates']} candidate signs. **The bar is the best n-gram, the Kneser-Ney trigram**, not the bigram.",
         "",
-        f"The bigram and trigram reproduce Milestone 2 (top-1 {pct(r['bigram']['top1'])} and {pct(r['trigram']['top1'])}; "
-        f"Milestone 2: {pct(res['milestone_2_restoration']['top1'])} "
-        f"and {pct(m2['witten-bell backoff n=3']['top1'])}; the small differences are tied candidates, now broken by sign number "
-        "so the ranking is the same on every machine), so the folds, candidates and trials are the same.",
+        f"The n-grams reproduce Milestone 2 (top-1 bigram {pct(r['bigram']['top1'])}, Witten-Bell trigram {pct(r['trigram']['top1'])}, "
+        f"Kneser-Ney trigram {pct(r['kn_trigram']['top1'])}; Milestone 2: {pct(res['milestone_2_restoration']['top1'])}, "
+        f"{pct(m2['witten-bell backoff n=3']['top1'])}, {pct(m2['kneser-ney n=3']['top1'])}), so the folds, candidates and trials are the "
+        "same. Tied candidates are broken by sign number, so the ranking is the same on every machine.",
         "",
         "## Results",
         "",
@@ -469,14 +479,15 @@ def write_report(res):
         f"Neural rows: mean ± sd over {len(s['seeds'])} training seeds. Conformal sets aim to contain the true sign "
         f"{pct(1 - ALPHA)} of the time; a smaller set at the same coverage is the more useful model.",
         "",
-        "Top-1 difference from the trigram, in points, with a 95% interval from resampling whole test texts (per-trial hits "
+        "Top-1 difference from the Kneser-Ney trigram, in points, with a 95% interval from resampling whole test texts (per-trial hits "
         "averaged over seeds):",
         "",
         "| Model | Difference | 95% interval |",
         "|---|---|---|",
         *diffs,
         "",
-        f"Over {len(part['trigram']['top1'])} random fold partitions the n-grams vary little: trigram top-1 "
+        f"Over {len(part['trigram']['top1'])} random fold partitions the n-grams vary little: Kneser-Ney trigram top-1 "
+        f"{pct(np.mean(part['kn_trigram']['top1']))} ± {100 * np.std(part['kn_trigram']['top1']):.1f}, Witten-Bell trigram "
         f"{pct(np.mean(part['trigram']['top1']))} ± {100 * np.std(part['trigram']['top1']):.1f}, bigram "
         f"{pct(np.mean(part['bigram']['top1']))} ± {100 * np.std(part['bigram']['top1']):.1f}. The neural rows use the first "
         "partition only.",
@@ -521,9 +532,9 @@ def write_report(res):
         f"- Mixture: weight on the neural model fitted on the inner split (median {s['median_mixture_lambda']}), then a "
         "temperature after mixing.",
         "- Residual model: a width-32, one-layer transformer whose output layer starts at zero and is added to the trigram's "
-        "log-probabilities, so it starts exactly at the trigram and can only learn corrections. Its training priors come from "
-        "trigrams fitted without the text being predicted (5-fold cross-fitting inside the training fold).",
-        f"- Temperatures (median): bigram {s['median_temperature']['bigram']}, trigram {s['median_temperature']['trigram']}, "
+        "log-probabilities, so it starts exactly at the Kneser-Ney trigram and can only learn corrections. Its training priors come "
+        "from trigrams fitted without the text being predicted (5-fold cross-fitting inside the training fold).",
+        f"- Temperatures (median): bigram {s['median_temperature']['bigram']}, Kneser-Ney trigram {s['median_temperature']['kn_trigram']}, "
         f"neural {s['median_temperature']['net']}. AdamW, learning rate {BASE['lr']}, weight decay {BASE['weight_decay']}, "
         f"dropout {BASE['dropout']}. Trained on CPU; wall-clock time for the whole run {s['runtime_min']:.0f} minutes.",
         "",
@@ -536,7 +547,7 @@ def verdict(diffs):
     def say(fam):
         d, lo, hi = (100 * x for x in diffs[fam])
         how = "reliably better than" if lo > 0 else "reliably worse than" if hi < 0 else "statistically tied with"
-        return f"{LABELS[fam].split(',')[0]} is {how} the trigram ({d:+.1f} points, 95% interval {lo:+.1f} to {hi:+.1f})"
+        return f"{LABELS[fam].split(',')[0]} is {how} the Kneser-Ney trigram ({d:+.1f} points, 95% interval {lo:+.1f} to {hi:+.1f})"
     return ("; ".join(say(f) for f in diffs) + ". The neural model cannot replace the n-gram on about 1,200 short training "
             "texts per fold, and what it adds on top is small: the neighbouring signs carry almost everything a model can use.")
 
@@ -600,17 +611,18 @@ if __name__ == "__main__":
     m2 = json.loads(M2_RESULTS.read_text())
     res = {"models": collapse(outcomes, seeds), "milestone_2_restoration": m2["restoration"],
            "milestone_2_restoration_by_model": m2["restoration_by_model"], "chosen_configurations": info["chosen"]}
-    for name, ref in (("bigram", m2["restoration"]), ("trigram", m2["restoration_by_model"]["witten-bell backoff n=3"])):
+    for name, ref in (("bigram", m2["restoration"]), ("trigram", m2["restoration_by_model"]["witten-bell backoff n=3"]),
+                      ("kn_trigram", m2["restoration_by_model"]["kneser-ney n=3"])):
         # ponytail: Milestone 2 broke tied rankings with numpy's default (CPU-dependent) sort; 0.002 = 14 of 7,000 trials
         assert all(abs(res["models"][name][k] - ref[k]) < 0.002 for k in ("top1", "top5")), f"{name} does not reproduce Milestone 2"
-    tri = outcomes["trigram"]["hit1"].astype(float)
+    tri = outcomes["kn_trigram"]["hit1"].astype(float)
     res["difference_top1_vs_trigram"] = {fam: paired_bootstrap(np.mean([outcomes[p.format(s)]["hit1"] for s in seeds], 0), tri, groups)
                                          for fam, p in FAMILIES.items() if fam != "net"}
     res["verdict"] = verdict(res["difference_top1_vs_trigram"])
     res["ngram_partitions"] = ngram_partitions(texts, vocab, partitions=2 if args.quick else 5)
 
     OUT.mkdir(parents=True, exist_ok=True)
-    reliability(outcomes, [("trigram", "trigram", "#4a9bd1"), ("net_seed0", "neural, raw", "#c9663c"),
+    reliability(outcomes, [("kn_trigram_calibrated", "Kneser-Ney trigram, calibrated", "#4a9bd1"), ("net_seed0", "neural, raw", "#c9663c"),
                            ("net_seed0_calibrated", "neural, calibrated", "#7a3b1d")], OUT / "reliability.png")
 
     top = Counter(json.dumps(c, sort_keys=True) for c in info["chosen"]).most_common(1)[0][0]
