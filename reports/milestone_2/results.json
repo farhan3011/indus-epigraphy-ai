@@ -83,9 +83,9 @@
   ]
  },
  "zipf_mandelbrot_fit": [
-  15.388982558192568,
-  2.599412490014351,
-  44.47149215610074
+  15.388982400454182,
+  2.59941246437735,
+  44.4714907598386
  ],
  "pairs": {
   "distinct": 2178,
@@ -240,13 +240,22 @@
    "cv_perplexity": 28.38486823271642,
    "cv_perplexity_no_eos": 49.08661278847741,
    "resubstitution_perplexity": 15.65799648684526
+  },
+  "kneser-ney n=3": {
+   "cv_bits": [
+    4.740400681110849,
+    0.08908766982814369
+   ],
+   "cv_perplexity": 26.730236205649767,
+   "cv_perplexity_no_eos": 46.276847916965686,
+   "resubstitution_perplexity": 7.815470326809356
   }
  },
  "restoration": {
   "trials": 7000,
   "top1": 0.37957142857142856,
   "top5": 0.6242857142857143,
-  "hit_in_90pct_mass_set": 0.8607142857142858,
+  "hit_in_90pct_mass_set": 0.8605714285714285,
   "hit_in_90pct_mass_set_strict": 0.795,
   "mean_size_of_90pct_set": 44.03628571428571
  },
@@ -1071,26 +1080,26 @@
    }
   },
   "Python source, tokens": {
-   "signs_in_sample": 952.6,
-   "unigram_entropy": 6.520590449549877,
-   "conditional_entropy": 3.3913607785362814,
+   "signs_in_sample": 990.9,
+   "unigram_entropy": 6.612098485806113,
+   "conditional_entropy": 3.4505473700957645,
    "dependence_index": [
-    0.105014460392992,
-    0.0029515798515748867
+    0.09869743714052234,
+    0.004863384853192647
    ],
    "dependence_index_top20": [
-    0.3268119609760999,
-    0.013438362941832553
+    0.32570938907765656,
+    0.008144213709147748
    ],
    "conditional_entropy_top_n": {
-    "2": 0.2610330729953487,
-    "4": 0.7952898245328345,
-    "10": 1.7392557683464875,
-    "20": 2.194786165795153,
-    "50": 2.640385468562713,
-    "100": 2.8645169310506855,
-    "200": 3.055543598203224,
-    "400": 3.2213356432567366
+    "2": 0.23884182949371766,
+    "4": 0.8145053295051848,
+    "10": 1.7693120267846094,
+    "20": 2.2344504968045067,
+    "50": 2.7047030113832093,
+    "100": 2.9270828673008857,
+    "200": 3.119123448995526,
+    "400": 3.2831481310931507
    }
   },
   "Linear B, Knossos series D (signs)": {
@@ -1998,19 +2007,27 @@
  "restoration_by_model": {
   "witten-bell backoff n=3": {
    "trials": 7000,
-   "top1": 0.40114285714285713,
-   "top5": 0.6297142857142857,
-   "hit_in_90pct_mass_set": 0.8248571428571428,
-   "hit_in_90pct_mass_set_strict": 0.699,
+   "top1": 0.4022857142857143,
+   "top5": 0.6302857142857143,
+   "hit_in_90pct_mass_set": 0.8247142857142857,
+   "hit_in_90pct_mass_set_strict": 0.6992857142857143,
    "mean_size_of_90pct_set": 37.10171428571429
   },
   "kneser-ney n=2": {
    "trials": 7000,
    "top1": 0.3871428571428571,
-   "top5": 0.6321428571428571,
-   "hit_in_90pct_mass_set": 0.8667142857142857,
-   "hit_in_90pct_mass_set_strict": 0.7697142857142857,
+   "top5": 0.6324285714285715,
+   "hit_in_90pct_mass_set": 0.8665714285714285,
+   "hit_in_90pct_mass_set_strict": 0.7698571428571429,
    "mean_size_of_90pct_set": 55.34442857142857
+  },
+  "kneser-ney n=3": {
+   "trials": 7000,
+   "top1": 0.422,
+   "top5": 0.645,
+   "hit_in_90pct_mass_set": 0.8545714285714285,
+   "hit_in_90pct_mass_set_strict": 0.6798571428571428,
+   "mean_size_of_90pct_set": 53.35628571428571
   }
  },
  "syntax": {
@@ -2265,6 +2282,11 @@
    "share_obeying": 0.9168975069252078,
    "share_obeying_after_shuffle": 0.39058171745152354,
    "share_obeying_ends_kept": 0.8518005540166205
+  },
+  "segment_model_bits_per_sign": {
+   "sign bigram": 4.897431729968467,
+   "segment unigram": 5.470731825186269,
+   "segment bigram": 4.905093119496265
   },
   "segments": {
    "distinct_recurring": 179,
@@ -2619,6 +2641,9 @@
    "mutual_information_permuted_corpus": 1.2507609077199078,
    "conditional_entropy": 3.5448492052987097,
    "direction_delta_S_primary": -0.4045466748728136
+  },
+  "NSB (sign entropy only)": {
+   "unigram_entropy": 6.7377450443202225
   }
  },
  "sample_size": [
@@ -2667,7 +2692,7 @@
    "unigram_entropy_plugin": 6.586706488372647,
    "unigram_entropy_chao_shen": 6.707718671330795,
    "mi_plugin": 3.457343492520544,
-   "mi_chao_shen": 3.1440735579297874,
+   "mi_chao_shen": 3.1440735579297865,
    "dependence_index": 0.16275281905314326,
    "bigram_perplexity": 33.76232119955243,
    "top_ender_share": 0.3453957996768982,
@@ -2706,7 +2731,7 @@
    "unigram_entropy_plugin": 6.6554944821675,
    "unigram_entropy_chao_shen": 6.745656327122552,
    "mi_plugin": 3.253182641190957,
-   "mi_chao_shen": 2.988894977831757,
+   "mi_chao_shen": 2.988894977831756,
    "dependence_index": 0.1840527109177878,
    "bigram_perplexity": 31.50503457905038,
    "top_ender_share": 0.3398523985239853,
@@ -2719,7 +2744,7 @@
    "unigram_entropy_plugin": 6.668589535148607,
    "unigram_entropy_chao_shen": 6.750013380774275,
    "mi_plugin": 3.2012482299877334,
-   "mi_chao_shen": 2.9382314041290973,
+   "mi_chao_shen": 2.938231404129097,
    "dependence_index": 0.1884943032283817,
    "bigram_perplexity": 30.99089856169556,
    "top_ender_share": 0.3397415185783522,
@@ -3088,15 +3113,15 @@
   }
  ],
  "provenance": {
-  "python": "3.10.12",
+  "python": "3.10.21",
   "packages": {
    "numpy": "2.2.6",
    "scipy": "1.15.3",
    "pandas": "2.3.3",
    "matplotlib": "3.10.9"
   },
-  "git_commit": "da2e03776666e5fcd6af968c932bf3f28fceb35d",
-  "uncommitted_changes": false,
+  "git_commit": "79373aea42fcd1d4df84d423b3fbdeb702b8c4ee",
+  "uncommitted_changes": true,
   "inputs_sha256": {
    "data/raw/im77/im77_corpus_lines.csv": "385b82bd6a9629e0ab215af46db84ca0c9ec4f6044a2a2ea58a3c64121f26211",
    "data/raw/yajnadevam/population-script.sql": "a1bcc150e91ede5e1c3ce813073d8ac7bfe370d2709be320132a651ba9c7a54c",
@@ -3106,6 +3131,6 @@
    "data/raw/reference/pride_and_prejudice.txt": "3f6bb9d6f78e0293b56acd4714dd68cb7d6d1d293402031ce9d5a216bcaf9d75"
   },
   "essen_krn_files_sha256": "471d640f3b1aa04b8e05fd67658e584de71daec4d5fe8f106375b37fdba7af2c",
-  "python_stdlib_tokens_sha256": "96166055545e0a619400e46928889206c5a6bcaa5ca1402473869d613ff850bd"
+  "python_stdlib_tokens_sha256": "4e2d5ed07e50b3f03142fd1a7050c4d3fa18fff6ec57ca08f64f8d9b538b9e1b"
  }
 }

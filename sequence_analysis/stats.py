@@ -30,6 +30,22 @@ def entropy_chao_shen(counts):
     return float(-(p * np.log2(p) / (1 - (1 - p) ** n)).sum())
 
 
+def entropy_nsb(counts, k, grid=400):
+    """NSB entropy estimate in bits (Nemenman, Shafee & Bialek 2002) for an alphabet of k symbols: the Dirichlet
+    posterior-mean entropy averaged over the concentration beta, under the prior that is flat in expected entropy.
+    Integrated numerically on a log-spaced beta grid."""
+    from scipy.special import gammaln, polygamma, psi
+    n = np.array([c for c in counts if c > 0], float)
+    N, zeros = n.sum(), k - len(n)
+    beta = np.logspace(-4, 4, grid)
+    log_ev = (gammaln(k * beta) - gammaln(N + k * beta) + (gammaln(n[:, None] + beta) - gammaln(beta)).sum(0))
+    prior = k * polygamma(1, k * beta + 1) - polygamma(1, beta + 1)  # d xi / d beta
+    post_h = (psi(N + k * beta + 1) - ((n[:, None] + beta) * psi(n[:, None] + beta + 1)).sum(0) / (N + k * beta)
+              - zeros * beta * psi(beta + 1) / (N + k * beta))
+    w = np.exp(log_ev - log_ev.max()) * prior * beta  # times beta: integrating over log beta
+    return float((w * post_h).sum() / w.sum() / math.log(2))
+
+
 def js_divergence(p, q):
     """Jensen-Shannon divergence in bits between two aligned count vectors (0 = identical, 1 = disjoint)."""
     return float(jensenshannon(p, q, base=2) ** 2)
@@ -212,6 +228,10 @@ def selfcheck():
     assert abs(entropy_chao_shen([50] * 4) - 2) < 1e-6  # no singletons, large n: no correction needed
     sample = np.random.default_rng(0).integers(0, 400, 300)  # true entropy log2(400) = 8.64
     assert entropy(Counter(sample).values()) < 8 and abs(entropy_chao_shen(Counter(sample).values()) - math.log2(400)) < 0.2
+    big = np.random.default_rng(2).integers(0, 50, 20000)
+    assert abs(entropy_nsb(Counter(big).values(), 50) - math.log2(50)) < 0.01
+    small = Counter(sample).values()  # 300 draws from 400 equally likely symbols
+    assert entropy(small) < entropy_nsb(small, 400) <= math.log2(400) + 0.05
     assert js_divergence([2, 1], [4, 2]) < 1e-12 and abs(js_divergence([1, 0], [0, 1]) - 1) < 1e-12
     assert abs(conditional_entropy([(1, 2), (1, 3)]) - 1) < 1e-12 and conditional_entropy([(1, 2), (1, 3)], top_n=2) == 0
     # a toy right-to-left script: every text ends (physical left) in sign 9, starts anywhere

@@ -54,6 +54,7 @@ def language_models(texts, vocab):
     makers["add-1 n=2"] = AddK
     makers["add-0.01 n=2"] = lambda tr, v: AddK(tr, v, 0.01)
     makers["kneser-ney n=2"] = KneserNey
+    makers["kneser-ney n=3"] = lambda tr, v: KneserNey(tr, v, order=3)
     out = {}
     for name, make in makers.items():
         with_eos, without = ngram.cross_validate(make, texts, vocab)
@@ -439,6 +440,7 @@ def syntax(texts, n_resample, seed=0):
             "order_rule_heldout": {"texts_with_both": int(rule_obs[1]), "share_obeying": rule_obs[0] / rule_obs[1],
                                    "share_obeying_after_shuffle": rule_shuf[0] / rule_shuf[1],
                                    "share_obeying_ends_kept": rule_inner[0] / rule_inner[1]},
+            "segment_model_bits_per_sign": segment_model(texts, sorted({s for t in texts for s in t})),
             "segments": {"distinct_recurring": len(segs), "top": seg_pos,
                          "heldout_token_coverage": seg_cov[0] / seg_cov[1], "heldout_token_coverage_after_shuffle": seg_cov_shuf[0] / seg_cov_shuf[1]}}
 
@@ -464,6 +466,39 @@ def recurring_segments(texts):
         pieces.append(tuple(piece))
         found.update({p for p in pieces if len(p) >= 2})
     return Counter({p: n for p, n in found.items() if n >= SEGMENT_MIN_TEXTS})
+
+
+def tokenize(text, segs, longest):
+    """Greedy longest match: the text as a sequence of recurring segments and single signs (each a tuple)."""
+    out, i = [], 0
+    while i < len(text):
+        for k in range(min(longest, len(text) - i), 1, -1):
+            if text[i:i + k] in segs:
+                out.append(text[i:i + k])
+                i += k
+                break
+        else:
+            out.append((text[i],))
+            i += 1
+    return out
+
+
+def segment_model(texts, vocab):
+    """Is a text better described as a sequence of recurring segments than as a sequence of signs? Bits per sign
+    (end of text counted) on held-out folds: a segment unigram and bigram over segments learnt on the training fold,
+    against the sign bigram, all Witten-Bell backoff on the same folds."""
+    bits = {"sign bigram": 0.0, "segment unigram": 0.0, "segment bigram": 0.0}
+    events = 0
+    for train, test in ngram.folds(texts):
+        segs = set(recurring_segments(train))
+        longest = max(map(len, segs), default=1)
+        tok_train, tok_test = ([tuple(tokenize(t, segs, longest)) for t in x] for x in (train, test))
+        tok_vocab = sorted({(s,) for s in vocab} | segs)
+        bits["sign bigram"] -= ngram.log2_likelihood(WittenBell(train, vocab, 2, backoff=True), test)[0]
+        for n, name in ((1, "segment unigram"), (2, "segment bigram")):
+            bits[name] -= ngram.log2_likelihood(WittenBell(tok_train, tok_vocab, n, backoff=True), tok_test)[0]
+        events += sum(len(t) + 1 for t in test)
+    return {k: v / events for k, v in bits.items()}
 
 
 def coverage_by_segments(segs, texts):
@@ -580,6 +615,7 @@ def estimators(texts, phys, seed=0):
                      "mutual_information_permuted_corpus": stats.mutual_information(perm, h),
                      "conditional_entropy": stats.conditional_entropy(texts, h=h),
                      "direction_delta_S_primary": float(stats.asymmetry(*stats.terminals(phys), h=h)[1])}
+    out["NSB (sign entropy only)"] = {"unigram_entropy": stats.entropy_nsb(Counter(s for t in texts for s in t).values(), len(stats.SIGNS) - 1)}
     return out
 
 
@@ -889,6 +925,14 @@ def syntax_section(sx):
           f"against {100 * s['heldout_token_coverage_after_shuffle']:.1f}% of the same texts shuffled: much of the corpus is built from a stock of recurring sign groups.", "",
           "| Segment (reading order) | Texts containing it | Occurrences: initial | medial | final | whole text |", "|---|---|---|---|---|---|"]
     L += [f"| {k} | {v['texts']} | {v.get('initial', 0)} | {v.get('medial', 0)} | {v.get('final', 0)} | {v.get('whole text', 0)} |" for k, v in s["top"].items()]
+    sm = sx["segment_model_bits_per_sign"]
+    L += ["", f"**Do segments describe the texts better than signs?** On held-out folds, a model over recurring segments costs "
+          f"{sm['segment unigram']:.2f} bits per sign (segment unigram) and {sm['segment bigram']:.2f} (segment bigram), against "
+          f"{sm['sign bigram']:.2f} for the sign bigram (end of text counted, segments learnt on the training folds only). "
+          + ("Treating the recurring segments as units predicts held-out texts better than the sign bigram does."
+             if min(sm['segment unigram'], sm['segment bigram']) < sm['sign bigram'] else
+             "Treating the recurring segments as units does not predict held-out texts better than the sign bigram, so they are a "
+             "description of frequent sign groups, not a better model of the texts.")]
     L += ["", "Segments keep their own positions: the commonest opening pairs open texts and the pairs ending in 342 close them. These are distributional rules "
           "of the notation in reading order. They do not show that the segments are words, or that the classes are grammatical categories.", ""]
     return L
@@ -937,6 +981,9 @@ def extended_section(res):
           "permuted, which has no real dependence: whatever remains there is bias.", "",
           "| Estimator | Sign entropy | Mutual information | MI, permuted corpus | MI in excess of the permuted corpus | H(next given current) | Direction delta S (primary) |", "|---|---|---|---|---|---|---|"]
     for k, v in res["estimators"].items():
+        if "mutual_information" not in v:
+            L.append(f"| {k} | {v['unigram_entropy']:.3f} | | | | | |")
+            continue
         L.append(f"| {k} | {v['unigram_entropy']:.3f} | {v['mutual_information']:.3f} | {v['mutual_information_permuted_corpus']:.3f} | "
                  f"{v['mutual_information'] - v['mutual_information_permuted_corpus']:.3f} | {v['conditional_entropy']:.3f} | {v['direction_delta_S_primary']:+.3f} |")
     cs_, pi = res["estimators"]["Chao-Shen"], res["estimators"]["plug-in"]
@@ -1161,7 +1208,8 @@ if __name__ == "__main__":
             print(f"skipped the {name}: input missing, see data/README.md")
 
     res["restoration_by_model"] = {"witten-bell backoff n=3": restoration(texts, vocab, lambda tr, v: WittenBell(tr, v, 3, backoff=True)),
-                                   "kneser-ney n=2": restoration(texts, vocab, KneserNey)}
+                                   "kneser-ney n=2": restoration(texts, vocab, KneserNey),
+                                   "kneser-ney n=3": restoration(texts, vocab, lambda tr, v: KneserNey(tr, v, order=3))}
     res["syntax"] = syntax(texts, n_resample)
     res["breakdown"] = breakdown(lines, n_resample)
     res["estimators"] = estimators(texts, phys)

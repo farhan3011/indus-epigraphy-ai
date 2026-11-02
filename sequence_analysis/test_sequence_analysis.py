@@ -66,3 +66,10 @@ def test_wells_reading_order_ends_in_jar_sign():
     texts, head = corpus.load_wells()
     assert sum(t[-1] == 740 for t in texts) > 10 * sum(t[0] == 740 for t in texts)
     assert not set(head) & set(head.values())  # variant groups are one level deep
+
+
+def test_segment_tokenizer_round_trips():
+    segs = {(1, 2), (3, 4, 5)}
+    for t in [(1, 2, 3, 4, 5, 6), (6, 1, 2), (3, 4), (1,)]:
+        assert tuple(s for tok in m2.tokenize(t, segs, 3) for s in tok) == t
+    assert m2.tokenize((1, 2, 3, 4, 5, 6), segs, 3) == [(1, 2), (3, 4, 5), (6,)]
