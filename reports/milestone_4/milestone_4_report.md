@@ -1,6 +1,6 @@
 # Milestone 4 report: testing claimed decipherments against chance
 
-A claimed decipherment of the Indus script is a table from signs to sounds. This harness applies a table to the inscriptions, measures how Sanskrit-like the result is, and compares that with thousands of tables made by shuffling the claim's own sound values among its signs. Everything was fixed in `decipherment/prereg.json` and committed before any claim was scored (pre-registration SHA-256 `647c654ca242…`, commit `e3d9af1368`). **The test can only show that a particular table does or does not carry a signal beyond chance; it cannot show that the script is or is not a language.**
+A claimed decipherment of the Indus script is a table from signs to sounds. This harness applies a table to the inscriptions, measures how Sanskrit-like the result is, and compares that with thousands of tables made by shuffling the claim's own sound values among its signs. The rules are in `decipherment/prereg.json`. Version 1 was committed before any claim was scored; version 2 changed the primary score after a quick v1 run had scored the claims, as disclosed below (pre-registration SHA-256 `647c654ca242…`, commit `e3d9af1368`). **The test can only show that a particular table does or does not carry a signal beyond chance; it cannot show that the script is or is not a language.**
 
 ## Revision of the pre-registration
 
@@ -27,7 +27,7 @@ Version 1 (commit 9d89ed1) made 'Sanskrit minus Old Tamil' the primary score. It
 
 ## Can the harness detect a real decipherment at all?
 
-Positive control: held-out Sanskrit text from the Digital Corpus of Sanskrit was enciphered with the Yajnadevam key's own sign-to-sound relation (many signs per sound) and cut to the lengths of real inscriptions; the true table was then tested exactly like a claim (20 replicates, 1,000 shuffles per null). It was detected (p < 0.05) in 100% of runs against the value-shuffle null and 100% against the frequency-binned null; with 30% of its values wrong, 100% and 100% (`power_curve.png`). So a negative result below is informative.
+Positive control: held-out Sanskrit text from the Digital Corpus of Sanskrit was enciphered with the Yajnadevam key's own sign-to-sound relation (many signs per sound) and cut to the lengths of real inscriptions; the true table was then tested exactly like a claim (20 replicates, 1,000 shuffles per null). It was detected (p < 0.05) in 100% of runs against the value-shuffle null and 100% against the frequency-binned null; with 30% of its values wrong, 100% and 100% (`power_curve.png`). So a negative result below is informative, with one caveat: the enciphered text comes from the same corpus as the scoring model (held-out chapters), so this power is an upper bound for a real Bronze Age language.
 
 Negative control: 200 shuffled tables were treated as claims. 2% came out "significant" at 0.05 (5% expected) and the p-values are consistent with uniform (KS p = 0.45; `negative_control_p.png`), so the test does not fire falsely.
 
@@ -46,6 +46,8 @@ All scores are bits per phoneme of the key's output (collapsed consonant skeleto
 
 - **yajnadevam-2024-11-30**: not distinguishable from frequency-matched random tables under the Sanskrit sequence score (percentile 93.9, Holm p = 0.672); the harness detects true keys in 100% of positive-control runs at this length.
 - **yajnadevam-2026-07-15**: not distinguishable from frequency-matched random tables under the Sanskrit sequence score (percentile 94.6, Holm p = 0.653); the harness detects true keys in 100% of positive-control runs at this length.
+
+Sensitivity runs (pre-registered, outside the corrected family): with 5 frequency bins instead of 10 the primary score's p is 0.191 (yajnadevam-2024-11-30), 0.170 (yajnadevam-2026-07-15); with 20 bins 0.034 (yajnadevam-2024-11-30), 0.012 (yajnadevam-2026-07-15). Finer bins come closer to significance; none of these would survive the correction applied to the main tests.
 
 - yajnadevam-2024-11-30, sign order: the real order scores -0.295; shuffling the signs inside each text gives -0.393 ± 0.011 (0% of shuffles score at least as high); reversing every text gives -0.438.
 - yajnadevam-2026-07-15, sign order: the real order scores -0.299; shuffling the signs inside each text gives -0.398 ± 0.012 (0% of shuffles score at least as high); reversing every text gives -0.442.

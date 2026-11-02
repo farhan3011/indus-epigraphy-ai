@@ -403,8 +403,9 @@ def write_report(res):
         "",
         "A claimed decipherment of the Indus script is a table from signs to sounds. This harness applies a table to the "
         "inscriptions, measures how Sanskrit-like the result is, and compares that with thousands of tables made by shuffling "
-        "the claim's own sound values among its signs. Everything was fixed in `decipherment/prereg.json` and committed before "
-        f"any claim was scored (pre-registration SHA-256 `{res['provenance']['prereg_sha256'][:12]}…`, commit "
+        "the claim's own sound values among its signs. The rules are in `decipherment/prereg.json`. Version 1 was committed "
+        "before any claim was scored; version 2 changed the primary score after a quick v1 run had scored the claims, as "
+        f"disclosed below (pre-registration SHA-256 `{res['provenance']['prereg_sha256'][:12]}…`, commit "
         f"`{res['provenance']['git_commit'][:10]}`). **The test can only show that a particular table does or does not carry a "
         "signal beyond chance; it cannot show that the script is or is not a language.**",
         "",
@@ -426,7 +427,8 @@ def write_report(res):
         f"detected (p < 0.05) in {pct(pc['0']['value_shuffle']['power'])} of runs against the value-shuffle null and "
         f"{pct(pc['0']['binned_10']['power'])} against the frequency-binned null; with 30% of its values wrong, "
         f"{pct(pc['0.3']['value_shuffle']['power'])} and {pct(pc['0.3']['binned_10']['power'])} (`power_curve.png`). "
-        + ("So a negative result below is informative." if power0 >= 0.8 else
+        + ("So a negative result below is informative, with one caveat: the enciphered text comes from the same corpus as "
+           "the scoring model (held-out chapters), so this power is an upper bound for a real Bronze Age language." if power0 >= 0.8 else
            "Power is below 80%, so a negative result below must be read as \"low power\", not as a rejection."),
         "",
         f"Negative control: {nc['runs']} shuffled tables were treated as claims. {pct(nc['share_below_0.05'])} came out "
@@ -449,6 +451,10 @@ def write_report(res):
               f"keys scoring at least as high ({s['draws']:,} shuffles); Holm adjusts across the {s['holm_family']} pre-registered tests.", ""]
     for claim, r in res["claims"].items():
         lines.append(f"- **{claim}**: {r['sentence']}")
+    lines += ["", "Sensitivity runs (pre-registered, outside the corrected family): with 5 frequency bins instead of 10 the primary "
+              "score's p is " + ", ".join(f"{r['nulls']['binned_5']['sequence']['p']:.3f} ({c})" for c, r in res["claims"].items())
+              + "; with 20 bins " + ", ".join(f"{r['nulls']['binned_20']['sequence']['p']:.3f} ({c})" for c, r in res["claims"].items())
+              + ". Finer bins come closer to significance; none of these would survive the correction applied to the main tests."]
     lines += [""]
     for claim, r in res["claims"].items():
         o = r["order_null"]

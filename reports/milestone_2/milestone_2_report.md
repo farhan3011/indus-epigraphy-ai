@@ -370,4 +370,4 @@ Re-segmenting up to a fifth of the sign list moves the dependence index by at mo
 
 ### Provenance
 
-Python 3.10.21; numpy 2.2.6, scipy 1.15.3, pandas 2.3.3, matplotlib 3.10.9; code at commit 79373ae plus uncommitted changes. Input checksums (SHA-256) and a checksum of the Python-token reference stream (which depends on the local standard library) are in `results.json` under `provenance`. Every random step uses a fixed seed.
+Python 3.10.21; numpy 2.2.6, scipy 1.15.3, pandas 2.3.3, matplotlib 3.10.9; code at commit f220c6f. Input checksums (SHA-256) and a checksum of the Python-token reference stream (which depends on the local standard library) are in `results.json` under `provenance`. Every random step uses a fixed seed.
