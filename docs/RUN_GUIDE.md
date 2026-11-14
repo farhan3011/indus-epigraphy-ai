@@ -139,3 +139,38 @@ python grapheme_extraction/evaluate.py --runs yolov8n-relief rtdetr-l-relief --o
 
 Send back `reports/milestone_1_relief/` and both `runs/*-relief/weights/best.pt`. Look at the figures of the real Met photos first: the question is whether the boxes on real seals improve.
 
+## Milestones 3 and 4 and their extensions (CPU only)
+
+None of this needs a GPU. Run from the repository root with the environment from step 2 active.
+
+```bash
+# Milestone 3: masked-sign prediction. Writes reports/milestone_3/ and models/masked_sign_model.pt (about 15 minutes)
+python sequence_analysis/masked_model.py
+
+# Milestone 3 extension: several gaps searched together, damage of unknown length, miscopied signs (about 7 minutes)
+python sequence_analysis/restore.py
+python sequence_analysis/restore.py fill "267 ? ? 342"    # ? = one missing sign, * = a damaged stretch of 0-3 signs
+python sequence_analysis/restore.py check "267 99 342"    # how expected each sign is, given the others
+
+# Milestone 4: fetch the pinned keys and corpora once, then run the pre-registered test (about 5 minutes)
+python decipherment/data.py
+python decipherment/harness.py
+
+# Milestone 4 extension, exploratory and not pre-registered: what a blind search can reach (about 7 minutes)
+python decipherment/overfit.py
+```
+
+Order matters in two places. `restore.py` compares against the neural model, so it needs `reports/milestone_3/results.json` from `masked_model.py`. `overfit.py` and the Milestone 4 tab of the app need the files `data.py` downloads.
+
+Every script takes `--quick` for a fast check; quick outputs go to `reports/quick/`, which is not committed.
+
+If `python decipherment/data.py` fails with a connection reset, the network is blocking `raw.githubusercontent.com`. The script then falls back to the jsDelivr mirror and, for the Sanskrit corpus, to a sparse git checkout of the same pinned commit. Every file is still checked against its SHA-256.
+
+Tests and the app self-check:
+
+```bash
+python -m pytest -q sequence_analysis    # if an unrelated system pytest plugin breaks collection: PYTEST_DISABLE_PLUGIN_AUTOLOAD=1
+python app.py                            # asserts, then runs every tab once headless
+```
+
+The app lists a detector only when its weights file exists and is not empty. Without trained Milestone 1 weights the first tab runs on the OpenCV baseline and the other three tabs work as normal.

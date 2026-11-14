@@ -1,0 +1,149 @@
+{
+ "two_gaps": {
+  "adjacent": {
+   "trials": 1290,
+   "joint": {
+    "both_right": 0.1434108527131783,
+    "signs_right": 0.26124031007751936,
+    "pair_in_top5": 0.2775193798449612
+   },
+   "greedy": {
+    "both_right": 0.08062015503875969,
+    "signs_right": 0.1817829457364341,
+    "pair_in_top5": 0.08062015503875969
+   },
+   "neural": {
+    "both_right": 0.024031007751937984,
+    "signs_right": 0.17751937984496124,
+    "pair_in_top5": 0.07519379844961241
+   }
+  },
+  "separated": {
+   "trials": 1006,
+   "joint": {
+    "both_right": 0.2554671968190855,
+    "signs_right": 0.4840954274353877,
+    "pair_in_top5": 0.44433399602385687
+   },
+   "greedy": {
+    "both_right": 0.13220675944333996,
+    "signs_right": 0.35785288270377735,
+    "pair_in_top5": 0.13220675944333996
+   },
+   "neural": {
+    "both_right": 0.1411530815109344,
+    "signs_right": 0.3757455268389662,
+    "pair_in_top5": 0.2813121272365805
+   }
+  },
+  "all": {
+   "trials": 2296,
+   "joint": {
+    "both_right": 0.19250871080139373,
+    "signs_right": 0.3588850174216028,
+    "pair_in_top5": 0.35060975609756095
+   },
+   "greedy": {
+    "both_right": 0.10322299651567944,
+    "signs_right": 0.25892857142857145,
+    "pair_in_top5": 0.10322299651567944
+   },
+   "neural": {
+    "both_right": 0.07534843205574913,
+    "signs_right": 0.2643728222996516,
+    "pair_in_top5": 0.16550522648083624
+   }
+  },
+  "joint_minus_neural_both_right": [
+   0.1171602787456446,
+   0.09982422439650189,
+   0.135384465216045
+  ],
+  "joint_minus_greedy_both_right": [
+   0.08928571428571429,
+   0.07398654712887404,
+   0.1040348247331342
+  ]
+ },
+ "settings": {
+  "texts": 1548,
+  "folds": 5,
+  "neural": true,
+  "beam": 200,
+  "wide": 4000,
+  "max_run": 3,
+  "runtime_min": 7.005513536930084,
+  "quick": false
+ },
+ "unknown_length": {
+  "trials": 1290,
+  "length_right": 0.5356589147286822,
+  "always_most_common_length": 0.32558139534883723,
+  "mean_probability_of_true_length": 0.4634560991730677,
+  "exact_fill": 0.3883720930232558,
+  "fill_in_top5": 0.5573643410852713,
+  "by_true_length": {
+   "0": {
+    "trials": 414,
+    "length_right": 0.7753623188405797,
+    "exact_fill": 0.8985507246376812,
+    "guessed": {
+     "0": 321,
+     "1": 75,
+     "2": 17,
+     "3": 1
+    }
+   },
+   "1": {
+    "trials": 420,
+    "length_right": 0.6071428571428571,
+    "exact_fill": 0.2523809523809524,
+    "guessed": {
+     "0": 92,
+     "1": 255,
+     "2": 67,
+     "3": 6
+    }
+   },
+   "2": {
+    "trials": 281,
+    "length_right": 0.36298932384341637,
+    "exact_fill": 0.07829181494661921,
+    "guessed": {
+     "0": 55,
+     "1": 114,
+     "2": 102,
+     "3": 10
+    }
+   },
+   "3": {
+    "trials": 175,
+    "length_right": 0.07428571428571429,
+    "exact_fill": 0.005714285714285714,
+    "guessed": {
+     "0": 40,
+     "1": 67,
+     "2": 55,
+     "3": 13
+    }
+   }
+  }
+ },
+ "miscopy": {
+  "trials": 1290,
+  "position_found": 0.6170542635658914,
+  "position_by_chance": 0.22062158986577593,
+  "text_auc": 0.7472597800612943,
+  "repair_top1_given_position": 0.4317829457364341,
+  "repair_top5_given_position": 0.6488372093023256,
+  "found_and_repaired_top1": 0.31007751937984496,
+  "threshold_at_5pct_false_alarms": 4.6400878829940545e-05,
+  "caught_at_that_threshold": 0.162015503875969
+ },
+ "reach": {
+  "positions": 6553,
+  "most_influential_sign_is_adjacent": 0.8969937433236685,
+  "two_away": 0.06836563406073554,
+  "three_or_more_away": 0.03464062261559591
+ }
+}

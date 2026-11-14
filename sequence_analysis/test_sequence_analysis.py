@@ -6,6 +6,7 @@ import pytest
 
 import corpus
 import ngram
+import restore
 import run_milestone2 as m2
 import stats
 
@@ -13,6 +14,7 @@ import stats
 def test_selfchecks():
     ngram.selfcheck()
     stats.selfcheck()
+    restore.selfcheck()
 
 
 def test_restoration_bigram_matches_closed_form():

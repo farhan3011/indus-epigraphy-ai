@@ -408,6 +408,23 @@ def fill(model, tokens, temperature, text, k=5):
     return out
 
 
+def influence(model, tokens, temperature, text, gap):
+    """How much each legible sign matters for the top guess at one gap: the drop, in bits, of that guess's
+    log-probability when the sign is replaced by the unknown-sign token (negative: the guess gets likelier without it).
+    text as in fill(). Returns (top sign, {position: bits})."""
+    gaps = {i for i, s in enumerate(text) if s is None}
+    ids = tokens.encode([s or 0 for s in text], gaps)
+    context = [i for i in range(len(text)) if i not in gaps]
+    x = torch.tensor([ids] * (len(context) + 1))
+    for row, i in enumerate(context, start=1):
+        x[row, i + 1] = UNK
+    model.eval()
+    with torch.no_grad():
+        logp = log_softmax(model(x)[:, gap + 1].numpy(), temperature)
+    top = int(np.argmax(logp[0]))
+    return tokens.vocab[top], {i: float((logp[0, top] - logp[row, top]) / math.log(2)) for row, i in enumerate(context, start=1)}
+
+
 def save(model, tokens, temperature, cfg):
     MODEL_FILE.parent.mkdir(exist_ok=True)
     torch.save({"state": model.state_dict(), "vocab": tokens.vocab, "tok": tokens.tok, "temperature": temperature, "config": cfg}, MODEL_FILE)
