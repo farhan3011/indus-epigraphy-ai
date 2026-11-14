@@ -13,6 +13,7 @@ import json
 import re
 import subprocess
 import sys
+import tempfile
 import urllib.parse
 from pathlib import Path
 
@@ -45,8 +46,31 @@ def sha256(b):
 
 def get(url):
     # curl rather than urllib: urllib timed out on projectmadurai.org from this network while curl did not
-    return subprocess.run(["curl", "-sSLf", "-m", "300", "--retry", "3", "-A", "Mozilla/5.0 (compatible; indus-epigraphy-student-project)", url],
-                          check=True, capture_output=True).stdout
+    curl = lambda u: subprocess.run(["curl", "-sSLf", "-m", "300", "--retry", "3", "-A", "Mozilla/5.0 (compatible; indus-epigraphy-student-project)", u],
+                                    check=True, capture_output=True).stdout
+    try:
+        return curl(url)
+    except subprocess.CalledProcessError:
+        # some networks reset raw.githubusercontent.com; jsDelivr serves the same commit, and every file is checked against its SHA-256
+        m = re.fullmatch(r"https://raw\.githubusercontent\.com/([^/]+)/([^/]+)/([^/]+)/(.+)", url)
+        if not m:
+            raise
+        return curl("https://cdn.jsdelivr.net/gh/{}/{}@{}/{}".format(*m.groups()))
+
+
+def dcs_from_git():
+    """The same lines as the per-file download, from a sparse checkout of the pinned commit (for networks that
+    reset raw.githubusercontent.com; the repository is too large for the jsDelivr mirror)."""
+    with tempfile.TemporaryDirectory() as tmp:
+        git = lambda *a: subprocess.run(["git", "-C", tmp, "-c", "core.quotepath=off", *a], check=True, capture_output=True)
+        git("init", "-q")
+        git("remote", "add", "origin", "https://github.com/OliverHellwig/sanskrit")
+        git("sparse-checkout", "set", *(f"dcs/data/conllu/files/{t}" for t in DCS_TEXTS))
+        git("fetch", "-q", "--depth", "1", "--filter=blob:none", "origin", DCS_COMMIT)
+        git("checkout", "-q", "FETCH_HEAD")
+        return [f"{text}\t{f.name}\t{l[9:].strip()}" for text in DCS_TEXTS
+                for f in sorted(Path(tmp, "dcs/data/conllu/files", text).iterdir(), key=lambda f: f.name)
+                for l in f.read_text().splitlines() if l.startswith("# text = ")]
 
 
 def fetch():
@@ -60,12 +84,15 @@ def fetch():
         assert got == (digest or recorded.setdefault(name, got)), f"{name}: SHA-256 {got} differs from the pinned file"
     dcs = RAW / "dcs.txt"
     if not dcs.exists():
-        lines = []
-        for text in DCS_TEXTS:
-            api = f"https://api.github.com/repos/OliverHellwig/sanskrit/contents/dcs/data/conllu/files/{urllib.parse.quote(text)}?ref={DCS_COMMIT}"
-            for f in sorted(json.loads(get(api)), key=lambda f: f["name"]):
-                raw = get(f"https://raw.githubusercontent.com/OliverHellwig/sanskrit/{DCS_COMMIT}/{urllib.parse.quote(f['path'])}").decode()
-                lines += [f"{text}\t{f['name']}\t{l[9:].strip()}" for l in raw.splitlines() if l.startswith("# text = ")]
+        try:
+            lines = []
+            for text in DCS_TEXTS:
+                api = f"https://api.github.com/repos/OliverHellwig/sanskrit/contents/dcs/data/conllu/files/{urllib.parse.quote(text)}?ref={DCS_COMMIT}"
+                for f in sorted(json.loads(get(api)), key=lambda f: f["name"]):
+                    raw = get(f"https://raw.githubusercontent.com/OliverHellwig/sanskrit/{DCS_COMMIT}/{urllib.parse.quote(f['path'])}").decode()
+                    lines += [f"{text}\t{f['name']}\t{l[9:].strip()}" for l in raw.splitlines() if l.startswith("# text = ")]
+        except subprocess.CalledProcessError:
+            lines = dcs_from_git()
         dcs.write_text("\n".join(lines))
     assert sha256(dcs.read_bytes()) == recorded.setdefault("dcs.txt", sha256(dcs.read_bytes())), "dcs.txt changed"
     for name, page in MADURAI.items():
