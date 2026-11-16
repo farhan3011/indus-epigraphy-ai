@@ -77,6 +77,22 @@ Planned once Milestone 1 is properly hand-labelled on real seals:
 - an error-propagation test that uses Milestone 1's real confusion matrix instead of uniform errors
 - a direction test that uses sign positions measured on photographs instead of Mahadevan's direction labels
 
+### Extension: do the stroke signs behave like numerals? (exploratory)
+
+```bash
+python sequence_analysis/numerals.py    # about 30 seconds on a laptop CPU
+```
+
+The 25 signs drawn as rows of equal bars are found from the glyph drawings by a stated rule (contact sheet in the report folder) and five numeral predictions are tested against pseudo sets of frequency-matched signs. Two hold after correction: text pairs differing only in which stroke sign stands in one slot are about 3 times as common as for matched signs (116 against 35), and frequency falls with bar count (Spearman -0.60). Three do not: stroke signs are not followed by a narrower set of signs, different stroke signs are not followed by the same signs, and their position in a text and their tendency to run together do not differ from matched signs. Report: [reports/milestone_2/numerals_report.md](reports/milestone_2/numerals_report.md).
+
+### Extension: do the stroke signs behave like numerals? (exploratory)
+
+```bash
+python sequence_analysis/numerals.py    # about 30 seconds on a laptop CPU
+```
+
+The 25 signs drawn as rows of equal bars are found from the glyph drawings by a stated rule (contact sheet in the report folder) and five numeral predictions are tested against pseudo sets of frequency-matched signs. Two hold after correction: text pairs differing only in which stroke sign stands in one slot are about 3 times as common as for matched signs (116 against 35), and frequency falls with bar count (Spearman -0.60). Three do not: stroke signs are not followed by a narrower set of signs, different stroke signs are not followed by the same signs, and their position in a text and their tendency to run together do not differ from matched signs. Report: [reports/milestone_2/numerals_report.md](reports/milestone_2/numerals_report.md).
+
 ## Milestone 3: masked-sign prediction
 
 ```bash

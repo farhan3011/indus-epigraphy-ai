@@ -1,0 +1,258 @@
+{
+ "texts": 1548,
+ "settings": {
+  "draws": 1000,
+  "seed": 20261116,
+  "quick": false,
+  "runtime_min": 0.4539051651954651
+ },
+ "adjustment": "A first version of the rule, without the fill condition, also selected 0 curved or looped signs (); requiring each part to fill at least half of its bounding box, a lone bar to be at least 5 times as tall as wide, and bar widths to agree within a factor of 2 removed them. Bars are called long when taller than a third of the drawing.",
+ "signs_with_context": 14,
+ "stroke_signs": {
+  "86": {
+   "count": 1,
+   "long": true,
+   "rows": 1,
+   "tokens": 89
+  },
+  "87": {
+   "count": 2,
+   "long": true,
+   "rows": 1,
+   "tokens": 166
+  },
+  "89": {
+   "count": 3,
+   "long": true,
+   "rows": 1,
+   "tokens": 112
+  },
+  "95": {
+   "count": 4,
+   "long": true,
+   "rows": 1,
+   "tokens": 7
+  },
+  "96": {
+   "count": 5,
+   "long": true,
+   "rows": 1,
+   "tokens": 10
+  },
+  "97": {
+   "count": 1,
+   "long": false,
+   "rows": 1,
+   "tokens": 56
+  },
+  "98": {
+   "count": 1,
+   "long": false,
+   "rows": 1,
+   "tokens": 50
+  },
+  "99": {
+   "count": 2,
+   "long": false,
+   "rows": 1,
+   "tokens": 377
+  },
+  "100": {
+   "count": 2,
+   "long": false,
+   "rows": 1,
+   "tokens": 20
+  },
+  "101": {
+   "count": 2,
+   "long": false,
+   "rows": 2,
+   "tokens": 1
+  },
+  "102": {
+   "count": 3,
+   "long": false,
+   "rows": 1,
+   "tokens": 74
+  },
+  "103": {
+   "count": 3,
+   "long": false,
+   "rows": 2,
+   "tokens": 9
+  },
+  "104": {
+   "count": 4,
+   "long": false,
+   "rows": 1,
+   "tokens": 40
+  },
+  "105": {
+   "count": 4,
+   "long": false,
+   "rows": 2,
+   "tokens": 2
+  },
+  "106": {
+   "count": 5,
+   "long": false,
+   "rows": 1,
+   "tokens": 24
+  },
+  "107": {
+   "count": 5,
+   "long": false,
+   "rows": 2,
+   "tokens": 5
+  },
+  "108": {
+   "count": 6,
+   "long": false,
+   "rows": 1,
+   "tokens": 3
+  },
+  "109": {
+   "count": 6,
+   "long": false,
+   "rows": 2,
+   "tokens": 17
+  },
+  "110": {
+   "count": 7,
+   "long": false,
+   "rows": 1,
+   "tokens": 5
+  },
+  "112": {
+   "count": 7,
+   "long": false,
+   "rows": 2,
+   "tokens": 38
+  },
+  "114": {
+   "count": 8,
+   "long": false,
+   "rows": 2,
+   "tokens": 4
+  },
+  "115": {
+   "count": 9,
+   "long": false,
+   "rows": 1,
+   "tokens": 1
+  },
+  "116": {
+   "count": 9,
+   "long": false,
+   "rows": 2,
+   "tokens": 1
+  },
+  "118": {
+   "count": 10,
+   "long": false,
+   "rows": 2,
+   "tokens": 1
+  },
+  "121": {
+   "count": 12,
+   "long": false,
+   "rows": 2,
+   "tokens": 33
+  }
+ },
+ "tests": {
+  "entropy_next": {
+   "observed": 3.7918365719319267,
+   "null_mean": 2.798187492833081,
+   "null_sd": 0.2937409756564555,
+   "p": 1.0,
+   "q": 1.0
+  },
+  "js_between": {
+   "observed": 0.76377626739732,
+   "null_mean": 0.7779102189814853,
+   "null_sd": 0.037747773236309436,
+   "p": 0.34565434565434566,
+   "q": 0.4147852147852148
+  },
+  "interchange": {
+   "observed": 116,
+   "null_mean": 34.792,
+   "null_sd": 14.674083821486095,
+   "p": 0.000999000999000999,
+   "q": 0.004899409459396736
+  },
+  "at_end": {
+   "observed": 0.05764192139737991,
+   "null_mean": 0.19235434223929745,
+   "null_sd": 0.10490936505909025,
+   "p": 0.16683316683316685,
+   "at_start": 0.17292576419213973,
+   "q": 0.25024975024975027
+  },
+  "adjacent": {
+   "observed": 159,
+   "null_mean": 95.867,
+   "null_sd": 38.774054611299036,
+   "p": 0.06593406593406594,
+   "q": 0.13186813186813187
+  }
+ },
+ "frequency": {
+  "rho": -0.5969028565950416,
+  "p": 0.0016331364864655788,
+  "q": 0.004899409459396736,
+  "rho_short": -0.78,
+  "rho_long": -0.6,
+  "short": {
+   "1": 106,
+   "2": 398,
+   "3": 83,
+   "4": 42,
+   "5": 29,
+   "6": 20,
+   "7": 43,
+   "8": 4,
+   "9": 2,
+   "10": 1,
+   "12": 33
+  },
+  "long": {
+   "1": 89,
+   "2": 166,
+   "3": 112,
+   "4": 7,
+   "5": 10
+  },
+  "short_by_count": {
+   "1": 106,
+   "2": 398,
+   "3": 83,
+   "4": 42,
+   "5": 29,
+   "6": 20,
+   "7": 43,
+   "8": 4,
+   "9": 2,
+   "10": 1,
+   "12": 33
+  },
+  "long_by_count": {
+   "1": 89,
+   "2": 166,
+   "3": 112,
+   "4": 7,
+   "5": 10
+  }
+ },
+ "all_start": 0.22114285714285714,
+ "all_end": 0.22114285714285714,
+ "reading": [
+  "Counted things: stroke signs are followed by a narrower set of signs (entropy of the next sign, bits): does not hold (observed 3.792 against 2.798 for matched pseudo sets, q 1.000); a numeral-like result would be lower.",
+  "Counted things: different stroke signs are followed by the same signs (mean Jensen-Shannon divergence): does not hold (observed 0.764 against 0.778 for matched pseudo sets, q 0.415); a numeral-like result would be lower.",
+  "Interchangeability: text pairs differing only in which stroke sign stands in one position: holds (observed 116.000 against 34.792 for matched pseudo sets, q 0.005); a numeral-like result would be higher.",
+  "Position: share of stroke-sign tokens at the end of a text: does not differ from matched pseudo sets (observed 0.058 against 0.192, q 0.250); this test has no single numeral-like direction.",
+  "Runs: adjacent pairs of stroke signs (additive systems show them, positional ones do not): does not differ from matched pseudo sets (observed 159.000 against 95.867, q 0.132); this test has no single numeral-like direction.",
+  "Frequency by value: rank correlation -0.60 (q 0.005); numerals would fall with value, so a negative correlation is the numeral-like result."
+ ]
+}
