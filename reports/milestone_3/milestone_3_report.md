@@ -38,6 +38,21 @@ Over 5 random fold partitions the n-grams vary little: Kneser-Ney trigram top-1 
 - Calibration (the proposal's "validation confidence ratings"): ECE is the average gap between how confident the top guess is and how often it is right; 0 is perfect. `reliability.png` shows it per confidence band.
 - Conformal sets replace the earlier "90% probability mass" set, which did not contain the true sign 90% of the time and whose size could not be compared across models. They are calibrated on the inner split of each training fold with models fitted on the rest of it and applied to models retrained on the whole fold, so coverage is approximate; the measured coverage above is the check. The bigram's 90%-mass set is kept for the comparison with Yadav et al. 2010 (74%): 86.1%, mean 44 signs.
 
+## Comparison with Yadav et al. 2010
+
+| Model | First guess right | True sign in the 90%-mass set | Mean set size |
+|---|---|---|---|
+| Yadav et al. 2010, bigram (published) | - | 74.0% | - |
+| Most frequent signs (no context) | 10.2% | 90.4% | 134 signs |
+| Bigram, calibrated | 38.0% | 88.9% | 61 signs |
+| Witten-Bell trigram, calibrated | 40.2% | 90.1% | 76 signs |
+| Kneser-Ney trigram, calibrated | 42.2% | 90.9% | 91 signs |
+| Neural model, calibrated | 32.2% | 87.3% | 73 signs |
+| Mixture of neural model and Kneser-Ney trigram, fitted weight, calibrated | 42.4% | 90.9% | 79 signs |
+| Residual model: Kneser-Ney trigram + learned correction, calibrated | 42.1% | 90.6% | 84 signs |
+
+Calibrated rows are used because a probability-mass set only means something for calibrated probabilities. The corpus is identical (1,548 texts after the same filter). Their train and test split is not stated, so the 5-fold figures here are not the same protocol. A larger set always hits more often, so the hit rate has to be read next to the set size.
+
 ## Damaged inscriptions
 
 The final neural model, trained on all 1,548 texts, was run on the 337 distinct single-line corpus texts with exactly one illegible sign. They have no answer key, so this shows what the model offers an epigrapher, not how accurate it is. Its top guess carries a median confidence of 19.9%; 63 texts get a top guess above 50% and 13 above 80%. The most frequent top guesses are 342, 211, 65, 67, 267. Per-text suggestions are in `data/derived/` on the machine that ran this (not published: they contain corpus texts).

@@ -471,6 +471,9 @@ def write_report(res):
                     f"{pct(v['conformal_lac_coverage'])}, {v['conformal_lac_mean_size']:.0f} signs | "
                     f"{pct(v['conformal_aps_coverage'])}, {v['conformal_aps_mean_size']:.0f} signs | {v['ece_top1']:.3f} |")
     diffs = [f"| {LABELS[fam]} | {100 * d[0]:+.1f} | [{100 * d[1]:+.1f}, {100 * d[2]:+.1f}] |" for fam, d in res["difference_top1_vs_trigram"].items()]
+    yadav_models = ("unigram", "bigram_calibrated", "trigram_calibrated", "kn_trigram_calibrated", "net_calibrated", "mixture", "residual_calibrated")
+    yadav = ["| Yadav et al. 2010, bigram (published) | - | 74.0% | - |"] + [
+        f"| {LABELS[n]} | {pct(r[n]['top1'])} | {pct(r[n]['hit_in_90pct_mass_set'])} | {r[n]['mean_90pct_mass_set_size']:.0f} signs |" for n in yadav_models]
     part = res["ngram_partitions"]
     chosen = Counter(f"{c['arch']} width {c['d']}, {c['layers']} layer{'s' if c['layers'] > 1 else ''}" for c in res["chosen_configurations"])
     dm = res["damaged_texts"]
@@ -519,6 +522,16 @@ def write_report(res):
         "fold with models fitted on the rest of it and applied to models retrained on the whole fold, so coverage is "
         "approximate; the measured coverage above is the check. The bigram's 90%-mass set is kept for the comparison with "
         f"Yadav et al. 2010 (74%): {pct(r['bigram']['hit_in_90pct_mass_set'])}, mean {r['bigram']['mean_90pct_mass_set_size']:.0f} signs.",
+        "",
+        "## Comparison with Yadav et al. 2010",
+        "",
+        "| Model | First guess right | True sign in the 90%-mass set | Mean set size |",
+        "|---|---|---|---|",
+        *yadav,
+        "",
+        "Calibrated rows are used because a probability-mass set only means something for calibrated probabilities. The corpus is identical "
+        "(1,548 texts after the same filter). Their train and test split is not stated, so the 5-fold figures here are not the same protocol. "
+        "A larger set always hits more often, so the hit rate has to be read next to the set size.",
         "",
         "## Damaged inscriptions",
         "",

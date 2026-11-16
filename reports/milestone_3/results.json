@@ -412,5 +412,42 @@
   },
   "runtime_min": 21.89050186475118,
   "quick": false
+ },
+ "yadav_comparison": {
+  "unigram": {
+   "top1": 0.10214285714285715,
+   "hit_in_90pct_mass_set": 0.9041428571428571,
+   "mean_90pct_mass_set_size": 134.396
+  },
+  "bigram_calibrated": {
+   "top1": 0.37957142857142856,
+   "hit_in_90pct_mass_set": 0.889,
+   "mean_90pct_mass_set_size": 60.990857142857145
+  },
+  "trigram_calibrated": {
+   "top1": 0.4024285714285714,
+   "hit_in_90pct_mass_set": 0.9012857142857142,
+   "mean_90pct_mass_set_size": 76.25871428571429
+  },
+  "kn_trigram_calibrated": {
+   "top1": 0.422,
+   "hit_in_90pct_mass_set": 0.9091428571428571,
+   "mean_90pct_mass_set_size": 90.718
+  },
+  "net_calibrated": {
+   "top1": 0.3221428571428571,
+   "hit_in_90pct_mass_set": 0.8731904761904762,
+   "mean_90pct_mass_set_size": 73.13171428571428
+  },
+  "mixture": {
+   "top1": 0.42357142857142854,
+   "hit_in_90pct_mass_set": 0.9085714285714285,
+   "mean_90pct_mass_set_size": 79.03133333333334
+  },
+  "residual_calibrated": {
+   "top1": 0.42123809523809524,
+   "hit_in_90pct_mass_set": 0.9062380952380953,
+   "mean_90pct_mass_set_size": 84.3397142857143
+  }
  }
 }
