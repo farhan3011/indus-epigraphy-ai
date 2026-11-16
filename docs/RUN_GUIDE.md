@@ -158,6 +158,9 @@ python decipherment/harness.py
 
 # Milestone 4 extension, exploratory and not pre-registered: what a blind search can reach (about 7 minutes)
 python decipherment/overfit.py
+
+# Milestone 4 extension, exploratory: dictionary match rate of a table's output (about 4 minutes)
+python decipherment/lexicon.py
 ```
 
 Order matters in two places. `restore.py` compares against the neural model, so it needs `reports/milestone_3/results.json` from `masked_model.py`. `overfit.py` and the Milestone 4 tab of the app need the files `data.py` downloads.

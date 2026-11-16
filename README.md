@@ -113,11 +113,18 @@ python decipherment/overfit.py    # about 7 minutes on a laptop CPU
 
 The permutation test compares a claimed table with random tables, but a decipherer searches for a table. `overfit.py` searches too: random tables are improved by swapping the values of two signs whenever the score does not fall. On the Indus inscriptions the search passes the claimed table within about 50 swaps and ends 0.81 bits per phoneme above it; tables searched on half the texts still score far above the claim on the other half. The same search on real Sanskrit enciphered with a known table also passes the true table, with tables that disagree with it, so this score cannot pick out the right table on a corpus of this size and scoring below the search ceiling is not evidence against a claim. The demo app runs a search live and tests any uploaded sign-to-sound table with the Milestone 4 test. Report: [reports/milestone_4/overfitting_report.md](reports/milestone_4/overfitting_report.md).
 
+### Extension: dictionary match rate (exploratory, not pre-registered)
+
+```bash
+python decipherment/lexicon.py    # about 4 minutes on a laptop CPU
+```
+
+A second score for a claimed table: how much of its output, reduced to consonant skeletons, is made of Sanskrit words (seen at least twice in the DCS training split), compared with shuffled versions of the same table. A table with correct values is detected 95-100% of the time by both scores (positive control), and the false-alarm rate is 4-9%. Yajnadevam's table beats fully shuffled tables on whole-text matches, but not tables shuffled within frequency bins (percentile 58-62), so the excess is how often each sign occurs, not which sound it carries; coverage is not significant either way. Report: [reports/milestone_4/lexicon_report.md](reports/milestone_4/lexicon_report.md).
+
 ## To do
 
 - **A positive control on a script that really was deciphered.** The Milestone 4 positive control enciphers Sanskrit with the claim's own table, so the "true" table is one this project made. Running the same harness on Linear B read as Greek would show whether it detects a real decipherment. Data: [DAMOS](https://damos.hf.uio.no/) (Database of Mycenaean at Oslo) states "Content: CC BY-NC-SA 4.0" on its own site (checked 15 November 2026), which allows this non-commercial use with attribution. It must be fetched at run time and never committed, because this repository is MIT and share-alike content cannot be relicensed; only aggregates would be published, as for the other corpora. Not usable: the Linear B and Ugaritic files in the NeuroDecipher repository (no licence) and LiBER (texts for "limited re-use in scholarly works" only). Work needed: a loader for the DAMOS transliterations, a Greek target corpus with an open licence, and a scoring alphabet for Greek in place of the Sanskrit consonant skeleton. About a day.
 - Rescore Milestone 3 on the clean subset used by Yadav et al. 2010, to compare like for like with the restoration figures in earlier Indus papers.
-- A dictionary match-rate test for Milestone 4: the share of a table's output found in a Sanskrit lexicon, against the same shuffled-table nulls.
 - Retrain the Milestone 1 detectors; see [docs/RUN_GUIDE.md](docs/RUN_GUIDE.md).
 
 ## Layout
