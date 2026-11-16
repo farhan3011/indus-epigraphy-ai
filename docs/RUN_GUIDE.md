@@ -144,6 +144,12 @@ Send back `reports/milestone_1_relief/` and both `runs/*-relief/weights/best.pt`
 None of this needs a GPU. Run from the repository root with the environment from step 2 active.
 
 ```bash
+# Milestone 2 extension, exploratory: do the stroke signs behave like numerals? (about 30 seconds)
+python sequence_analysis/numerals.py
+
+# Milestone 2 extension, exploratory: does the text predict the object? (about 1 minute)
+python sequence_analysis/predict_object.py
+
 # Milestone 3: masked-sign prediction. Writes reports/milestone_3/ and models/masked_sign_model.pt (about 15 minutes)
 python sequence_analysis/masked_model.py
 
@@ -158,6 +164,18 @@ python decipherment/harness.py
 
 # Milestone 4 extension, exploratory and not pre-registered: what a blind search can reach (about 7 minutes)
 python decipherment/overfit.py
+
+# Milestone 4 extension, exploratory: dictionary match rate of a table's output (about 4 minutes)
+python decipherment/lexicon.py
+
+# Milestone 4 extension, exploratory: Linear B read as Greek, a positive control on a real decipherment (about 1 minute)
+python decipherment/linear_b.py
+
+# Milestone 4 extension, exploratory: the same claim against four languages (about 1 minute)
+python decipherment/languages.py
+
+# Milestone 4 extension, exploratory: how large would the corpus have to be? (about 55 minutes)
+python decipherment/corpus_size.py
 ```
 
 Order matters in two places. `restore.py` compares against the neural model, so it needs `reports/milestone_3/results.json` from `masked_model.py`. `overfit.py` and the Milestone 4 tab of the app need the files `data.py` downloads.

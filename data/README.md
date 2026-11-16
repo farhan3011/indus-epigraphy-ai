@@ -73,3 +73,7 @@ python decipherment/data.py
 ```
 
 Fetches into `data/raw/decipherment/`: the Yajnadevam key at two pinned commits and his readings file (github.com/yajnadevam/lipi, no licence, so never committed), the Shaw 2026 and Fuls 2024 key transcriptions (paragorth/Indus-, pinned), five post-Vedic texts from the Digital Corpus of Sanskrit (CC BY 4.0, pinned commit) and five Sangam anthologies from Project Madurai (SHA-256 recorded at first fetch). It then checks the pins and the reading direction.
+
+## Extra inputs for the Linear B control (Milestone 4)
+
+`python decipherment/linear_b.py` fetches these itself into `data/raw/linear_b/` (gitignored, never committed) and records their SHA-256 on first fetch: the Linear B / Greek word list `linear_b-greek.cog` from github.com/j-luo93/NeuroDecipher (commit 480bad24, no licence stated; only the Linear B column is read) and the Iliad and Odyssey from github.com/PerseusDL/canonical-greekLit (commit dacb0490, CC BY-SA 4.0).

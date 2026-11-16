@@ -1,0 +1,243 @@
+{
+ "lexicon": {
+  "sanskrit": 8264,
+  "tamil": 7030
+ },
+ "claims": {
+  "yajnadevam-2024-11-30": {
+   "texts": 1334,
+   "tokens": 5682,
+   "sanskrit": {
+    "observed": {
+     "whole_text_match": 0.2563291139240506,
+     "coverage": 0.6132804757185332
+    },
+    "nulls": {
+     "value_shuffle": {
+      "whole_text_match": {
+       "mean": 0.11304884219358396,
+       "sd": 0.030738352818714065,
+       "p": 0.0004997501249375312,
+       "percentile": 100.0
+      },
+      "coverage": {
+       "mean": 0.6521210083159908,
+       "sd": 0.055453654229856916,
+       "p": 0.7681159420289855,
+       "percentile": 23.200000000000003
+      }
+     },
+     "binned_10": {
+      "whole_text_match": {
+       "mean": 0.24543131938567914,
+       "sd": 0.0403099240668816,
+       "p": 0.383808095952024,
+       "percentile": 61.650000000000006
+      },
+      "coverage": {
+       "mean": 0.5632852223212781,
+       "sd": 0.03904059583115893,
+       "p": 0.079960019990005,
+       "percentile": 92.05
+      }
+     }
+    }
+   },
+   "tamil": {
+    "observed": {
+     "whole_text_match": 0.14029535864978904,
+     "coverage": 0.3419226957383548
+    },
+    "nulls": {
+     "value_shuffle": {
+      "whole_text_match": {
+       "mean": 0.07215759993855218,
+       "sd": 0.03150855643429585,
+       "p": 0.027486256871564217,
+       "percentile": 97.3
+      },
+      "coverage": {
+       "mean": 0.3537904724635699,
+       "sd": 0.09670106114302839,
+       "p": 0.5397301349325337,
+       "percentile": 46.050000000000004
+      }
+     },
+     "binned_10": {
+      "whole_text_match": {
+       "mean": 0.13524803178483233,
+       "sd": 0.04251469661545136,
+       "p": 0.4987506246876562,
+       "percentile": 50.14999999999999
+      },
+      "coverage": {
+       "mean": 0.3083964118983683,
+       "sd": 0.061375760724948575,
+       "p": 0.344327836081959,
+       "percentile": 65.60000000000001
+      }
+     }
+    }
+   }
+  },
+  "yajnadevam-2026-07-15": {
+   "texts": 1318,
+   "tokens": 5584,
+   "sanskrit": {
+    "observed": {
+     "whole_text_match": 0.25775401069518716,
+     "coverage": 0.6138374899436846
+    },
+    "nulls": {
+     "value_shuffle": {
+      "whole_text_match": {
+       "mean": 0.11268148435672921,
+       "sd": 0.0320319085091485,
+       "p": 0.0004997501249375312,
+       "percentile": 100.0
+      },
+      "coverage": {
+       "mean": 0.6500122112124789,
+       "sd": 0.056504218445824636,
+       "p": 0.7541229385307346,
+       "percentile": 24.6
+      }
+     },
+     "binned_10": {
+      "whole_text_match": {
+       "mean": 0.2514424123421342,
+       "sd": 0.03942070027960023,
+       "p": 0.42328835582208896,
+       "percentile": 57.699999999999996
+      },
+      "coverage": {
+       "mean": 0.5648950558113851,
+       "sd": 0.03747529130965544,
+       "p": 0.07146426786606697,
+       "percentile": 92.9
+      }
+     }
+    }
+   },
+   "tamil": {
+    "observed": {
+     "whole_text_match": 0.14010695187165775,
+     "coverage": 0.335679806918745
+    },
+    "nulls": {
+     "value_shuffle": {
+      "whole_text_match": {
+       "mean": 0.06729877796418339,
+       "sd": 0.029766097172247742,
+       "p": 0.017491254372813594,
+       "percentile": 98.3
+      },
+      "coverage": {
+       "mean": 0.34723581311341906,
+       "sd": 0.09788105422438365,
+       "p": 0.5292353823088456,
+       "percentile": 47.099999999999994
+      }
+     },
+     "binned_10": {
+      "whole_text_match": {
+       "mean": 0.13121787570810853,
+       "sd": 0.04205227008896282,
+       "p": 0.46326836581709147,
+       "percentile": 53.7
+      },
+      "coverage": {
+       "mean": 0.2994958566863672,
+       "sd": 0.05991472873075498,
+       "p": 0.32233883058470764,
+       "percentile": 67.80000000000001
+      }
+     }
+    }
+   }
+  }
+ },
+ "holm": {
+  "yajnadevam-2024-11-30": {
+   "whole_text_match": {
+    "value_shuffle": 0.00399800099950025,
+    "binned_10": 1.0
+   },
+   "coverage": {
+    "value_shuffle": 1.0,
+    "binned_10": 0.4287856071964018
+   }
+  },
+  "yajnadevam-2026-07-15": {
+   "whole_text_match": {
+    "value_shuffle": 0.00399800099950025,
+    "binned_10": 1.0
+   },
+   "coverage": {
+    "value_shuffle": 1.0,
+    "binned_10": 0.4287856071964018
+   }
+  }
+ },
+ "positive_control": {
+  "0": {
+   "value_shuffle": {
+    "whole_text_match": 0.95,
+    "coverage": 1.0
+   },
+   "binned_10": {
+    "whole_text_match": 1.0,
+    "coverage": 1.0
+   }
+  },
+  "0.1": {
+   "value_shuffle": {
+    "whole_text_match": 0.8,
+    "coverage": 0.7
+   },
+   "binned_10": {
+    "whole_text_match": 0.95,
+    "coverage": 1.0
+   }
+  },
+  "0.2": {
+   "value_shuffle": {
+    "whole_text_match": 0.7,
+    "coverage": 0.3
+   },
+   "binned_10": {
+    "whole_text_match": 0.7,
+    "coverage": 1.0
+   }
+  },
+  "0.3": {
+   "value_shuffle": {
+    "whole_text_match": 0.45,
+    "coverage": 0.0
+   },
+   "binned_10": {
+    "whole_text_match": 0.55,
+    "coverage": 0.85
+   }
+  }
+ },
+ "negative_control": {
+  "runs": 100,
+  "draws": 199,
+  "share_below_0.05": {
+   "whole_text_match": 0.09,
+   "coverage": 0.04
+  }
+ },
+ "reading": "yajnadevam-2024-11-30: beats fully shuffled tables on whole text match but not tables shuffled within frequency bins (percentile 62 on whole text match, percentile 92 on coverage), so the excess is explained by how often each sign occurs, not by which sound it carries. yajnadevam-2026-07-15: beats fully shuffled tables on whole text match but not tables shuffled within frequency bins (percentile 58 on whole text match, percentile 93 on coverage), so the excess is explained by how often each sign occurs, not by which sound it carries. Against the Old Tamil lexicon the frequency-binned test is significant for no key and score.",
+ "settings": {
+  "draws": 2000,
+  "control_replicates": 20,
+  "control_draws": 500,
+  "holm_family": 8,
+  "seed": 20261116,
+  "quick": false,
+  "pre_registered": false,
+  "runtime_min": 4.0302818258603414
+ }
+}

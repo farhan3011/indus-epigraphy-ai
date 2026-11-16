@@ -1,0 +1,432 @@
+{
+ "rows": 2406,
+ "targets": {
+  "site": {
+   "classes": 5,
+   "rows": 2375,
+   "dropped": {
+    "Other sites": 23,
+    "West Asian finds": 8
+   },
+   "majority": 0.2,
+   "models": {
+    "signs and pairs": {
+     "bal_acc": 0.3112772777168877,
+     "bal_acc_sd": 0.015233933231530581,
+     "macro_f1": 0.28820798593973485
+    },
+    "signs only": {
+     "bal_acc": 0.3102112779612009,
+     "bal_acc_sd": 0.024793956081905585,
+     "macro_f1": 0.26126072087133495
+    },
+    "text length only": {
+     "bal_acc": 0.22060562140529769,
+     "bal_acc_sd": 0.02337259440919366,
+     "macro_f1": 0.16992206421022304
+    }
+   },
+   "permuted": {
+    "mean": 0.1978831997139766,
+    "max": 0.23979272294942094,
+    "p": 0.03225806451612903
+   },
+   "top_signs": {
+    "Chanhudaro": [
+     69,
+     14,
+     139,
+     214,
+     180,
+     109,
+     198,
+     293,
+     326,
+     12
+    ],
+    "Harappa": [
+     328,
+     176,
+     210,
+     12,
+     17,
+     89,
+     67,
+     121,
+     95,
+     99
+    ],
+    "Kalibangan": [
+     336,
+     167,
+     206,
+     15,
+     65,
+     8,
+     73,
+     344,
+     76,
+     121
+    ],
+    "Lothal": [
+     113,
+     66,
+     176,
+     286,
+     341,
+     258,
+     123,
+     32,
+     387,
+     292
+    ],
+    "Mohenjodaro": [
+     296,
+     107,
+     242,
+     367,
+     63,
+     336,
+     124,
+     112,
+     345,
+     397
+    ]
+   },
+   "confusion": {
+    "classes": [
+     "Chanhudaro",
+     "Harappa",
+     "Kalibangan",
+     "Lothal",
+     "Mohenjodaro"
+    ],
+    "matrix": [
+     [
+      0.077,
+      0.205,
+      0.128,
+      0.077,
+      0.513
+     ],
+     [
+      0.035,
+      0.555,
+      0.086,
+      0.058,
+      0.266
+     ],
+     [
+      0.047,
+      0.328,
+      0.172,
+      0.172,
+      0.281
+     ],
+     [
+      0.077,
+      0.088,
+      0.121,
+      0.154,
+      0.56
+     ],
+     [
+      0.069,
+      0.168,
+      0.092,
+      0.118,
+      0.552
+     ]
+    ]
+   }
+  },
+  "object type": {
+   "classes": 5,
+   "rows": 2364,
+   "dropped": {
+    "ivory/bone rod": 19,
+    "miscellaneous": 13,
+    "bronze implement": 10
+   },
+   "majority": 0.2,
+   "models": {
+    "signs and pairs": {
+     "bal_acc": 0.5005856185291419,
+     "bal_acc_sd": 0.015158984179762343,
+     "macro_f1": 0.4447547904562392
+    },
+    "signs only": {
+     "bal_acc": 0.5212390408193676,
+     "bal_acc_sd": 0.009911217860726471,
+     "macro_f1": 0.43114098309000765
+    },
+    "text length only": {
+     "bal_acc": 0.4231369430214699,
+     "bal_acc_sd": 0.0006337815879147284,
+     "macro_f1": 0.2863515476305681
+    }
+   },
+   "permuted": {
+    "mean": 0.2082080255114896,
+    "max": 0.2617984365151004,
+    "p": 0.03225806451612903
+   },
+   "top_signs": {
+    "copper tablet": [
+     190,
+     407,
+     363,
+     176,
+     204,
+     184,
+     319,
+     194,
+     169,
+     348
+    ],
+    "miniature tablet": [
+     176,
+     328,
+     95,
+     103,
+     169,
+     99,
+     319,
+     347,
+     345,
+     267
+    ],
+    "pottery graffito": [
+     365,
+     328,
+     167,
+     345,
+     72,
+     53,
+     336,
+     41,
+     363,
+     59
+    ],
+    "seal": [
+     328,
+     28,
+     99,
+     12,
+     48,
+     365,
+     60,
+     65,
+     391,
+     17
+    ],
+    "sealing": [
+     328,
+     63,
+     321,
+     135,
+     113,
+     127,
+     99,
+     373,
+     176,
+     230
+    ]
+   },
+   "confusion": {
+    "classes": [
+     "copper tablet",
+     "miniature tablet",
+     "pottery graffito",
+     "seal",
+     "sealing"
+    ],
+    "matrix": [
+     [
+      0.521,
+      0.017,
+      0.165,
+      0.273,
+      0.025
+     ],
+     [
+      0.0,
+      0.517,
+      0.105,
+      0.191,
+      0.186
+     ],
+     [
+      0.014,
+      0.127,
+      0.563,
+      0.268,
+      0.028
+     ],
+     [
+      0.033,
+      0.053,
+      0.109,
+      0.743,
+      0.062
+     ],
+     [
+      0.028,
+      0.327,
+      0.105,
+      0.327,
+      0.213
+     ]
+    ]
+   }
+  },
+  "field symbol": {
+   "classes": 3,
+   "rows": 2406,
+   "dropped": {},
+   "majority": 0.3333333333333333,
+   "models": {
+    "signs and pairs": {
+     "bal_acc": 0.4582946933623047,
+     "bal_acc_sd": 0.010446706731552277,
+     "macro_f1": 0.4564846704683389
+    },
+    "signs only": {
+     "bal_acc": 0.44342907323364855,
+     "bal_acc_sd": 0.007752272319288394,
+     "macro_f1": 0.44320298337374747
+    },
+    "text length only": {
+     "bal_acc": 0.3975608181382933,
+     "bal_acc_sd": 0.01059805041366635,
+     "macro_f1": 0.3767495948401098
+    }
+   },
+   "permuted": {
+    "mean": 0.3327615389440434,
+    "max": 0.3808040813806304,
+    "p": 0.03225806451612903
+   },
+   "top_signs": {
+    "no field symbol": [
+     210,
+     328,
+     169,
+     389,
+     137,
+     407,
+     18,
+     149,
+     45,
+     180
+    ],
+    "other field symbol": [
+     321,
+     398,
+     63,
+     45,
+     113,
+     169,
+     389,
+     10,
+     287,
+     297
+    ],
+    "unicorn": [
+     328,
+     125,
+     113,
+     321,
+     12,
+     14,
+     188,
+     304,
+     192,
+     28
+    ]
+   },
+   "confusion": {
+    "classes": [
+     "no field symbol",
+     "other field symbol",
+     "unicorn"
+    ],
+    "matrix": [
+     [
+      0.58,
+      0.166,
+      0.254
+     ],
+     [
+      0.386,
+      0.189,
+      0.425
+     ],
+     [
+      0.185,
+      0.23,
+      0.585
+     ]
+    ]
+   }
+  }
+ },
+ "confounds": [
+  {
+   "target": "site",
+   "within": "object type",
+   "value": "seal",
+   "rows": 1253,
+   "classes": 5,
+   "bal_acc": 0.24065053333643788
+  },
+  {
+   "target": "site",
+   "within": "field symbol",
+   "value": "no field symbol",
+   "rows": 1176,
+   "classes": 3,
+   "bal_acc": 0.5106670575206826
+  },
+  {
+   "target": "object type",
+   "within": "site",
+   "value": "Mohenjodaro",
+   "rows": 1136,
+   "classes": 3,
+   "bal_acc": 0.47512015631303606
+  },
+  {
+   "target": "object type",
+   "within": "field symbol",
+   "value": "no field symbol",
+   "rows": 1190,
+   "classes": 5,
+   "bal_acc": 0.4356103951693989
+  },
+  {
+   "target": "field symbol",
+   "within": "site",
+   "value": "Mohenjodaro",
+   "rows": 1183,
+   "classes": 3,
+   "bal_acc": 0.461138198594946
+  },
+  {
+   "target": "field symbol",
+   "within": "object type",
+   "value": "seal",
+   "rows": 1271,
+   "classes": 3,
+   "bal_acc": 0.40862496125654013
+  }
+ ],
+ "reading": "site: 31% balanced accuracy against 20% chance and 24% at most for permuted labels (p 0.032); text length alone gives 22%, and adding pairs to single signs changes it by +0.1 points. object type: 50% balanced accuracy against 20% chance and 26% at most for permuted labels (p 0.032); text length alone gives 42%, and adding pairs to single signs changes it by -2.1 points. field symbol: 46% balanced accuracy against 33% chance and 38% at most for permuted labels (p 0.032); text length alone gives 40%, and adding pairs to single signs changes it by +1.5 points.",
+ "settings": {
+  "repeats": 3,
+  "permutations": 30,
+  "seed": 20261116,
+  "quick": false,
+  "runtime_min": 0.8454962293306987
+ }
+}

@@ -1,0 +1,71 @@
+{
+ "indus_tokens": 5584,
+ "by_size": {
+  "0.5": {
+   "tokens": 2793,
+   "replicates": 4,
+   "power": 1.0,
+   "beats_all": 0.75,
+   "margin_mean": -0.005224345594909993,
+   "margin_sd": 0.019768974035493415,
+   "agreement": 0.05081204618435811
+  },
+  "1": {
+   "tokens": 5587,
+   "replicates": 4,
+   "power": 1.0,
+   "beats_all": 0.0,
+   "margin_mean": -0.07066919626103685,
+   "margin_sd": 0.02322259003058142,
+   "agreement": 0.05183360296240033
+  },
+  "2": {
+   "tokens": 11169,
+   "replicates": 4,
+   "power": 1.0,
+   "beats_all": 0.0,
+   "margin_mean": -0.08568294172810081,
+   "margin_sd": 0.0149330691682159,
+   "agreement": 0.045441669954104966
+  },
+  "5": {
+   "tokens": 27921,
+   "replicates": 4,
+   "power": 1.0,
+   "beats_all": 0.0,
+   "margin_mean": -0.09559631341684843,
+   "margin_sd": 0.0072504157517411325,
+   "agreement": 0.031346971772361724
+  },
+  "10": {
+   "tokens": 55840,
+   "replicates": 4,
+   "power": 1.0,
+   "beats_all": 0.0,
+   "margin_mean": -0.10559249749542171,
+   "margin_sd": 0.00858812117057992,
+   "agreement": 0.04450615545302859
+  },
+  "20": {
+   "tokens": 111681,
+   "replicates": 4,
+   "power": 1.0,
+   "beats_all": 0.0,
+   "margin_mean": -0.11240696726830639,
+   "margin_sd": 0.00179372273297326,
+   "agreement": 0.043693200260759464
+  }
+ },
+ "reading": "The true table does not beat every blind search in 80% of replicates at any size run, up to 20 times the Indus size (111,681 sign tokens). The permutation test against shuffled tables detects the true table at every size (power 100%, 100%, 100%, 100%, 100%, 100%), so what fails is the comparison with searched tables: a plain blind search finds tables that score above the true one on held-out texts at every size, and the tables it finds read only 3-5% of tokens the way the true table does. With this score, the true table is not what a search maximises, however large the corpus, so scoring below the search ceiling is not evidence against a table and scoring above shuffled tables is not evidence for one.",
+ "settings": {
+  "replicates": 4,
+  "searches": 5,
+  "steps": 2000,
+  "draws": 500,
+  "dropped": [],
+  "seed": 20261116,
+  "quick": false,
+  "pre_registered": false,
+  "runtime_min": 54.17348848581314
+ }
+}

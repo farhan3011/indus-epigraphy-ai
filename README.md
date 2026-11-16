@@ -77,6 +77,30 @@ Planned once Milestone 1 is properly hand-labelled on real seals:
 - an error-propagation test that uses Milestone 1's real confusion matrix instead of uniform errors
 - a direction test that uses sign positions measured on photographs instead of Mahadevan's direction labels
 
+### Extension: do the stroke signs behave like numerals? (exploratory)
+
+```bash
+python sequence_analysis/numerals.py    # about 30 seconds on a laptop CPU
+```
+
+The 25 signs drawn as rows of equal bars are found from the glyph drawings by a stated rule (contact sheet in the report folder) and five numeral predictions are tested against pseudo sets of frequency-matched signs. Two hold after correction: text pairs differing only in which stroke sign stands in one slot are about 3 times as common as for matched signs (116 against 35), and frequency falls with bar count (Spearman -0.60). Three do not: stroke signs are not followed by a narrower set of signs, different stroke signs are not followed by the same signs, and their position in a text and their tendency to run together do not differ from matched signs. Report: [reports/milestone_2/numerals_report.md](reports/milestone_2/numerals_report.md).
+
+### Extension: do the stroke signs behave like numerals? (exploratory)
+
+```bash
+python sequence_analysis/numerals.py    # about 30 seconds on a laptop CPU
+```
+
+The 25 signs drawn as rows of equal bars are found from the glyph drawings by a stated rule (contact sheet in the report folder) and five numeral predictions are tested against pseudo sets of frequency-matched signs. Two hold after correction: text pairs differing only in which stroke sign stands in one slot are about 3 times as common as for matched signs (116 against 35), and frequency falls with bar count (Spearman -0.60). Three do not: stroke signs are not followed by a narrower set of signs, different stroke signs are not followed by the same signs, and their position in a text and their tendency to run together do not differ from matched signs. Report: [reports/milestone_2/numerals_report.md](reports/milestone_2/numerals_report.md).
+
+### Extension: does the text predict the object? (exploratory)
+
+```bash
+python sequence_analysis/predict_object.py    # about 1 minute on a laptop CPU
+```
+
+A logistic regression on sign and sign-pair counts is scored by 5-fold cross-validation grouped by text. Balanced accuracy: site 31% (chance 20%), object type 50% (chance 20%; text length alone gives 42%), field symbol 46% (chance 33%). All beat labels permuted within the training folds, but modestly, and adding sign pairs to single signs changes little, so what predicts the object is mostly which signs occur, not their order. Report: [reports/milestone_2/predict_object_report.md](reports/milestone_2/predict_object_report.md).
+
 ## Milestone 3: masked-sign prediction
 
 ```bash
@@ -84,7 +108,7 @@ python sequence_analysis/masked_model.py                          # 5-fold evalu
 python sequence_analysis/masked_model.py predict "267 99 ? 342"    # fill gaps; reading order, ? for each missing sign
 ```
 
-Small neural models (transformer or bidirectional LSTM, chosen per fold on an inner split) read the whole inscription and rank every sign for a hidden position. They are scored on exactly the trials Milestone 2 used (every sign of every held-out text, 5-fold) against the best n-gram, an interpolated Kneser-Ney trigram, with calibrated confidences and conformal candidate sets. Result: the neural model alone gets the first guess right 32.2% of the time against the n-gram's 42.2%; a fitted mixture of the two (42.4%) and a residual model are statistically tied with the n-gram. The neighbouring signs carry almost everything a model can use. The final model is also run on the 337 corpus texts with one illegible sign.
+Small neural models (transformer or bidirectional LSTM, chosen per fold on an inner split) read the whole inscription and rank every sign for a hidden position. They are scored on exactly the trials Milestone 2 used (every sign of every held-out text, 5-fold) against the best n-gram, an interpolated Kneser-Ney trigram, with calibrated confidences and conformal candidate sets. Result: the neural model alone gets the first guess right 32.2% of the time against the n-gram's 42.2%; a fitted mixture of the two (42.4%) and a residual model are statistically tied with the n-gram. The neighbouring signs carry almost everything a model can use. The final model is also run on the 337 corpus texts with one illegible sign. On Yadav et al.'s measure (the true sign inside the set holding 90% of the predicted probability), every calibrated model reaches 87-91% against their published 74% for a bigram, but with sets of 61-91 signs, so the figures are not like for like: their split is unstated and a larger set always hits more often (table in the report).
 
 ### Extension: several gaps, unknown-length damage, miscopies
 
@@ -113,11 +137,40 @@ python decipherment/overfit.py    # about 7 minutes on a laptop CPU
 
 The permutation test compares a claimed table with random tables, but a decipherer searches for a table. `overfit.py` searches too: random tables are improved by swapping the values of two signs whenever the score does not fall. On the Indus inscriptions the search passes the claimed table within about 50 swaps and ends 0.81 bits per phoneme above it; tables searched on half the texts still score far above the claim on the other half. The same search on real Sanskrit enciphered with a known table also passes the true table, with tables that disagree with it, so this score cannot pick out the right table on a corpus of this size and scoring below the search ceiling is not evidence against a claim. The demo app runs a search live and tests any uploaded sign-to-sound table with the Milestone 4 test. Report: [reports/milestone_4/overfitting_report.md](reports/milestone_4/overfitting_report.md).
 
+### Extension: dictionary match rate (exploratory, not pre-registered)
+
+```bash
+python decipherment/lexicon.py    # about 4 minutes on a laptop CPU
+```
+
+A second score for a claimed table: how much of its output, reduced to consonant skeletons, is made of Sanskrit words (seen at least twice in the DCS training split), compared with shuffled versions of the same table. A table with correct values is detected 95-100% of the time by both scores (positive control), and the false-alarm rate is 4-9%. Yajnadevam's table beats fully shuffled tables on whole-text matches, but not tables shuffled within frequency bins (percentile 58-62), so the excess is how often each sign occurs, not which sound it carries; coverage is not significant either way. Report: [reports/milestone_4/lexicon_report.md](reports/milestone_4/lexicon_report.md).
+
+### Extension: a positive control on a real decipherment (exploratory, not pre-registered)
+
+```bash
+python decipherment/linear_b.py    # about 1 minute on a laptop CPU after the first download
+```
+
+The harness is run, unchanged, on Linear B read as Greek: 918 Linear B words (a word list from the NeuroDecipher repository, not tablet text) with the accepted Mycenaean sound values, against Homer. The true table is detected only against frequency-matched shuffles (percentile 99, p 0.010), not against fully shuffled tables (p 0.32); a table with 10% of its values replaced is still detected 90% of the time, 30% replaced 35%. Scored against Sanskrit instead of Greek the same table is also significant, so a significant result from this test is not evidence that a table is right for its language. Report: [reports/milestone_4/linear_b_report.md](reports/milestone_4/linear_b_report.md).
+
+### Extension: the same claim against four languages (exploratory, not pre-registered)
+
+```bash
+python decipherment/languages.py    # about 1 minute on a laptop CPU
+```
+
+Yajnadevam's tables are compared with shuffled versions of themselves under four language models (Sanskrit, Old Tamil, English, Sumerian), each reduced to the consonant skeleton and cut to the same 336,466 letters, and a blind search is run under each. Against frequency-matched shuffles the table sits at percentile 94 for Sanskrit, 87 for Tamil, 76 for English and 22 for Sumerian, and none is significant after Holm correction, so the data do not favour Sanskrit over the others. Search ceilings differ between languages by more than their spread, but part of that comes from the table's Sanskrit-shaped values. Report: [reports/milestone_4/languages_report.md](reports/milestone_4/languages_report.md).
+
+### Extension: how large would the corpus have to be? (exploratory)
+
+```bash
+python decipherment/corpus_size.py    # about 55 minutes on a laptop CPU
+```
+
+Sanskrit is enciphered with the claimed sign-to-sound relation into corpora from 0.5 to 20 times the Indus size, so the true table is known. The permutation test detects the true table at every size, but a blind search finds tables scoring above it on held-out texts at every size too (the true table beats every search in 0% of replicates from the Indus size up to 20 times it), and those tables agree with the true one on only 3-5% of tokens. A larger corpus does not fix this under this score: the true table is not what the score is maximised by. Report: [reports/milestone_4/corpus_size_report.md](reports/milestone_4/corpus_size_report.md).
+
 ## To do
 
-- **A positive control on a script that really was deciphered.** The Milestone 4 positive control enciphers Sanskrit with the claim's own table, so the "true" table is one this project made. Running the same harness on Linear B read as Greek would show whether it detects a real decipherment. Data: [DAMOS](https://damos.hf.uio.no/) (Database of Mycenaean at Oslo) states "Content: CC BY-NC-SA 4.0" on its own site (checked 15 November 2026), which allows this non-commercial use with attribution. It must be fetched at run time and never committed, because this repository is MIT and share-alike content cannot be relicensed; only aggregates would be published, as for the other corpora. Not usable: the Linear B and Ugaritic files in the NeuroDecipher repository (no licence) and LiBER (texts for "limited re-use in scholarly works" only). Work needed: a loader for the DAMOS transliterations, a Greek target corpus with an open licence, and a scoring alphabet for Greek in place of the Sanskrit consonant skeleton. About a day.
-- Rescore Milestone 3 on the clean subset used by Yadav et al. 2010, to compare like for like with the restoration figures in earlier Indus papers.
-- A dictionary match-rate test for Milestone 4: the share of a table's output found in a Sanskrit lexicon, against the same shuffled-table nulls.
 - Retrain the Milestone 1 detectors; see [docs/RUN_GUIDE.md](docs/RUN_GUIDE.md).
 
 ## Layout
