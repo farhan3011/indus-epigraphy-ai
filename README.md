@@ -121,9 +121,16 @@ python decipherment/lexicon.py    # about 4 minutes on a laptop CPU
 
 A second score for a claimed table: how much of its output, reduced to consonant skeletons, is made of Sanskrit words (seen at least twice in the DCS training split), compared with shuffled versions of the same table. A table with correct values is detected 95-100% of the time by both scores (positive control), and the false-alarm rate is 4-9%. Yajnadevam's table beats fully shuffled tables on whole-text matches, but not tables shuffled within frequency bins (percentile 58-62), so the excess is how often each sign occurs, not which sound it carries; coverage is not significant either way. Report: [reports/milestone_4/lexicon_report.md](reports/milestone_4/lexicon_report.md).
 
+### Extension: a positive control on a real decipherment (exploratory, not pre-registered)
+
+```bash
+python decipherment/linear_b.py    # about 1 minute on a laptop CPU after the first download
+```
+
+The harness is run, unchanged, on Linear B read as Greek: 918 Linear B words (a word list from the NeuroDecipher repository, not tablet text) with the accepted Mycenaean sound values, against Homer. The true table is detected only against frequency-matched shuffles (percentile 99, p 0.010), not against fully shuffled tables (p 0.32); a table with 10% of its values replaced is still detected 90% of the time, 30% replaced 35%. Scored against Sanskrit instead of Greek the same table is also significant, so a significant result from this test is not evidence that a table is right for its language. Report: [reports/milestone_4/linear_b_report.md](reports/milestone_4/linear_b_report.md).
+
 ## To do
 
-- **A positive control on a script that really was deciphered.** The Milestone 4 positive control enciphers Sanskrit with the claim's own table, so the "true" table is one this project made. Running the same harness on Linear B read as Greek would show whether it detects a real decipherment. Data: [DAMOS](https://damos.hf.uio.no/) (Database of Mycenaean at Oslo) states "Content: CC BY-NC-SA 4.0" on its own site (checked 15 November 2026), which allows this non-commercial use with attribution. It must be fetched at run time and never committed, because this repository is MIT and share-alike content cannot be relicensed; only aggregates would be published, as for the other corpora. Not usable: the Linear B and Ugaritic files in the NeuroDecipher repository (no licence) and LiBER (texts for "limited re-use in scholarly works" only). Work needed: a loader for the DAMOS transliterations, a Greek target corpus with an open licence, and a scoring alphabet for Greek in place of the Sanskrit consonant skeleton. About a day.
 - Retrain the Milestone 1 detectors; see [docs/RUN_GUIDE.md](docs/RUN_GUIDE.md).
 
 ## Layout

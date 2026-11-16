@@ -161,6 +161,9 @@ python decipherment/overfit.py
 
 # Milestone 4 extension, exploratory: dictionary match rate of a table's output (about 4 minutes)
 python decipherment/lexicon.py
+
+# Milestone 4 extension, exploratory: Linear B read as Greek, a positive control on a real decipherment (about 1 minute)
+python decipherment/linear_b.py
 ```
 
 Order matters in two places. `restore.py` compares against the neural model, so it needs `reports/milestone_3/results.json` from `masked_model.py`. `overfit.py` and the Milestone 4 tab of the app need the files `data.py` downloads.
