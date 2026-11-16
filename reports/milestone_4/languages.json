@@ -1,0 +1,210 @@
+{
+ "letters": 336466,
+ "keys": {
+  "yajnadevam-2024-11-30": {
+   "sanskrit": {
+    "observed": -0.29437422934249785,
+    "value_shuffle": {
+     "mean": -0.3261339329886197,
+     "sd": 0.10798003653000798,
+     "p": 0.39730134932533734,
+     "percentile": 60.3
+    },
+    "binned_10": {
+     "mean": -0.47168453559777007,
+     "sd": 0.11104026385486775,
+     "p": 0.06046976511744128,
+     "percentile": 94.0
+    }
+   },
+   "tamil": {
+    "observed": -2.4293340277137787,
+    "value_shuffle": {
+     "mean": -2.8454639106448214,
+     "sd": 0.5125207436046707,
+     "p": 0.2223888055972014,
+     "percentile": 77.8
+    },
+    "binned_10": {
+     "mean": -2.867984263208875,
+     "sd": 0.44360645505979895,
+     "p": 0.13193403298350825,
+     "percentile": 86.85000000000001
+    }
+   },
+   "english": {
+    "observed": -0.6290156037642293,
+    "value_shuffle": {
+     "mean": -0.672913886759862,
+     "sd": 0.2752769618094108,
+     "p": 0.5332333833083458,
+     "percentile": 46.7
+    },
+    "binned_10": {
+     "mean": -0.7452878416605729,
+     "sd": 0.20988456999118166,
+     "p": 0.2683658170914543,
+     "percentile": 73.2
+    }
+   },
+   "sumerian": {
+    "observed": -2.219448991689913,
+    "value_shuffle": {
+     "mean": -1.6044540769662015,
+     "sd": 0.5785722798860109,
+     "p": 0.8445777111444278,
+     "percentile": 15.55
+    },
+    "binned_10": {
+     "mean": -2.0327058892670804,
+     "sd": 0.5210392678143198,
+     "p": 0.7841079460269865,
+     "percentile": 21.6
+    }
+   }
+  },
+  "yajnadevam-2026-07-15": {
+   "sanskrit": {
+    "observed": -0.2986462310398239,
+    "value_shuffle": {
+     "mean": -0.3515584737431999,
+     "sd": 0.11146724929862871,
+     "p": 0.3173413293353323,
+     "percentile": 68.30000000000001
+    },
+    "binned_10": {
+     "mean": -0.48615662653172725,
+     "sd": 0.11578820279709519,
+     "p": 0.062468765617191405,
+     "percentile": 93.8
+    }
+   },
+   "tamil": {
+    "observed": -2.4614513814897503,
+    "value_shuffle": {
+     "mean": -2.9069218897610423,
+     "sd": 0.49665179118537245,
+     "p": 0.19540229885057472,
+     "percentile": 80.5
+    },
+    "binned_10": {
+     "mean": -2.910350247089853,
+     "sd": 0.4259190389564047,
+     "p": 0.13143428285857073,
+     "percentile": 86.9
+    }
+   },
+   "english": {
+    "observed": -0.633015669407011,
+    "value_shuffle": {
+     "mean": -0.6793045164512641,
+     "sd": 0.2811526480525492,
+     "p": 0.5062468765617192,
+     "percentile": 49.4
+    },
+    "binned_10": {
+     "mean": -0.7549691349497799,
+     "sd": 0.20290971088072965,
+     "p": 0.23788105947026486,
+     "percentile": 76.25
+    }
+   },
+   "sumerian": {
+    "observed": -2.228148436907301,
+    "value_shuffle": {
+     "mean": -1.634202490458495,
+     "sd": 0.5506094841379319,
+     "p": 0.8430784607696152,
+     "percentile": 15.7
+    },
+    "binned_10": {
+     "mean": -2.0695118774638437,
+     "sd": 0.5070943124659589,
+     "p": 0.776111944027986,
+     "percentile": 22.400000000000002
+    }
+   }
+  }
+ },
+ "search_key": "yajnadevam-2026-07-15",
+ "holm": {
+  "yajnadevam-2024-11-30": {
+   "sanskrit": 0.48375812093953025,
+   "tamil": 0.7886056971514244,
+   "english": 0.9515242378810594,
+   "sumerian": 1.0
+  },
+  "yajnadevam-2026-07-15": {
+   "sanskrit": 0.48375812093953025,
+   "tamil": 0.7886056971514244,
+   "english": 0.9515242378810594,
+   "sumerian": 1.0
+  }
+ },
+ "search": {
+  "sanskrit": {
+   "ceiling_mean": 0.28410819248066443,
+   "ceiling_sd": 0.036084963497750686,
+   "claim_mean": -0.29687506736665975,
+   "gap_mean": 0.5809832598473241,
+   "gap_sd": 0.04029096190577644
+  },
+  "tamil": {
+   "ceiling_mean": -0.002834739327903455,
+   "ceiling_sd": 0.021610882453163626,
+   "claim_mean": -2.4426180794617016,
+   "gap_mean": 2.4397833401337983,
+   "gap_sd": 0.06086445401525621
+  },
+  "english": {
+   "ceiling_mean": 0.24151630846985966,
+   "ceiling_sd": 0.03705248369756103,
+   "claim_mean": -0.6405219889997691,
+   "gap_mean": 0.882038297469629,
+   "gap_sd": 0.03824453177331672
+  },
+  "sumerian": {
+   "ceiling_mean": 0.24214826449554488,
+   "ceiling_sd": 0.06270603029753023,
+   "claim_mean": -2.234309122856703,
+   "gap_mean": 2.476457387352247,
+   "gap_sd": 0.08815147380585363
+  }
+ },
+ "cross": {
+  "sanskrit": {
+   "sanskrit": 0.38872608298600747,
+   "tamil": -1.9005071613352262,
+   "english": -0.4982577809027653,
+   "sumerian": -1.0046585762591924
+  },
+  "tamil": {
+   "sanskrit": -0.22321903867834925,
+   "tamil": 0.12605178390252467,
+   "english": -0.34591829341338326,
+   "sumerian": -0.9135443235308062
+  },
+  "english": {
+   "sanskrit": -0.1770380643348959,
+   "tamil": -2.701760990545796,
+   "english": 0.3374825955450839,
+   "sumerian": -1.0139184434259472
+  },
+  "sumerian": {
+   "sanskrit": -0.11178548794442589,
+   "tamil": -3.6217052270856236,
+   "english": -0.6590328027580409,
+   "sumerian": 0.4701548421009944
+  }
+ },
+ "reading": "Against frequency-matched shuffles the current table sits at percentile sanskrit 94, tamil 87, english 76, sumerian 22. None is significant after Holm correction. The search ceiling lies above the claimed table by sanskrit +0.58, tamil +2.44, english +0.88, sumerian +2.48 bits; the largest difference between languages is 1.90 bits against a typical spread over searches of 0.06, so the ceiling differs between languages by more than its spread.",
+ "settings": {
+  "draws": 2000,
+  "starts": 10,
+  "steps": 2000,
+  "seed": 20261116,
+  "quick": false,
+  "pre_registered": false,
+  "runtime_min": 1.2036401430765789
+ }
+}

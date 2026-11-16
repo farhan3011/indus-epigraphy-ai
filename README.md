@@ -129,6 +129,14 @@ python decipherment/linear_b.py    # about 1 minute on a laptop CPU after the fi
 
 The harness is run, unchanged, on Linear B read as Greek: 918 Linear B words (a word list from the NeuroDecipher repository, not tablet text) with the accepted Mycenaean sound values, against Homer. The true table is detected only against frequency-matched shuffles (percentile 99, p 0.010), not against fully shuffled tables (p 0.32); a table with 10% of its values replaced is still detected 90% of the time, 30% replaced 35%. Scored against Sanskrit instead of Greek the same table is also significant, so a significant result from this test is not evidence that a table is right for its language. Report: [reports/milestone_4/linear_b_report.md](reports/milestone_4/linear_b_report.md).
 
+### Extension: the same claim against four languages (exploratory, not pre-registered)
+
+```bash
+python decipherment/languages.py    # about 1 minute on a laptop CPU
+```
+
+Yajnadevam's tables are compared with shuffled versions of themselves under four language models (Sanskrit, Old Tamil, English, Sumerian), each reduced to the consonant skeleton and cut to the same 336,466 letters, and a blind search is run under each. Against frequency-matched shuffles the table sits at percentile 94 for Sanskrit, 87 for Tamil, 76 for English and 22 for Sumerian, and none is significant after Holm correction, so the data do not favour Sanskrit over the others. Search ceilings differ between languages by more than their spread, but part of that comes from the table's Sanskrit-shaped values. Report: [reports/milestone_4/languages_report.md](reports/milestone_4/languages_report.md).
+
 ## To do
 
 - Retrain the Milestone 1 detectors; see [docs/RUN_GUIDE.md](docs/RUN_GUIDE.md).
