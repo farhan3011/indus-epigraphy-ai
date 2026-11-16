@@ -93,6 +93,14 @@ python sequence_analysis/numerals.py    # about 30 seconds on a laptop CPU
 
 The 25 signs drawn as rows of equal bars are found from the glyph drawings by a stated rule (contact sheet in the report folder) and five numeral predictions are tested against pseudo sets of frequency-matched signs. Two hold after correction: text pairs differing only in which stroke sign stands in one slot are about 3 times as common as for matched signs (116 against 35), and frequency falls with bar count (Spearman -0.60). Three do not: stroke signs are not followed by a narrower set of signs, different stroke signs are not followed by the same signs, and their position in a text and their tendency to run together do not differ from matched signs. Report: [reports/milestone_2/numerals_report.md](reports/milestone_2/numerals_report.md).
 
+### Extension: does the text predict the object? (exploratory)
+
+```bash
+python sequence_analysis/predict_object.py    # about 1 minute on a laptop CPU
+```
+
+A logistic regression on sign and sign-pair counts is scored by 5-fold cross-validation grouped by text. Balanced accuracy: site 31% (chance 20%), object type 50% (chance 20%; text length alone gives 42%), field symbol 46% (chance 33%). All beat labels permuted within the training folds, but modestly, and adding sign pairs to single signs changes little, so what predicts the object is mostly which signs occur, not their order. Report: [reports/milestone_2/predict_object_report.md](reports/milestone_2/predict_object_report.md).
+
 ## Milestone 3: masked-sign prediction
 
 ```bash

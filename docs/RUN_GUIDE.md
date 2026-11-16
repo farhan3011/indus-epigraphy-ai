@@ -147,6 +147,9 @@ None of this needs a GPU. Run from the repository root with the environment from
 # Milestone 2 extension, exploratory: do the stroke signs behave like numerals? (about 30 seconds)
 python sequence_analysis/numerals.py
 
+# Milestone 2 extension, exploratory: does the text predict the object? (about 1 minute)
+python sequence_analysis/predict_object.py
+
 # Milestone 3: masked-sign prediction. Writes reports/milestone_3/ and models/masked_sign_model.pt (about 15 minutes)
 python sequence_analysis/masked_model.py
 
