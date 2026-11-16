@@ -161,6 +161,14 @@ python decipherment/languages.py    # about 1 minute on a laptop CPU
 
 Yajnadevam's tables are compared with shuffled versions of themselves under four language models (Sanskrit, Old Tamil, English, Sumerian), each reduced to the consonant skeleton and cut to the same 336,466 letters, and a blind search is run under each. Against frequency-matched shuffles the table sits at percentile 94 for Sanskrit, 87 for Tamil, 76 for English and 22 for Sumerian, and none is significant after Holm correction, so the data do not favour Sanskrit over the others. Search ceilings differ between languages by more than their spread, but part of that comes from the table's Sanskrit-shaped values. Report: [reports/milestone_4/languages_report.md](reports/milestone_4/languages_report.md).
 
+### Extension: how large would the corpus have to be? (exploratory)
+
+```bash
+python decipherment/corpus_size.py    # about 55 minutes on a laptop CPU
+```
+
+Sanskrit is enciphered with the claimed sign-to-sound relation into corpora from 0.5 to 20 times the Indus size, so the true table is known. The permutation test detects the true table at every size, but a blind search finds tables scoring above it on held-out texts at every size too (the true table beats every search in 0% of replicates from the Indus size up to 20 times it), and those tables agree with the true one on only 3-5% of tokens. A larger corpus does not fix this under this score: the true table is not what the score is maximised by. Report: [reports/milestone_4/corpus_size_report.md](reports/milestone_4/corpus_size_report.md).
+
 ## To do
 
 - Retrain the Milestone 1 detectors; see [docs/RUN_GUIDE.md](docs/RUN_GUIDE.md).

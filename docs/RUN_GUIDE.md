@@ -173,6 +173,9 @@ python decipherment/linear_b.py
 
 # Milestone 4 extension, exploratory: the same claim against four languages (about 1 minute)
 python decipherment/languages.py
+
+# Milestone 4 extension, exploratory: how large would the corpus have to be? (about 55 minutes)
+python decipherment/corpus_size.py
 ```
 
 Order matters in two places. `restore.py` compares against the neural model, so it needs `reports/milestone_3/results.json` from `masked_model.py`. `overfit.py` and the Milestone 4 tab of the app need the files `data.py` downloads.
