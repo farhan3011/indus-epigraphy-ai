@@ -1,0 +1,30 @@
+<View>
+  <View style="display: flex; gap: 24px; align-items: flex-start">
+    <View style="flex: 3; min-width: 0">
+      <RectangleLabels name="box" toName="image" strokeWidth="2" showInline="true">
+        <Label value="sign" background="#e8590c" hotkey="s"/>
+      </RectangleLabels>
+      <Image name="image" value="$image" zoom="true" zoomControl="true" rotateControl="false"/>
+    </View>
+    <View style="flex: 1; min-width: 240px; position: sticky; top: 0">
+      <Header value="1. What does this photo show?" size="5"/>
+      <Choices name="view" toName="image" choice="single" required="true">
+        <Choice value="impression" hint="The animal faces right. Use sign_chart.pdf"/>
+        <Choice value="carved seal" hint="The animal faces left. Use sign_chart_MIRRORED.pdf"/>
+        <Choice value="skip" hint="No legible signs, a drawing, or too blurred"/>
+      </Choices>
+      <Choices name="objects" toName="image" choice="single">
+        <Choice value="several inscriptions in this photo"/>
+      </Choices>
+      <Header value="2. Press S, then drag a box around each sign" size="5"/>
+      <View visibleWhen="region-selected">
+        <Header value="3. Sign number for the selected box (0 = illegible)" size="5"/>
+        <TextArea name="sign_id" toName="image" perRegion="true" editable="true" required="true" maxSubmissions="1" rows="1" placeholder="e.g. 342"/>
+        <Choices name="certainty" toName="image" perRegion="true">
+          <Choice value="unsure"/>
+        </Choices>
+      </View>
+      <TextArea name="notes" toName="image" rows="2" placeholder="Notes (optional): catalogue number, anything odd"/>
+    </View>
+  </View>
+</View>

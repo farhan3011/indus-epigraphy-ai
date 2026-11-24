@@ -11,7 +11,7 @@ Scope and milestones: [Indus_Epigraphy_AI_Project_Proposal.md](Indus_Epigraphy_A
 
 | Milestone | State | Code | Results |
 |---|---|---|---|
-| 1. Seal photo to ordered sign IDs | Done on synthetic seals; does not yet work on real photographs | `grapheme_extraction/` | [report](reports/milestone_1/milestone_1_report.md), [findings](reports/milestone_1/milestone_1_findings.md) |
+| 1. Seal photo to ordered sign IDs | Done on synthetic seals; first real-photo test on 31 hand-labelled photos (detector usable, sign naming not yet) | `grapheme_extraction/` | [report](reports/milestone_1/milestone_1_report.md), [findings](reports/milestone_1/milestone_1_findings.md), [real photos](reports/milestone_1/real/real_report.md) |
 | 2. Sign-sequence statistics | Done on the IM77 corpus | `sequence_analysis/` | [report](reports/milestone_2/milestone_2_report.md) |
 | 3. Masked-sign prediction | Done: neural models against the best n-gram (Kneser-Ney trigram, 42.2%); the n-gram wins alone and a mixture only ties it | `sequence_analysis/masked_model.py` | [report](reports/milestone_3/milestone_3_report.md) |
 | 4. Decipherment-claim test harness | Done: the one runnable Sanskrit key is not distinguishable from shuffled versions of itself | `decipherment/` | [report](reports/milestone_4/milestone_4_report.md) |

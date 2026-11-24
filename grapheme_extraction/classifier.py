@@ -69,9 +69,9 @@ def class_scores(q, bank_emb, bank_lbl):
     return scores.scatter_reduce(1, bank_lbl.expand(len(q), -1), sims, reduce="amax")
 
 
-def load_classifier():
+def load_classifier(bank_path=BANK):
     """Returns f(tensor of crops) -> (N, N_SIGNS) logits; softmax gives calibrated-ish top-k probabilities."""
-    backbone, bank = load_backbone(), torch.load(BANK)
+    backbone, bank = load_backbone(), torch.load(bank_path)
     return lambda x: class_scores(embed(backbone, x), bank["emb"], bank["lbl"]) / bank["T"]
 
 

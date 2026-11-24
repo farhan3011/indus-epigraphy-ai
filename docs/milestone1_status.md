@@ -30,6 +30,10 @@ Milestone 1 is complete on synthetic data. The full run (YOLOv8n, RT-DETR-L, Ope
 - `pipeline.rescore`: beam search over each sign's top 5 with the Kneser-Ney trigram; `evaluate.size_adjusted`: a sign-size penalty. Results in `reports/milestone_1/rescoring.md` (corpus-text seals: sign error rate 0.170 to 0.134; size: 0.224 to 0.202 on all seals).
 - `synthetic_generator.py --relief`: shaded carved relief instead of flat masks. Not yet used for training.
 
+## First real-photo measurement (24 Nov 2026)
+
+31 hand-labelled real photographs (`import_labels.py`, guide in `docs/HAND_LABELLING_GUIDE.md`), split by photo: 14 train, 5 val, 12 test. `train_real.py` fine-tunes the detector (chosen on val: synthetic weights fine-tuned on real photos mixed with 300 synthetic seals) and adds real crops to the classifier bank. On the 12 test photos (68 signs): detector precision 0.69 and recall 0.59 (synthetic-only 0.66 and 0.53); classifier top-1 on true boxes about 0.25-0.28 either way; whole-pipeline sign error rate about 1.0. The detector now finds most signs on real seals; naming them is the bottleneck. Report: `reports/milestone_1/real/real_report.md`.
+
 ## Not done
 
 - Collecting and hand-labelling real seals: 50-100 frozen test seals first, then 150-250 train/val. This is manual work.
