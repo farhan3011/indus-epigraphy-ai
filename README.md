@@ -7,6 +7,8 @@ Computational epigraphy of the undeciphered **Indus Valley script** (~2600–190
 
 Scope and milestones: [Indus_Epigraphy_AI_Project_Proposal.md](Indus_Epigraphy_AI_Project_Proposal.md).
 
+**One-page summary of every result: [reports/SUMMARY.md](reports/SUMMARY.md).**
+
 ## Status
 
 | Milestone | State | Code | Results |
@@ -50,6 +52,14 @@ python grapheme_extraction/pipeline.py photo.jpg --annotate out.jpg    # run on 
 
 Step-by-step instructions: [docs/RUN_GUIDE.md](docs/RUN_GUIDE.md). Design decisions and open items: [docs/milestone1_status.md](docs/milestone1_status.md).
 
+### Extension: zero-shot sign detection (exploratory)
+
+```bash
+python grapheme_extraction/zero_shot.py    # about 20 minutes on a laptop (SAM runs on the CPU)
+```
+
+Two pretrained segmenters, FastSAM and SAM ViT-B, used with no training and a fixed sign-shape filter, against the synthetic-trained YOLOv8n. On the 12 real test photographs FastSAM finds 41% of signs and SAM 18%, against 53% for YOLOv8n: below the 70% set in advance for drafting labels, so zero-shot segmentation does not solve sign detection here. YOLO-World could not be tried because its weights are only on GitHub release assets, which this network blocks. Report: [reports/milestone_1_zero_shot/zero_shot_report.md](reports/milestone_1_zero_shot/zero_shot_report.md).
+
 ## Milestone 2: sign-sequence analysis
 
 N-gram models with Witten-Bell smoothing, transition matrices, sign-pair statistics and writing-direction measures on the IM77 corpus, plus distributional syntax: positional sign classes, class-order rules and recurring segments, checked on held-out texts. Robustness checks cover:
@@ -85,14 +95,6 @@ python sequence_analysis/numerals.py    # about 30 seconds on a laptop CPU
 
 The 25 signs drawn as rows of equal bars are found from the glyph drawings by a stated rule (contact sheet in the report folder) and five numeral predictions are tested against pseudo sets of frequency-matched signs. Two hold after correction: text pairs differing only in which stroke sign stands in one slot are about 3 times as common as for matched signs (116 against 35), and frequency falls with bar count (Spearman -0.60). Three do not: stroke signs are not followed by a narrower set of signs, different stroke signs are not followed by the same signs, and their position in a text and their tendency to run together do not differ from matched signs. Report: [reports/milestone_2/numerals_report.md](reports/milestone_2/numerals_report.md).
 
-### Extension: do the stroke signs behave like numerals? (exploratory)
-
-```bash
-python sequence_analysis/numerals.py    # about 30 seconds on a laptop CPU
-```
-
-The 25 signs drawn as rows of equal bars are found from the glyph drawings by a stated rule (contact sheet in the report folder) and five numeral predictions are tested against pseudo sets of frequency-matched signs. Two hold after correction: text pairs differing only in which stroke sign stands in one slot are about 3 times as common as for matched signs (116 against 35), and frequency falls with bar count (Spearman -0.60). Three do not: stroke signs are not followed by a narrower set of signs, different stroke signs are not followed by the same signs, and their position in a text and their tendency to run together do not differ from matched signs. Report: [reports/milestone_2/numerals_report.md](reports/milestone_2/numerals_report.md).
-
 ### Extension: does the text predict the object? (exploratory)
 
 ```bash
@@ -100,6 +102,14 @@ python sequence_analysis/predict_object.py    # about 1 minute on a laptop CPU
 ```
 
 A logistic regression on sign and sign-pair counts is scored by 5-fold cross-validation grouped by text. Balanced accuracy: site 31% (chance 20%), object type 50% (chance 20%; text length alone gives 42%), field symbol 46% (chance 33%). All beat labels permuted within the training folds, but modestly, and adding sign pairs to single signs changes little, so what predicts the object is mostly which signs occur, not their order. Report: [reports/milestone_2/predict_object_report.md](reports/milestone_2/predict_object_report.md).
+
+### Extension: do signs that look alike behave alike? (exploratory)
+
+```bash
+python sequence_analysis/visual_vs_context.py    # under a minute on a laptop
+```
+
+For the 76 signs with at least 20 tokens, visual similarity (DINOv2 embeddings of the clean drawings) is compared with context similarity (the signs before and after, and the position in the text). Across all pairs the two are hardly related (Spearman +0.05, Mantel p = 0.18; raw pixels +0.00), but the 50 most alike-looking pairs are used more alike than random pairs (0.56 against 0.44, p = 0.0001). The report lists 20 pairs high on both, mostly the fish signs and stroke signs, as candidates for sign-list variants. Report: [reports/milestone_2/visual_vs_context_report.md](reports/milestone_2/visual_vs_context_report.md).
 
 ## Milestone 3: masked-sign prediction
 
@@ -153,6 +163,14 @@ python decipherment/linear_b.py    # about 1 minute on a laptop CPU after the fi
 
 The harness is run, unchanged, on Linear B read as Greek: 918 Linear B words (a word list from the NeuroDecipher repository, not tablet text) with the accepted Mycenaean sound values, against Homer. The true table is detected only against frequency-matched shuffles (percentile 99, p 0.010), not against fully shuffled tables (p 0.32); a table with 10% of its values replaced is still detected 90% of the time, 30% replaced 35%. Scored against Sanskrit instead of Greek the same table is also significant, so a significant result from this test is not evidence that a table is right for its language. Report: [reports/milestone_4/linear_b_report.md](reports/milestone_4/linear_b_report.md).
 
+
+### Extension: more controls on real scripts (exploratory)
+
+```bash
+python decipherment/real_controls.py    # about 2 minutes on a laptop CPU after the first download
+```
+
+A second true decipherment, Ugaritic read as Hebrew, and a known-wrong one, Linear A read with Linear B sound values as Greek, run through the unchanged test. Ugaritic is detected (p 0.0001, and in 100% of subsamples cut to Indus size). Linear A also comes out significant against frequency-matched shuffles (p 0.019), a false alarm: the test can respond to roughly right sound values in a language that is not the target, so a pass is not evidence for a particular language. Report: [reports/milestone_4/real_controls_report.md](reports/milestone_4/real_controls_report.md).
 ### Extension: the same claim against four languages (exploratory, not pre-registered)
 
 ```bash
@@ -171,7 +189,11 @@ Sanskrit is enciphered with the claimed sign-to-sound relation into corpora from
 
 ## To do
 
-- Retrain the Milestone 1 detectors; see [docs/RUN_GUIDE.md](docs/RUN_GUIDE.md).
+Everything below depends on more hand-labelled real seal photographs (31 exist; the real test set is 12 photos):
+
+- Label more real photographs (guide: [docs/HAND_LABELLING_GUIDE.md](docs/HAND_LABELLING_GUIDE.md)), then rerun `import_labels.py` and `train_real.py`. Sign naming on real photos is the bottleneck.
+- Retrain the detectors on relief-shaded synthetic seals and compare on the real test photos (GPU; see [docs/RUN_GUIDE.md](docs/RUN_GUIDE.md)).
+- Milestone 2: an error-propagation test with Milestone 1's real confusion matrix, and a direction test from sign positions measured on photographs.
 
 ## Layout
 
@@ -179,7 +201,9 @@ Sanskrit is enciphered with the claimed sign-to-sound relation into corpora from
 grapheme_extraction/   Milestone 1 code
 sequence_analysis/     Milestone 2 and 3 code (masked_model.py, restore.py)
 decipherment/          Milestone 4 code (harness.py, overfit.py)
-reports/milestone_1/   Milestone 1 results (synthetic data)
+reports/milestone_1/   Milestone 1 results (synthetic data; real/ for the hand-labelled photos)
+reports/milestone_1_zero_shot/  zero-shot segmenters on real and synthetic seals
+reports/SUMMARY.md     one-page summary built by reports/build_summary.py
 reports/milestone_2/   Milestone 2 results
 reports/milestone_3/   Milestone 3 results and the restoration extension
 reports/milestone_4/   Milestone 4 results and the search extension

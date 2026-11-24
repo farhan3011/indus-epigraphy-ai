@@ -717,13 +717,26 @@ def decipher_tools():
     return harness, dec_data, key, tables, texts, wells, harness.Corpus(readable, key)
 
 
-def test_table(harness, dec_data, tables, wells, table, draws=300, seed=0):
-    """The Milestone 4 test on any table {sign: value}: None if it reads too little of the corpus, else the test's results."""
+@st.cache_resource
+def lexicon_tools():
+    """The dictionary match-rate module and its Sanskrit lexicon (exploratory extension), or None before lexicon.py has run."""
+    if not (M4 / "lexicon.json").exists():
+        return None
+    import data as dec_data
+    import lexicon
+    return lexicon, lexicon.build_lexicon(dec_data.dcs_lines("train"))
+
+
+def test_table(harness, dec_data, tables, wells, table, draws=300, seed=0, lex=None):
+    """The Milestone 4 test on any table {sign: value}: None if it reads too little of the corpus, else the test's results.
+    lex: (lexicon module, lexicon) to add the dictionary match-rate scores."""
     key = {s: (str(s), v) for s, v in table.items()}  # a value with no consonant (a bare vowel) is read as nothing, as in the harness
     texts = [t for t in wells if all(s in key for s in t)]
     if sum(bool(dec_data.skeleton(v)) for v in table.values()) < 20 or len(texts) < 30:
         return None
     r, _ = harness.test_key(harness.Corpus(texts, key), key, tables, draws, np.random.default_rng(seed))
+    if lex:
+        r["lexicon"] = lex[0].test(texts, key, draws, np.random.default_rng(seed), lex[1])
     return r | {"texts": len(texts), "signs": len(key), "draws": draws}
 
 
@@ -878,7 +891,7 @@ def milestone4():
             table = {int(a): v.strip() for a, v in zip(d["sign"], d[col]) if a.strip().isdigit() and v.strip()}
         except (KeyError, StopIteration, ValueError, pd.errors.ParserError):
             table = None
-        r = test_table(harness, dec_data, tables, wells, table) if table else None
+        r = test_table(harness, dec_data, tables, wells, table, lex=lexicon_tools()) if table else None
         if r is None:
             st.html('<div class="note">Could not test this table. It needs columns <code>sign</code> and <code>value</code>, at least 20 signs '
                     'with a consonant in their value, and it must read at least 30 whole inscriptions.</div>')
@@ -887,6 +900,12 @@ def milestone4():
             st.html(stats(("Inscriptions read", f"{r['texts']:,}", f"{r['signs']} signs"), ("Sequence score", f"{r['observed']['sequence']:+.3f}"),
                           ("Against any shuffle", f"p = {n['value_shuffle']['sequence']['p']:.3f}"),
                           ("Against frequency-matched shuffles", f"p = {n['binned_10']['sequence']['p']:.3f}")))
+            if "lexicon" in r:
+                lx = r["lexicon"]
+                st.html(stats(("Outputs that are Sanskrit words", f"{lx['observed']['whole_text_match']:.1%}",
+                               f"p = {lx['nulls']['binned_10']['whole_text_match']['p']:.3f} vs matched shuffles"),
+                              ("Letters covered by Sanskrit words", f"{lx['observed']['coverage']:.1%}",
+                               f"p = {lx['nulls']['binned_10']['coverage']['p']:.3f} vs matched shuffles")))
             st.caption(f"{r['draws']} shuffles, so the smallest possible p is {1 / (r['draws'] + 1):.3f}; one uncorrected test, a screening "
                        "result only. A small p means the table carries structure beyond chance; it does not mean the readings are right.")
     st.caption("Full report: reports/milestone_4/milestone_4_report.md")
@@ -909,8 +928,10 @@ def selftest():
     except (FileNotFoundError, OSError):
         harness = None  # the decipherment data is not on this machine
     if harness:
-        r = test_table(harness, dec_data, tables, wells, {s: cv[1] for s, cv in key.items()}, draws=20)
+        lex = lexicon_tools.__wrapped__()
+        r = test_table(harness, dec_data, tables, wells, {s: cv[1] for s, cv in key.items()}, draws=20, lex=lex)
         assert r["texts"] > 1000 and 0 < r["nulls"]["binned_10"]["sequence"]["p"] <= 1
+        assert lex is None or 0 <= r["lexicon"]["observed"]["coverage"] <= 1
         assert test_table(harness, dec_data, tables, wells, {1: "ka"}) is None
     from streamlit.testing.v1 import AppTest
     os.environ["INDUS_APP_UNDER_TEST"] = "1"

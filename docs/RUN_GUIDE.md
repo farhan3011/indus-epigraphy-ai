@@ -139,6 +139,16 @@ python grapheme_extraction/evaluate.py --runs yolov8n-relief rtdetr-l-relief --o
 
 Send back `reports/milestone_1_relief/` and both `runs/*-relief/weights/best.pt`. Look at the figures of the real Met photos first: the question is whether the boxes on real seals improve.
 
+## Milestone 1 on real photographs and zero-shot detection
+
+```bash
+python grapheme_extraction/import_labels.py <label-studio-export>.json --package data/raw/indus_hand_labelling
+python grapheme_extraction/train_real.py      # fine-tune on the real train photos, score the real test photos (about 10 minutes)
+python grapheme_extraction/zero_shot.py       # FastSAM and SAM with no training (about 20 minutes; needs models/FastSAM.pt)
+```
+
+`models/FastSAM.pt` comes from https://huggingface.co/spaces/An-619/FastSAM/resolve/main/weights/FastSAM.pt (GitHub release downloads of ultralytics weights may be blocked).
+
 ## Milestones 3 and 4 and their extensions (CPU only)
 
 None of this needs a GPU. Run from the repository root with the environment from step 2 active.
@@ -149,6 +159,9 @@ python sequence_analysis/numerals.py
 
 # Milestone 2 extension, exploratory: does the text predict the object? (about 1 minute)
 python sequence_analysis/predict_object.py
+
+# Milestone 2 extension, exploratory: do signs that look alike behave alike? (under a minute)
+python sequence_analysis/visual_vs_context.py
 
 # Milestone 3: masked-sign prediction. Writes reports/milestone_3/ and models/masked_sign_model.pt (about 15 minutes)
 python sequence_analysis/masked_model.py
@@ -171,6 +184,9 @@ python decipherment/lexicon.py
 # Milestone 4 extension, exploratory: Linear B read as Greek, a positive control on a real decipherment (about 1 minute)
 python decipherment/linear_b.py
 
+# Milestone 4 extension, exploratory: Ugaritic as Hebrew and Linear A as Greek, more real-script controls (about 2 minutes)
+python decipherment/real_controls.py
+
 # Milestone 4 extension, exploratory: the same claim against four languages (about 1 minute)
 python decipherment/languages.py
 
@@ -192,3 +208,5 @@ python app.py                            # asserts, then runs every tab once hea
 ```
 
 The app lists a detector only when its weights file exists and is not empty. Without trained Milestone 1 weights the first tab runs on the OpenCV baseline and the other three tabs work as normal.
+
+After any run, `python reports/build_summary.py` rebuilds `reports/SUMMARY.md`.

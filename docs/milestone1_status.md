@@ -1,6 +1,6 @@
 # Milestone 1: decision and status (1 Oct 2026)
 
-**Decision: follow the revised plan ("Milestone 1 Plan: Grapheme Extraction (Revised)"). Real labelled seals come first; synthetic data is an optional extra.** That plan is not in this repository yet. Until real labelled seals exist, Milestone 1 is completed on synthetic data only: see `docs/RUN_GUIDE.md` and `reports/milestone_1/milestone_1_report.md`.
+**Decision: follow the revised plan ("Milestone 1 Plan: Grapheme Extraction (Revised)"). Real labelled seals come first; synthetic data is an optional extra.** That plan was never committed; the parts that were adopted are listed below. Milestone 1 was first completed on synthetic data only: see `docs/RUN_GUIDE.md` and `reports/milestone_1/milestone_1_report.md`.
 
 ## Why
 
@@ -33,6 +33,10 @@ Milestone 1 is complete on synthetic data. The full run (YOLOv8n, RT-DETR-L, Ope
 ## First real-photo measurement (24 Nov 2026)
 
 31 hand-labelled real photographs (`import_labels.py`, guide in `docs/HAND_LABELLING_GUIDE.md`), split by photo: 14 train, 5 val, 12 test. `train_real.py` fine-tunes the detector (chosen on val: synthetic weights fine-tuned on real photos mixed with 300 synthetic seals) and adds real crops to the classifier bank. On the 12 test photos (68 signs): detector precision 0.69 and recall 0.59 (synthetic-only 0.66 and 0.53); classifier top-1 on true boxes about 0.25-0.28 either way; whole-pipeline sign error rate about 1.0. The detector now finds most signs on real seals; naming them is the bottleneck. Report: `reports/milestone_1/real/real_report.md`.
+
+## Zero-shot segmenters (24 Nov 2026)
+
+FastSAM and SAM ViT-B, untrained, with a fixed sign-shape filter: on the 12 real test photos FastSAM finds 41% of signs and SAM 18%, against 53% for the synthetic YOLOv8n. Below the 70% bar, so `bootstrap_boxes.py` keeps using the trained detector. Report: `reports/milestone_1_zero_shot/zero_shot_report.md`.
 
 ## Not done
 
