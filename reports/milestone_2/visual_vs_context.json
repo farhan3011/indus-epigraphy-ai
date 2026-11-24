@@ -1,0 +1,210 @@
+{
+ "texts": 1548,
+ "main": {
+  "signs": 76,
+  "pairs": 2850,
+  "dino_spearman": 0.05312509571772249,
+  "dino_p": 0.1810818918108189,
+  "pixel_spearman": 0.0009916349246962728,
+  "pixel_p": 0.49695030496950304,
+  "top_pairs": {
+   "observed": 0.5598262374302351,
+   "null_mean": 0.4437394952573082,
+   "null_sd": 0.017145211610470067,
+   "p": 9.999000099990002e-05
+  },
+  "candidates": [
+   {
+    "signs": [
+     104,
+     106
+    ],
+    "visual": 0.954,
+    "context": 0.788
+   },
+   {
+    "signs": [
+     70,
+     72
+    ],
+    "visual": 0.939,
+    "context": 0.819
+   },
+   {
+    "signs": [
+     67,
+     70
+    ],
+    "visual": 0.945,
+    "context": 0.772
+   },
+   {
+    "signs": [
+     294,
+     296
+    ],
+    "visual": 0.946,
+    "context": 0.763
+   },
+   {
+    "signs": [
+     102,
+     104
+    ],
+    "visual": 0.947,
+    "context": 0.755
+   },
+   {
+    "signs": [
+     65,
+     70
+    ],
+    "visual": 0.938,
+    "context": 0.756
+   },
+   {
+    "signs": [
+     65,
+     67
+    ],
+    "visual": 0.926,
+    "context": 0.793
+   },
+   {
+    "signs": [
+     387,
+     389
+    ],
+    "visual": 0.921,
+    "context": 0.801
+   },
+   {
+    "signs": [
+     59,
+     72
+    ],
+    "visual": 0.954,
+    "context": 0.701
+   },
+   {
+    "signs": [
+     65,
+     72
+    ],
+    "visual": 0.909,
+    "context": 0.771
+   },
+   {
+    "signs": [
+     67,
+     72
+    ],
+    "visual": 0.907,
+    "context": 0.79
+   },
+   {
+    "signs": [
+     12,
+     15
+    ],
+    "visual": 0.942,
+    "context": 0.678
+   },
+   {
+    "signs": [
+     48,
+     53
+    ],
+    "visual": 0.91,
+    "context": 0.735
+   },
+   {
+    "signs": [
+     70,
+     387
+    ],
+    "visual": 0.913,
+    "context": 0.715
+   },
+   {
+    "signs": [
+     102,
+     106
+    ],
+    "visual": 0.897,
+    "context": 0.761
+   },
+   {
+    "signs": [
+     59,
+     70
+    ],
+    "visual": 0.963,
+    "context": 0.654
+   },
+   {
+    "signs": [
+     267,
+     284
+    ],
+    "visual": 0.937,
+    "context": 0.659
+   },
+   {
+    "signs": [
+     53,
+     67
+    ],
+    "visual": 0.905,
+    "context": 0.722
+   },
+   {
+    "signs": [
+     87,
+     102
+    ],
+    "visual": 0.93,
+    "context": 0.659
+   },
+   {
+    "signs": [
+     53,
+     389
+    ],
+    "visual": 0.891,
+    "context": 0.747
+   }
+  ]
+ },
+ "sensitivity": {
+  "10": {
+   "signs": 114,
+   "pairs": 6441,
+   "dino_spearman": 0.02284038208440912,
+   "dino_p": 0.3087691230876912,
+   "pixel_spearman": 0.0906479904736252,
+   "pixel_p": 0.0537946205379462
+  },
+  "50": {
+   "signs": 38,
+   "pairs": 703,
+   "dino_spearman": 0.10241540998119947,
+   "dino_p": 0.0690930906909309,
+   "pixel_spearman": 0.04336576869471604,
+   "pixel_p": 0.28947105289471053
+  }
+ },
+ "settings": {
+  "perms": 10000,
+  "draws": 10000,
+  "seed": 20261124,
+  "quick": false,
+  "min_tokens": 20,
+  "runtime_min": 0.16907600164413453
+ },
+ "reading": [
+  "There is no reliable association between how alike two signs look (DINOv2) and how alike they are used (Spearman +0.053, Mantel p = 0.1811); raw pixels give +0.001 (p = 0.4970).",
+  "The most similar-looking pairs are more alike in use than random pairs (p = 0.0001).",
+  "The candidate pairs are where to look for sign-list variants; each needs checking by eye against carved examples."
+ ]
+}
