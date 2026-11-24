@@ -174,6 +174,9 @@ python decipherment/lexicon.py
 # Milestone 4 extension, exploratory: Linear B read as Greek, a positive control on a real decipherment (about 1 minute)
 python decipherment/linear_b.py
 
+# Milestone 4 extension, exploratory: Ugaritic as Hebrew and Linear A as Greek, more real-script controls (about 2 minutes)
+python decipherment/real_controls.py
+
 # Milestone 4 extension, exploratory: the same claim against four languages (about 1 minute)
 python decipherment/languages.py
 

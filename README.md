@@ -153,6 +153,14 @@ python decipherment/linear_b.py    # about 1 minute on a laptop CPU after the fi
 
 The harness is run, unchanged, on Linear B read as Greek: 918 Linear B words (a word list from the NeuroDecipher repository, not tablet text) with the accepted Mycenaean sound values, against Homer. The true table is detected only against frequency-matched shuffles (percentile 99, p 0.010), not against fully shuffled tables (p 0.32); a table with 10% of its values replaced is still detected 90% of the time, 30% replaced 35%. Scored against Sanskrit instead of Greek the same table is also significant, so a significant result from this test is not evidence that a table is right for its language. Report: [reports/milestone_4/linear_b_report.md](reports/milestone_4/linear_b_report.md).
 
+
+### Extension: more controls on real scripts (exploratory)
+
+```bash
+python decipherment/real_controls.py    # about 2 minutes on a laptop CPU after the first download
+```
+
+A second true decipherment, Ugaritic read as Hebrew, and a known-wrong one, Linear A read with Linear B sound values as Greek, run through the unchanged test. Ugaritic is detected (p 0.0001, and in 100% of subsamples cut to Indus size). Linear A also comes out significant against frequency-matched shuffles (p 0.019), a false alarm: the test can respond to roughly right sound values in a language that is not the target, so a pass is not evidence for a particular language. Report: [reports/milestone_4/real_controls_report.md](reports/milestone_4/real_controls_report.md).
 ### Extension: the same claim against four languages (exploratory, not pre-registered)
 
 ```bash
