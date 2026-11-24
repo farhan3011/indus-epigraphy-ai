@@ -227,6 +227,9 @@ models/
 *.pt
 data/real/source/
 data/real/images/
+data/real/yolo/
+data/real/check/
+data/real/import_problems.txt
 reports/quick/
 .DS_Store
 
