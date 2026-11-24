@@ -22,4 +22,4 @@
 | fine-tuned, real | 0.765 [0.583, 0.846] | 0.520 [0.238, 0.760] | 0.707 [0.500, 0.804] | 0.426 [0.196, 0.612] |
 | fine-tuned, mixed | 0.692 [0.476, 0.857] | 0.720 [0.476, 0.897] | 0.690 [0.565, 0.816] | 0.588 [0.448, 0.714] |
 
-`figures/` shows each test photo with the boxes and top-1 sign numbers of both systems (left: synthetic-only, right: with real).
+`figures/` (local only: the photos are research-use only and not published) shows each test photo with the boxes and top-1 sign numbers of both systems (left: synthetic-only, right: with real).

@@ -166,7 +166,7 @@ def write_report(res):
         "| Detector | Val precision | Val recall | Test precision | Test recall |", "|---|---|---|---|---|",
         *[f"| {k} | {fmt(v['precision'])} | {fmt(v['recall'])} | {fmt(res['detector_choice']['test'][k]['precision'])} | "
           f"{fmt(res['detector_choice']['test'][k]['recall'])} |" for k, v in res["detector_choice"]["val"].items()], "",
-        "`figures/` shows each test photo with the boxes and top-1 sign numbers of both systems (left: synthetic-only, right: with real).", ""]
+        "`figures/` (local only: the photos are research-use only and not published) shows each test photo with the boxes and top-1 sign numbers of both systems (left: synthetic-only, right: with real).", ""]
     (OUT / "real_report.md").write_text("\n".join(lines))
 
 
