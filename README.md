@@ -7,6 +7,8 @@ Computational epigraphy of the undeciphered **Indus Valley script** (~2600–190
 
 Scope and milestones: [Indus_Epigraphy_AI_Project_Proposal.md](Indus_Epigraphy_AI_Project_Proposal.md).
 
+**One-page summary of every result: [reports/SUMMARY.md](reports/SUMMARY.md).**
+
 ## Status
 
 | Milestone | State | Code | Results |
@@ -49,6 +51,14 @@ python grapheme_extraction/pipeline.py photo.jpg --annotate out.jpg    # run on 
 ```
 
 Step-by-step instructions: [docs/RUN_GUIDE.md](docs/RUN_GUIDE.md). Design decisions and open items: [docs/milestone1_status.md](docs/milestone1_status.md).
+
+### Extension: zero-shot sign detection (exploratory)
+
+```bash
+python grapheme_extraction/zero_shot.py    # about 20 minutes on a laptop (SAM runs on the CPU)
+```
+
+Two pretrained segmenters, FastSAM and SAM ViT-B, used with no training and a fixed sign-shape filter, against the synthetic-trained YOLOv8n. On the 12 real test photographs FastSAM finds 41% of signs and SAM 18%, against 53% for YOLOv8n: below the 70% set in advance for drafting labels, so zero-shot segmentation does not solve sign detection here. YOLO-World could not be tried because its weights are only on GitHub release assets, which this network blocks. Report: [reports/milestone_1_zero_shot/zero_shot_report.md](reports/milestone_1_zero_shot/zero_shot_report.md).
 
 ## Milestone 2: sign-sequence analysis
 
@@ -179,7 +189,11 @@ Sanskrit is enciphered with the claimed sign-to-sound relation into corpora from
 
 ## To do
 
-- Retrain the Milestone 1 detectors; see [docs/RUN_GUIDE.md](docs/RUN_GUIDE.md).
+Everything below depends on more hand-labelled real seal photographs (31 exist; the real test set is 12 photos):
+
+- Label more real photographs (guide: [docs/HAND_LABELLING_GUIDE.md](docs/HAND_LABELLING_GUIDE.md)), then rerun `import_labels.py` and `train_real.py`. Sign naming on real photos is the bottleneck.
+- Retrain the detectors on relief-shaded synthetic seals and compare on the real test photos (GPU; see [docs/RUN_GUIDE.md](docs/RUN_GUIDE.md)).
+- Milestone 2: an error-propagation test with Milestone 1's real confusion matrix, and a direction test from sign positions measured on photographs.
 
 ## Layout
 
@@ -187,7 +201,9 @@ Sanskrit is enciphered with the claimed sign-to-sound relation into corpora from
 grapheme_extraction/   Milestone 1 code
 sequence_analysis/     Milestone 2 and 3 code (masked_model.py, restore.py)
 decipherment/          Milestone 4 code (harness.py, overfit.py)
-reports/milestone_1/   Milestone 1 results (synthetic data)
+reports/milestone_1/   Milestone 1 results (synthetic data; real/ for the hand-labelled photos)
+reports/milestone_1_zero_shot/  zero-shot segmenters on real and synthetic seals
+reports/SUMMARY.md     one-page summary built by reports/build_summary.py
 reports/milestone_2/   Milestone 2 results
 reports/milestone_3/   Milestone 3 results and the restoration extension
 reports/milestone_4/   Milestone 4 results and the search extension
